@@ -1,6 +1,8 @@
-from dataset.LetorDataset import LetorDataset
+from dataset import LetorDataset
+from ranker import  PDGDLinearRanker
+num_features = 46
+Learning_rate = 0.1
+dataset = LetorDataset("../datasets/test.txt", num_features)
+#%%
 
-dataset = "../datasets/test.txt"
-
-t = LetorDataset(dataset, 46)
-print(len(t.get_all_querys()))
+ranker = PDGDLinearRanker(num_features, Learning_rate)
