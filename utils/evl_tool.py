@@ -24,7 +24,6 @@ def query_ndcg_at_k(dataset, result_list, query, k):
     ndcg = (dcg / idcg)
     return ndcg
 
-
 def average_ndcg_at_k(dataset, query_result_list, k):
     ndcg = 0.0
     num_query = 0

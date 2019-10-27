@@ -83,4 +83,4 @@ class LetorDataset(AbstractDataset):
         return self._query_pos_docids[query]
 
     def get_all_querys(self):
-        return list(self._query_get_all_features.keys())
+        return np.array(list(self._query_get_all_features.keys()))

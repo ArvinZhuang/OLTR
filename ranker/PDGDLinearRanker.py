@@ -1,7 +1,11 @@
 from ranker.LinearRanker import LinearRanker
 import numpy as np
 
+
 class PDGDLinearRanker(LinearRanker):
+    def __init__(self, num_features, learning_rate, tau, learning_rate_decay=1, random_initial=True):
+        super().__init__(num_features, learning_rate, learning_rate_decay, random_initial)
+        self.tau = tau
 
     def get_query_result_list(self, dataset, query):
         feature_matrix = dataset.get_all_features_by_query(query)
@@ -10,13 +14,13 @@ class PDGDLinearRanker(LinearRanker):
 
         k = np.minimum(10, n_docs)
 
-        doc_scores = self.get_scores(feature_matrix, self.weights)
+        doc_scores = self.get_scores(feature_matrix)
 
         doc_scores += 18 - np.amax(doc_scores)
 
         ranking = self._recursive_choice(np.copy(doc_scores),
-                                   np.array([], dtype=np.int32),
-                                   k)
+                                         np.array([], dtype=np.int32),
+                                         k)
         return ranking, doc_scores
 
     def _recursive_choice(self, scores, incomplete_ranking, k_left):
@@ -25,7 +29,7 @@ class PDGDLinearRanker(LinearRanker):
         scores[incomplete_ranking] = np.amin(scores)
 
         scores += 18 - np.amax(scores)
-        exp_scores = np.exp(scores)
+        exp_scores = np.exp(scores/self.tau)
 
         exp_scores[incomplete_ranking] = 0
         probs = exp_scores / np.sum(exp_scores)
@@ -48,7 +52,7 @@ class PDGDLinearRanker(LinearRanker):
             return ranking
 
     def update_to_clicks(self, click_label, ranking, doc_scores, feature_matrix):
-        clicks = np.array(click_label == 0)
+        clicks = np.array(click_label == 1)
 
         n_docs = ranking.shape[0]
         n_results = 10
@@ -97,7 +101,7 @@ class PDGDLinearRanker(LinearRanker):
         all_w = np.concatenate([pos_w, neg_w])
         all_ind = np.concatenate([pos_r_ind, neg_r_ind])
 
-        self._update_to_documents(all_w, all_ind, feature_matrix)
+        self._update_to_documents(all_ind, all_w, feature_matrix)
 
     def _update_to_documents(self, doc_ind, doc_weights, feature_matrix):
         weighted_docs = feature_matrix[doc_ind, :] * doc_weights[:, None]
@@ -112,9 +116,9 @@ class PDGDLinearRanker(LinearRanker):
 
     def _calculate_unbias_weights(self, pos_ind, neg_ind, doc_scores, ranking):
         ranking_prob = self._calculate_observed_prob(pos_ind, neg_ind,
-                                                doc_scores, ranking)
+                                                     doc_scores, ranking)
         flipped_prob = self._calculate_flipped_prob(pos_ind, neg_ind,
-                                               doc_scores, ranking)
+                                                    doc_scores, ranking)
         return flipped_prob / (ranking_prob + flipped_prob)
 
     def _calculate_flipped_prob(self, pos_ind, neg_ind, doc_scores, ranking):
