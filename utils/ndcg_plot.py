@@ -11,7 +11,7 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
         result = np.zeros(num_interactions)
         for f in folds:
             for r in runs:
-                with open("{}/fold{}/{}_tau{}_run{}_ndcg.txt".format(path, f, click_model, p, r),
+                with open("{}/fold{}/{}_{}_run{}_ndcg.txt".format(path, f, click_model, p, r),
                           "rb") as fp:
                     data = pickle.load(fp)
                     data = np.array(data[:num_interactions])
@@ -24,7 +24,8 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
         result_high = np.add(result_mean, result_h)
 
         plt.plot(range(num_interactions), result_mean, color=COLORS[color_index], alpha=1)
-        # plt.fill_between(range(num_interactions), result_low, result_high, color='black', alpha=0.2)
+
+        plt.fill_between(range(num_interactions), result_low, result_high, color='black', alpha=0.2)
         color_index += 1
     plt.figure(1)
 
@@ -36,9 +37,9 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
 if __name__ == "__main__":
     path = "../results/exploration/mq2007/PDGD"
     folds = list(range(1, 6))
-    runs = list(range(1, 26))
+    runs = list(range(1, 15))
     click_models = ['informational']
-    parameters = [0.1, 0.5, 1.0, 5.0, 10.0]
+    parameters = [0.8, 0.9, 1.0, 1.1, 1.2]
     num_interactions = 10000
-
-    plot(path, parameters, folds, runs, 'informational', num_interactions)
+    for p in parameters:
+        plot(path, parameters, folds, runs, 'informational', num_interactions)
