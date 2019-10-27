@@ -11,7 +11,7 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
         result = np.zeros(num_interactions)
         for f in folds:
             for r in runs:
-                with open("{}/fold{}/{}_{}_run{}_ndcg.txt".format(path, f, click_model, p, r),
+                with open("{}/fold{}/{}_tau{}_run{}_ndcg.txt".format(path, f, click_model, p, r),
                           "rb") as fp:
                     data = pickle.load(fp)
                     data = np.array(data[:num_interactions])
@@ -39,7 +39,6 @@ if __name__ == "__main__":
     folds = list(range(1, 6))
     runs = list(range(1, 15))
     click_models = ['informational']
-    parameters = [0.8, 0.9, 1.0, 1.1, 1.2]
+    parameters = [0.1, 0.5, 1.0, 5.0, 10.0]
     num_interactions = 10000
-    for p in parameters:
-        plot(path, parameters, folds, runs, 'informational', num_interactions)
+    plot(path, parameters, folds, runs, 'informational', num_interactions)
