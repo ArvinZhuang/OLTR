@@ -41,5 +41,4 @@ if __name__ == "__main__":
     click_models = ['informational']
     parameters = [0.8, 0.9, 1.0, 1.1, 1.2]
     num_interactions = 10000
-    for p in parameters:
-        plot(path, parameters, folds, runs, 'informational', num_interactions)
+    plot(path, parameters, folds, runs, 'informational', num_interactions)
