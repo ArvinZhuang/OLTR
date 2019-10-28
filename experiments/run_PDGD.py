@@ -56,15 +56,15 @@ def job(model_type, f, train_set, test_set, tau):
         print("PDGD tau{} fold{} {} run{} start!".format(tau, f, model_type, r))
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
-                "../results/exploration/mq2007/PDGD/fold{}/{}_{}_run{}_ndcg.txt".format(f, model_type, tau, r),
+                "../results/exploration/mq2007/PDGD/fold{}/{}_tau{}_run{}_ndcg.txt".format(f, model_type, tau, r),
                 "wb") as fp:
             pickle.dump(ndcg_scores, fp)
         with open(
-                "../results/exploration/mq2007/PDGD/fold{}/{}_{}_run{}_cndcg.txt".format(f, model_type, tau, r),
+                "../results/exploration/mq2007/PDGD/fold{}/{}_tau{}_run{}_cndcg.txt".format(f, model_type, tau, r),
                 "wb") as fp:
             pickle.dump(cndcg_scores, fp)
         with open(
-                "../results/exploration/mq2007/PDGD/fold{}/{}_{}_run{}_final_weight.txt".format(f, model_type, tau, r),
+                "../results/exploration/mq2007/PDGD/fold{}/{}_tau{}_run{}_final_weight.txt".format(f, model_type, tau, r),
                 "wb") as fp:
             pickle.dump(final_weight, fp)
         print("PDGD tau{} fold{} {} run{} finished!".format(tau, f, model_type, r))

@@ -218,3 +218,6 @@ class PDGDLinearRanker(LinearRanker):
         safe_pair_prob = np.prod(safe_prob, axis=1)
 
         return safe_pair_prob
+
+    def set_learning_rate(self, learning_rate):
+        self.learning_rate = learning_rate
