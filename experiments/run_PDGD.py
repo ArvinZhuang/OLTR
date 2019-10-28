@@ -36,7 +36,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
     return ndcg_scores, cndcg_scores, final_weight
 
 
-def job(model_type, f, train_set, test_set, tau, output_fold):
+def job(model_type, f, train_set, test_set, tau):
     if model_type == "perfect":
         pc = [0.0, 0.5, 1.0]
         ps = [0.0, 0.0, 0.0]
@@ -47,6 +47,7 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
         pc = [0.4, 0.7, 0.9]
         ps = [0.1, 0.3, 0.5]
 
+    output_fold = "mq2007"
     cm = CascadeClickModel(train_set, pc, ps)
 
     for r in range(1, 26):
@@ -55,15 +56,15 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
         print("PDGD tau{} fold{} {} run{} start!".format(tau, f, model_type, r))
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
-                "{}/fold{}/{}_tau{}_run{}_ndcg.txt".format(output_fold, f, model_type, tau, r),
+                "../results/exploration/mq2007/PDGD/fold{}/{}_{}_run{}_ndcg.txt".format(f, model_type, tau, r),
                 "wb") as fp:
             pickle.dump(ndcg_scores, fp)
         with open(
-                "{}/fold{}/{}_tau{}_run{}_cndcg.txt".format(output_fold, f, model_type, tau, r),
+                "../results/exploration/mq2007/PDGD/fold{}/{}_{}_run{}_cndcg.txt".format(f, model_type, tau, r),
                 "wb") as fp:
             pickle.dump(cndcg_scores, fp)
         with open(
-                "{}/fold{}/{}_tau{}_run{}_final_weight.txt".format(output_fold, f, model_type, tau, r),
+                "../results/exploration/mq2007/PDGD/fold{}/{}_{}_run{}_final_weight.txt".format(f, model_type, tau, r),
                 "wb") as fp:
             pickle.dump(final_weight, fp)
         print("PDGD tau{} fold{} {} run{} finished!".format(tau, f, model_type, r))
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     click_models = ["informational"]
     Learning_rate = 0.1
     dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "../results/exploration/mq2007/PDGD"
+    output_fold = "mq2007"
     taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     # for 5 folds
     for f in range(1, 6):
@@ -89,4 +90,4 @@ if __name__ == "__main__":
         # for 3 click_models
         for click_model in click_models:
             for tau in taus:
-                mp.Process(target=job, args=(click_model, f, train_set, test_set, tau, output_fold)).start()
+                mp.Process(target=job, args=(click_model, f, train_set, test_set, tau / 10)).start()
