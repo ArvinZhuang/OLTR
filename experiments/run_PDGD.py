@@ -90,4 +90,4 @@ if __name__ == "__main__":
         # for 3 click_models
         for click_model in click_models:
             for tau in taus:
-                mp.Process(target=job, args=(click_model, f, train_set, test_set, tau / 10)).start()
+                mp.Process(target=job, args=(click_model, f, train_set, test_set, tau)).start()

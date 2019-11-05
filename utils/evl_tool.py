@@ -60,6 +60,7 @@ def get_all_query_ndcg(dataset, query_result_list, k):
             pos_docid_set = set(dataset.get_relevance_docids_by_query(query))
         except:
             # print("Query:", query, "has no relevant document!")
+            query_ndcg[query] = 0
             continue
         dcg = 0.0
         for i in range(0, min(k, len(query_result_list[query]))):

@@ -18,6 +18,7 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
                     result = np.vstack((result, data))
         result = result[1:].T
         result_mean = np.mean(result, axis=1)
+        print(result_mean.shape)
         result_std_err = sem(result, axis=1)
         result_h = result_std_err * t.ppf((1 + 0.95) / 2, 25 - 1)
         result_low = np.subtract(result_mean, result_h)
@@ -25,7 +26,7 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
 
         plt.plot(range(num_interactions), result_mean, color=COLORS[color_index], alpha=1)
 
-        plt.fill_between(range(num_interactions), result_low, result_high, color='black', alpha=0.2)
+        plt.fill_between(range(num_interactions), result_low, result_high, color=COLORS[color_index], alpha=0.2)
         color_index += 1
     plt.figure(1)
 
@@ -35,10 +36,10 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
     plt.show()
 
 if __name__ == "__main__":
-    path = "../results/exploration/mq2007/PDGD"
+    path = "../results/exploration/MSLR10K/PDGD"
     folds = list(range(1, 6))
     runs = list(range(1, 15))
     click_models = ['informational']
-    parameters = [0.1, 0.5, 1.0, 5.0, 10.0]
+    parameters = [0.05, 0.08, 0.1, 0.5, 1.0, 5.0, 10.0]
     num_interactions = 10000
     plot(path, parameters, folds, runs, 'informational', num_interactions)

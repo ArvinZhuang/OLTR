@@ -39,11 +39,12 @@ def plot(path, parameters, folds, runs, click_model, num_interactions):
     plt.show()
 
 if __name__ == "__main__":
-    path = "../results/exploration/mq2007/PDGD"
+    path = "../results/exploration/MSLR10K/PDGD"
     folds = list(range(1, 6))
     runs = list(range(1, 26))
     click_models = ['informational']
-    parameters = [0.1, 0.5, 1.0, 5.0, 10.0]
+    parameters = [0.05, 0.08, 0.1, 0.5, 1.0, 5.0, 10.0]
+    # parameters = [0.05, 0.1, 0.5]
     num_interactions = 10000
 
     plot(path, parameters, folds, runs, 'informational', num_interactions)
