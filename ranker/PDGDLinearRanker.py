@@ -221,3 +221,6 @@ class PDGDLinearRanker(LinearRanker):
 
     def set_learning_rate(self, learning_rate):
         self.learning_rate = learning_rate
+
+    def set_tau(self, tau):
+        self.tau = tau
