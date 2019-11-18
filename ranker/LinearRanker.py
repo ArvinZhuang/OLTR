@@ -1,4 +1,3 @@
-from abc import ABC
 
 from ranker.AbstractRanker import AbstractRanker
 import numpy as np
