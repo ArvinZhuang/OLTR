@@ -2,7 +2,7 @@ import sys
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
 from ranker.PDGDLinearRanker import PDGDLinearRanker, LinearRanker
-from clickModel.CascadeClickModel import CascadeClickModel
+from clickModel.SDBN import SDBN
 from utils import evl_tool
 import numpy as np
 import multiprocessing as mp
@@ -114,7 +114,7 @@ def job(model_type, f, train_set, test_set, tau, r):
         pc = [0.4, 0.7, 0.9]
         ps = [0.1, 0.3, 0.5]
 
-    cm = CascadeClickModel(train_set, pc, ps)
+    cm = SDBN(train_set, pc, ps)
         # np.random.seed(r)
     ranker1 = PDGDLinearRanker(FEATURE_SIZE, Learning_rate, tau)
     ranker2 = PDGDLinearRanker(FEATURE_SIZE, Learning_rate, tau)

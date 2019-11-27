@@ -2,8 +2,9 @@ import sys
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
 from ranker.PDGDLinearRanker import PDGDLinearRanker
-from clickModel.SDBN import SDBN
+from clickModel.SDBN import CascadeClickModel
 from utils import evl_tool
+from utils.lshash import LSHash
 import numpy as np
 import multiprocessing as mp
 import pickle
@@ -48,7 +49,7 @@ def job(model_type, f, train_set, test_set, tau):
         ps = [0.1, 0.3, 0.5]
 
     output_fold = "mq2007"
-    cm = SDBN(pc, ps)
+    cm = CascadeClickModel(pc, ps)
 
     for r in range(1, 26):
         # np.random.seed(r)
@@ -79,15 +80,40 @@ if __name__ == "__main__":
     Learning_rate = 0.1
     dataset_fold = "../datasets/2007_mq_dataset"
     output_fold = "mq2007"
-    taus = [0.1, 0.5, 1.0, 5.0, 10.0]
+    tau = 1.0
     # for 5 folds
-    for f in range(1, 6):
-        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        train_set = LetorDataset(training_path, FEATURE_SIZE)
-        test_set = LetorDataset(test_path, FEATURE_SIZE)
-
-        # for 3 click_models
-        for click_model in click_models:
-            for tau in taus:
-                mp.Process(target=job, args=(click_model, f, train_set, test_set, tau)).start()
+    # for f in range(1, 6):
+    #     training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+    #     test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+    #     train_set = LetorDataset(training_path, FEATURE_SIZE)
+    #     test_set = LetorDataset(test_path, FEATURE_SIZE)
+    #
+    #     # for 3 click_models
+    #     for click_model in click_models:
+    #         mp.Process(target=job, args=(click_model, f, train_set, test_set, tau)).start()
+    training_path = "{}/Fold{}/train.txt".format(dataset_fold, 1)
+    train_set = LetorDataset(training_path, FEATURE_SIZE)
+    lsh = LSHash(2, FEATURE_SIZE, num_hashtables=2)
+    ranker1 = []
+    ranker2 = []
+    ranker3 = []
+    ranker4 = []
+    print(len(train_set.get_all_querys()))
+    for q in train_set.get_all_querys():
+        query = np.mean(train_set.get_all_features_by_query(q), axis=0)
+        code = lsh._hash(lsh.uniform_planes[0], query)
+        print(code)
+        print(lsh._hash(lsh.uniform_planes[1], query))
+        print()
+        if code == '00':
+            ranker1.append(q)
+        elif code == '01':
+            ranker2.append(q)
+        elif code == '10':
+            ranker3.append(q)
+        elif code == '11':
+            ranker4.append(q)
+    print(len(ranker1))
+    print(len(ranker2))
+    print(len(ranker3))
+    print(len(ranker4))

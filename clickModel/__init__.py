@@ -1,5 +1,11 @@
-from clickModel.CascadeClickModel import CascadeClickModel
+from clickModel.SDBN import SDBN
+from clickModel.SDCM import SDCM
+from clickModel.CM import CM
+from clickModel.DCTR import DCTR
 
 __all__ = [
-    'CascadeClickModel'
+    'SDBN',
+    'SDCM',
+    'CM',
+    'DCTR'
 ]
