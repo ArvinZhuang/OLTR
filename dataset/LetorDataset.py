@@ -57,12 +57,12 @@ class LetorDataset(AbstractDataset):
                         self._query_pos_docids[query] = [docid]
 
                 if old_query:
-                    self._query_docid_get_features[query][docid] = features
+                    self._query_docid_get_features[query][docid] = np.array(features)
                     self._query_get_docids[query].append(docid)
                     self._query_get_all_features[query] = np.vstack((self._query_get_all_features[query], features))
                     self._query_docid_get_rel[query][docid] = relevence
                 else:
-                    self._query_docid_get_features[query] = {docid: features}
+                    self._query_docid_get_features[query] = {docid: np.array(features)}
                     self._query_get_docids[query] = [docid]
                     self._query_get_all_features[query] = np.array([features])
                     self._query_docid_get_rel[query] = {docid: relevence}
