@@ -4,7 +4,7 @@ from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from utils import read_file as rf
 from dataset import LetorDataset
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import multiprocessing as mp
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
                           ('DCTR', DCTR(pc))]
     # datasets = ['CM']
     for dataset, simulator in datasets_simulator:
-        for id in range(1, 16):
+        for id in range(1, 2):
             click_log_path = "../feature_click_datasets/{}/train_set{}.txt".format(dataset, id)
             test_click_log_path = "../feature_click_datasets/{}/seen_set{}.txt".format(dataset, id)
             query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format(dataset, id)

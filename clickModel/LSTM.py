@@ -8,7 +8,7 @@ tf.disable_v2_behavior()
 
 class LSTM(CM):
     def __init__(self, num_feature, num_hidden_units, train_set, learning_rate=0.001):
-        self.name = "LSTM"
+        self.name = "LSTM_models"
         self.lr = learning_rate
         self.num_feature = num_feature
         self.num_hidden_units = num_hidden_units

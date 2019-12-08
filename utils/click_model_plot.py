@@ -25,7 +25,7 @@ def read_set_result_file(simulator, click_model, id):
 def plot_perplexity_MSE_for_each_rank(simulator, click_model, p1, p2):
     avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
 
-    for id in range(2, 16):
+    for id in range(1,2):
         perplexities, MSEs = read_set_result_file(simulator, click_model, id)
         for i in range(5):
             avg_perplexities[i].append(perplexities[i][0])

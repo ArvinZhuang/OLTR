@@ -1,10 +1,10 @@
-import numpy as np
 import tensorflow as tf
 from dataset import LetorDataset
 import numpy as np
 from clickModel.LSTMv2 import LSTMv2
 from utils import read_file as rf
 from clickModel.DCTR import DCTR
+from clickModel.SDBN import SDBN
 
 # %%
 
@@ -54,43 +54,40 @@ def clicks_to_bitmap(clicks):
     sess_clicks = clicks.reshape(-1, 1)
     return sess_clicks
 
-train_path = "../datasets/ltrc_yahoo/test_set.txt"
+train_path = "../datasets/ltrc_yahoo/set1.train.txt"
 print("loading training set.......")
 train_set = LetorDataset(train_path, 700)
 
-click_log_path = "../datasets/ltrc_yahoo/test_click_log.txt"
-test_click_log_path = "../datasets/ltrc_yahoo/test_click_log_test.txt"
+click_log_path = "../feature_click_datasets/SDBN/train_set1.txt"
+test_click_log_path =  "../feature_click_datasets/SDBN/seen_set1.txt"
 click_log = rf.read_click_log(click_log_path)
 test_click_log = rf.read_click_log(test_click_log_path)
+query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format("SDBN", 1)
+query_frequency = rf.read_query_frequency(query_frequency_path)
+
+test_logs = {'10': [],
+                 '100': [],
+                 '1000': [],
+                 '10000': [],
+                 '100000': []
+                 }
+
+for i in range(click_log.shape[0]):
+    qid = click_log[i][0]
+    test_logs[query_frequency[qid]].append(click_log[i])
 
 
-
-
-writer = tf.io.TFRecordWriter('test.tfrecord')
-for seesion in click_log:
+writer = tf.io.TFRecordWriter("../feature_click_datasets/SDBN/train_set1_freq10.tfrecord")
+num_session = 0
+for seesion in test_logs['10']:
     inputs = session_to_features(seesion, train_set)
     labels = clicks_to_bitmap(seesion[11:])
     example = make_sequence_example(inputs, labels)
     serialized = example.SerializeToString()
-    writer.write(serialized)  # **4.写入文件中
+    writer.write(serialized)
+    num_session += 1
+    if num_session % 100 == 0:
+        print("\r", end='')
+        print("num_of_writen:", num_session / 1800000, end="", flush=True)
 writer.close()
-
-
-
-dataset = tf.data.TFRecordDataset(filenames = 'test.tfrecord')
-dataset = dataset.map(read_tfrecord)
-dataset = dataset.repeat(1)
-dataset = dataset.shuffle(2048)
-dataset = dataset.batch(32, drop_remainder=False)
-
-#%%
-pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-simulator = DCTR(pc)
-print(click_log.shape)
-print(test_click_log.shape)
-#
-click_model = LSTMv2(700, 1024, train_set)
-print(click_model.get_MSE(test_click_log[np.random.choice(test_click_log.shape[0], 100)], train_set, simulator))
-click_model.train(None, dataset, 10)
-print(click_model.get_MSE(test_click_log[np.random.choice(test_click_log.shape[0], 100)], train_set, simulator))
+print(num_session)

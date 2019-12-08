@@ -1,8 +1,12 @@
 import numpy as np
+import tensorflow as tf
 
 
 def read_click_log(path):
     print("reading {}.......".format(path))
+    if path.split('.')[-1] == "tfrecord":
+        log = tf.data.TFRecordDataset(filenames='test.tfrecord')
+        return log
     log = []
     num_session = 0
     with open(path) as f:
