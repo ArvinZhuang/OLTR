@@ -19,23 +19,23 @@ test_click_log = rf.read_click_log(test_click_log_path)
 
 
 # #
-# dataset = tf.data.TFRecordDataset(filenames='../feature_click_datasets/SDBN/train_set1_freq10.tfrecord')
+dataset = tf.data.TFRecordDataset(filenames='../feature_click_datasets/SDBN/train_set1.tfrecord')
 # # # test_dataset = tf.data.TFRecordDataset(filenames='../feature_click_datasets/SDBN/seen_set1.tfrecord')
 # # #%%
 pc = [0.05, 0.3, 0.5, 0.7, 0.95]
 ps = [0.2, 0.3, 0.5, 0.7, 0.9]
 simulator = SDBN(pc, ps)
-# print(click_log.shape)
-# print(test_click_log.shape)
-# #
-# click_model = LSTMv2(700, 64, train_set, batch_size=128, epoch=5)
-# print(click_model.get_MSE(test_click_log[np.random.choice(test_click_log.shape[0], 1000)], train_set, simulator))
-# click_model.train(dataset)
+print(click_log.shape)
+print(test_click_log.shape)
 #
-# print(click_model.get_MSE(test_click_log[np.random.choice(test_click_log.shape[0], 1000)], train_set, simulator))
-#
-# click_model.model.save("../click_model_results/LSTM_models/SDBN_seen1_freq10.h5")
-#
+click_model = LSTMv2(700, 1024, train_set, batch_size=128, epoch=5)
+print(click_model.get_MSE(test_click_log[np.random.choice(test_click_log.shape[0], 1000)], train_set, simulator))
+click_model.train(dataset)
+
+print(click_model.get_MSE(test_click_log[np.random.choice(test_click_log.shape[0], 1000)], train_set, simulator))
+
+click_model.model.save("../click_model_results/LSTM_models/SDBN_train_set1.h5")
+
 
 
 # test model
@@ -65,27 +65,27 @@ for i in range(test_click_log.shape[0]):
     qid = test_click_log[i][0]
     test_logs[query_frequency[qid]].append(test_click_log[i])
 
-click_model = LSTMv2(700, 64, train_set, model=load_model('../click_model_results/LSTM_models/SDBN_seen1_freq10.h5'))
-print(click_model.get_MSE(np.array(test_logs["10"]), train_set, simulator))
+click_model = LSTMv2(700, 1024, train_set, model=load_model('../click_model_results/LSTM_models/SDBN_train_set1.h5'))
+# print(click_model.get_MSE(np.array(test_logs["10"]), train_set, simulator))
 pc = [0.05, 0.3, 0.5, 0.7, 0.95]
 ps = [0.2, 0.3, 0.5, 0.7, 0.9]
 simulator = SDBN(pc, ps)
 frequencies = ['10', '100', '1000', '10000', '100000']
 # i = 0
 
-# f.write("Click Model:" + "LSTM" + "\n")
-#
-# for freq in frequencies:
-#     perplexities = click_model.get_perplexity(np.array(test_logs[freq]))
-#     MSEs = click_model.get_MSE(np.array(test_logs[freq]), train_set, simulator)
-#
-#     perplexity_line = "Frequency " + freq + " perplexities:"
-#     MSEs_line = "Frequency " + freq + " MSE:"
-#     for perp in perplexities:
-#         perplexity_line += " " + str(perp)
-#     for MSE in MSEs:
-#         MSEs_line += " " + str(MSE)
-#     f.write(perplexity_line + "\n")
-#     f.write(MSEs_line + "\n")
-#
-# f.close()
+f.write("Click Model:" + "LSTM" + "\n")
+
+for freq in frequencies:
+    perplexities = click_model.get_perplexity(np.array(test_logs[freq]))
+    MSEs = click_model.get_MSE(np.array(test_logs[freq]), train_set, simulator)
+
+    perplexity_line = "Frequency " + freq + " perplexities:"
+    MSEs_line = "Frequency " + freq + " MSE:"
+    for perp in perplexities:
+        perplexity_line += " " + str(perp)
+    for MSE in MSEs:
+        MSEs_line += " " + str(MSE)
+    f.write(perplexity_line + "\n")
+    f.write(MSEs_line + "\n")
+
+f.close()

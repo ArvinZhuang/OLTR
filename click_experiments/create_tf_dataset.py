@@ -58,30 +58,30 @@ train_path = "../datasets/ltrc_yahoo/set1.train.txt"
 print("loading training set.......")
 train_set = LetorDataset(train_path, 700)
 
-click_log_path = "../feature_click_datasets/SDBN/train_set1.txt"
-test_click_log_path =  "../feature_click_datasets/SDBN/seen_set1.txt"
+click_log_path = "../feature_click_datasets/DCTR/train_set1.txt"
+test_click_log_path =  "../feature_click_datasets/DCTR/seen_set1.txt"
 click_log = rf.read_click_log(click_log_path)
 test_click_log = rf.read_click_log(test_click_log_path)
-query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format("SDBN", 1)
+query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format("DCTR", 1)
 query_frequency = rf.read_query_frequency(query_frequency_path)
+#
+# test_logs = {'10': [],
+#                  '100': [],
+#                  '1000': [],
+#                  '10000': [],
+#                  '100000': []
+#                  }
+#
+# for i in range(click_log.shape[0]):
+#     qid = click_log[i][0]
+#     test_logs[query_frequency[qid]].append(click_log[i])
+#
 
-test_logs = {'10': [],
-                 '100': [],
-                 '1000': [],
-                 '10000': [],
-                 '100000': []
-                 }
-
-for i in range(click_log.shape[0]):
-    qid = click_log[i][0]
-    test_logs[query_frequency[qid]].append(click_log[i])
-
-
-writer = tf.io.TFRecordWriter("../feature_click_datasets/SDBN/train_set1_freq10.tfrecord")
+writer = tf.io.TFRecordWriter("../feature_click_datasets/DCTR/train_set1.tfrecord")
 num_session = 0
-for seesion in test_logs['10']:
-    inputs = session_to_features(seesion, train_set)
-    labels = clicks_to_bitmap(seesion[11:])
+for session in click_log:
+    inputs = session_to_features(session, train_set)
+    labels = clicks_to_bitmap(session[11:])
     example = make_sequence_example(inputs, labels)
     serialized = example.SerializeToString()
     writer.write(serialized)

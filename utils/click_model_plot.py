@@ -67,7 +67,7 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
     for click_model in click_models:
         avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
 
-        for id in range(2, 16):
+        for id in range(1, 2):
             perplexities, MSEs = read_set_result_file(simulator, click_model, id)
             for i in range(5):
                 avg_perplexities[i].append(perplexities[i][0])
@@ -116,9 +116,10 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
 
 
 if __name__ == "__main__":
+    # simulators = ["SDBN"]
     simulators = ["SDBN", 'SDCM', 'DCTR', 'CM']
     # click_models = ["SDBN"]
-    click_models = ["SDBN", 'SDCM', 'DCTR', 'CM']
+    click_models = ["SDBN", 'SDCM', 'DCTR', 'CM', 'LSTM']
 
 
     for s in simulators:

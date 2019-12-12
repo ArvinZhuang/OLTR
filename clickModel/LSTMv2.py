@@ -46,7 +46,7 @@ class LSTMv2(CM):
             #                         input_shape=(10, num_feature)))
 
             # output shape (None, 10, 1)
-            self.model.add(layers.Dense(32, activation='relu'))
+            # self.model.add(layers.Dense(32, activation='relu'))
             self.model.add(layers.Dense(1, activation='sigmoid'))
             print(self.model.summary())
 
@@ -61,7 +61,7 @@ class LSTMv2(CM):
         click_log = click_log.map(self._read_tfrecord)
         click_log = click_log.repeat(1)
         click_log = click_log.shuffle(2048)
-        click_log = click_log.batch(self.batch_size, drop_remainder=False)
+        click_log = click_log.batch(self.batch_size, drop_remainder=True)
 
         # test_log = test_log.map(self._read_tfrecord)
         # test_log = test_log.batch(self.batch_size, drop_remainder=False)
