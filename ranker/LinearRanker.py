@@ -21,6 +21,7 @@ class LinearRanker(AbstractRanker):
 
     def update(self, gradient):
         self.weights += self.learning_rate * gradient
+        self.learning_rate *= self.learning_rate_decay
 
     def assign_weights(self, weights):
         self.weights = weights

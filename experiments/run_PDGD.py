@@ -31,7 +31,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
         ndcg_scores.append(ndcg)
         cndcg_scores.append(cndcg)
         final_weight = ranker.get_current_weights()
-        # print(ndcg, cndcg)
+        print(ndcg, cndcg)
 
     return ndcg_scores, cndcg_scores, final_weight
 
@@ -79,9 +79,10 @@ if __name__ == "__main__":
     Learning_rate = 0.1
     dataset_fold = "../datasets/2007_mq_dataset"
     output_fold = "mq2007"
-    taus = [0.1, 0.5, 1.0, 5.0, 10.0]
+    # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
+    taus = [1]
     # for 5 folds
-    for f in range(1, 6):
+    for f in range(1, 2):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE)
