@@ -47,7 +47,6 @@ def job(model_type, f, train_set, test_set, tau):
         pc = [0.4, 0.7, 0.9]
         ps = [0.1, 0.3, 0.5]
 
-    output_fold = "mq2007"
     cm = SDBN(pc, ps)
 
     for r in range(1, 26):
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
-    for f in range(1, 2):
+    for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE)

@@ -20,15 +20,6 @@ class COLTRLinearRanker(LinearRanker):
 
         sample_size = np.minimum(10, len(self.docid_list))
 
-        # if np.sum(props > 0) < sample_size:
-        #     print("not safe", query)
-        #     safe_size = np.sum(props > 0)
-        #     query_result_list = np.random.choice(docid_list, safe_size, replace=False, p=props)
-        #     rest = np.setdiff1d(docid_list, query_result_list)
-        #     np.random.shuffle(rest)
-        #     query_result_list = np.append(query_result_list, rest)
-        #     return query_result_list[:sample_size], False
-
         self.query_result_list = np.random.choice(self.docid_list, sample_size,
                                              replace=False, p=props)
         return self.query_result_list
@@ -51,7 +42,7 @@ class COLTRLinearRanker(LinearRanker):
         new_weights = self.weights + self.step_size * unit_vectors
         return new_weights
 
-    def infer_winners(self, canditate_rankers, record, dataset):
+    def infer_winners(self, canditate_rankers, record):
         current_ranker = self.weights
         all_ranker = np.vstack((current_ranker, canditate_rankers))  # all rankers weights
         query = record[0]
