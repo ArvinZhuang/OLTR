@@ -29,14 +29,17 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
 
             clicked_doc, click_label, _ = click_model.simulate(qid, result_list, train_set)
 
+            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+            cndcg_scores.append(cndcg)
+
             # if no clicks, skip.
             if len(clicked_doc) == 0:
-                all_result = ranker.get_all_query_result_list(test_set)
-                ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-                cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-
-                ndcg_scores.append(ndcg)
-                cndcg_scores.append(cndcg)
+                # all_result = ranker.get_all_query_result_list(test_set)
+                # ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+                # cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+                #
+                # ndcg_scores.append(ndcg)
+                # cndcg_scores.append(cndcg)
                 continue
 
             # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
@@ -57,30 +60,41 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
 
         all_result = ranker.get_all_query_result_list(test_set)
         ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
 
-        ndcg_scores.append(ndcg)
-        cndcg_scores.append(cndcg)
+
+        ndcg = [ndcg] * batch_size
+        ndcg_scores.extend(ndcg)
+        # print(len(ndcg_scores))
         final_weight = ranker.get_current_weights()
-        print(iterated, ndcg, cndcg)
+        # print(iterated, ndcg, cndcg)
 
     return ndcg_scores, cndcg_scores, final_weight
 
 
 def job(model_type, f, train_set, test_set, tau, sigma, gamma, num_rankers, learning_rate_decay, output_fold):
+    # if model_type == "perfect":
+    #     pc = [0.0, 0.5, 1.0]
+    #     ps = [0.0, 0.0, 0.0]
+    # elif model_type == "navigational":
+    #     pc = [0.05, 0.5, 0.95]
+    #     ps = [0.2, 0.5, 0.9]
+    # elif model_type == "informational":
+    #     pc = [0.4, 0.7, 0.9]
+    #     ps = [0.1, 0.3, 0.5]
+
     if model_type == "perfect":
-        pc = [0.0, 0.5, 1.0]
-        ps = [0.0, 0.0, 0.0]
+        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
     elif model_type == "navigational":
-        pc = [0.05, 0.5, 0.95]
-        ps = [0.2, 0.5, 0.9]
+        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     elif model_type == "informational":
-        pc = [0.4, 0.7, 0.9]
-        ps = [0.1, 0.3, 0.5]
+        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
 
     cm = SDBN(pc, ps)
 
-    for r in range(1, 2):
+    for r in range(1, 26):
         # np.random.seed(r)
         ranker = ESLinearRanker(FEATURE_SIZE, Learning_rate, sigma, tau, gamma, learning_rate_decay=learning_rate_decay)
         print("ES fold{} {} run{} start!".format(f, model_type, r))
@@ -102,22 +116,25 @@ def job(model_type, f, train_set, test_set, tau, sigma, gamma, num_rankers, lear
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 46
+    FEATURE_SIZE = 136
     NUM_INTERACTION = 10000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational"]
     Learning_rate = 0.2
-    dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "mq2007"
+
+    dataset_fold = "../datasets/MSLR-WEB10K"
+    output_fold = "../results/ES/MSLR10K"
+    # dataset_fold = "../datasets/2007_mq_dataset"
+    # output_fold = "mq2007"
 
     num_rankers = 499
     tau = 1
     gamma = 1
-    learning_rate_decay = 0.99
+    learning_rate_decay = 0.999
     sigma = 0.1
 
     # for 5 folds
-    for f in range(1, 2):
+    for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
