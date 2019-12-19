@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
-    for f in range(1, 6):
+    for f in range(1, 2):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE)

@@ -2,7 +2,7 @@ from ranker.LinearRanker import LinearRanker
 import numpy as np
 
 
-class COLTRLinearRanker(LinearRanker):
+class CMAESLinearRanker(LinearRanker):
     def __init__(self, num_features, learning_rate, step_size, tau, gamma,
                  learning_rate_decay=1, random_initial=True):
         super().__init__(num_features, learning_rate, learning_rate_decay, random_initial)
@@ -17,6 +17,7 @@ class COLTRLinearRanker(LinearRanker):
 
         scores = self.get_scores(self.feature_matrix)
         props = self._softmax_with_tau(scores).reshape(-1)
+        props = (props + 1e-5) / (1 + len(props) * 1e-5)
 
         sample_size = np.minimum(10, len(self.docid_list))
 
@@ -42,41 +43,37 @@ class COLTRLinearRanker(LinearRanker):
         new_weights = self.weights + self.step_size * unit_vectors
         return new_weights
 
-    def infer_winners(self, canditate_rankers, record):
+    def fitness(self, canditate_rankers, records, dataset):
+        result = 0
         current_ranker = self.weights
         all_ranker = np.vstack((current_ranker, canditate_rankers))  # all rankers weights
+        #for record in records:
+        record = records[len(records) - 1]
         query = record[0]
         result_list = record[1]
         click_label = record[2]
         log_weight = np.array(record[3])
 
-        doc_indexes = [np.where(self.docid_list==i)[0][0] for i in result_list]
+        doc_indexes = get_doc_indexes(result_list, dataset.get_candidate_docids_by_query(query))
 
-        scores = np.dot(self.feature_matrix, all_ranker.T)
-        log_score = np.dot(self.feature_matrix, log_weight.T)
-
+        feature_matrix = dataset.get_all_features_by_query(query)
+        scores = np.dot(feature_matrix, all_ranker.T)
+        log_score = np.dot(feature_matrix, log_weight.T)
 
         propensities = self.softmax(scores)[doc_indexes]
         log_propensity = self.softmax(log_score)[doc_indexes]
         log_propensity = log_propensity.reshape(len(result_list), 1)
 
         SNIPS = self.compute_SNIPS(log_propensity, propensities, click_label)
-        winners = np.where(SNIPS < SNIPS[0])[0]
-        #
-        # IPS = self.compute_IPS(log_propensity, propensities, click_label)
-        # winners = np.where(IPS < IPS[0])[0]
-
-        if len(winners) == 0:
-            return None
-        return winners
+        np.set_printoptions(suppress=True)
+        result -= SNIPS
+        return result / len(record)
 
     def compute_SNIPS(self, log_propensity, propensities, click_label):
         click_label = np.array(click_label).reshape(-1, 1)
-
         IPS = np.sum((propensities / log_propensity) * click_label, axis=0) / len(click_label)
 
         S = np.sum((propensities / log_propensity), axis=0) / len(click_label)
-
         SNIPS = IPS / S
 
         Var = np.sum((click_label - SNIPS) ** 2 * (propensities / log_propensity) ** 2, axis=0) / np.sum(
@@ -90,5 +87,11 @@ class COLTRLinearRanker(LinearRanker):
         return IPS
 
     def softmax(self, x):
-        e_x = np.exp(x - np.max(x))
-        return e_x / e_x.sum(axis=0)
+        e_x = np.exp(x - np.max(x)) + 1e-6
+        return e_x / (e_x.sum(axis=0) + 1e-6)
+
+
+def get_doc_indexes(result_list, doc_ids):
+    doc_ids = np.array(doc_ids)
+    #return np.searchsorted(doc_ids,result_list, sorter=range(len(doc_ids)))
+    return [np.where(doc_ids==i)[0][0] for i in result_list]
