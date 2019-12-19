@@ -15,8 +15,9 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
     query_set = train_set.get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
 
-    batch_size = 50
+    batch_size = 1
     iterated = 0
+    record = []
     for j in range(0, num_interation // batch_size):
         R = np.zeros((num_rankers + 1,))
         unit_vectors = ranker.sample_random_vectors(num_rankers)
@@ -47,8 +48,8 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
             click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
 
             # bandit record
-            record = (qid, result_list, click_label, ranker.get_current_weights())
-            snips = ranker.get_SNIPS(canditate_rankers, record)
+            record.append((qid, result_list, click_label, ranker.get_current_weights()))
+            snips = ranker.get_SNIPS(canditate_rankers, record, train_set)
 
             if snips is not None:
                 R += snips
@@ -66,23 +67,23 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         ndcg_scores.extend(ndcg)
         # print(len(ndcg_scores))
         final_weight = ranker.get_current_weights()
-        # print(iterated, ndcg, cndcg)
+        print(iterated, ndcg, cndcg)
 
     return ndcg_scores, cndcg_scores, final_weight
 
 
 def job(model_type, f, train_set, test_set, tau, sigma, gamma, num_rankers, learning_rate_decay, output_fold):
-    # if model_type == "perfect":
-    #     pc = [0.0, 0.5, 1.0]
-    #     ps = [0.0, 0.0, 0.0]
-    # elif model_type == "navigational":
-    #     pc = [0.05, 0.5, 0.95]
-    #     ps = [0.2, 0.5, 0.9]
-    # elif model_type == "informational":
-    #     pc = [0.4, 0.7, 0.9]
-    #     ps = [0.1, 0.3, 0.5]
-
     if model_type == "perfect":
+        pc = [0.0, 0.5, 1.0]
+        ps = [0.0, 0.0, 0.0]
+    elif model_type == "navigational":
+        pc = [0.05, 0.5, 0.95]
+        ps = [0.2, 0.5, 0.9]
+    elif model_type == "informational":
+        pc = [0.4, 0.7, 0.9]
+        ps = [0.1, 0.3, 0.5]
+
+    """if model_type == "perfect":
         pc = [0.0, 0.2, 0.4, 0.8, 1.0]
         ps = [0.0, 0.0, 0.0, 0.0, 0.0]
     elif model_type == "navigational":
@@ -90,7 +91,7 @@ def job(model_type, f, train_set, test_set, tau, sigma, gamma, num_rankers, lear
         ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     elif model_type == "informational":
         pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+        ps = [0.1, 0.2, 0.3, 0.4, 0.5]"""
 
     cm = SDBN(pc, ps)
 
@@ -116,16 +117,16 @@ def job(model_type, f, train_set, test_set, tau, sigma, gamma, num_rankers, lear
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 136
+    FEATURE_SIZE = 46
     NUM_INTERACTION = 10000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational"]
     Learning_rate = 0.2
 
-    dataset_fold = "../datasets/MSLR-WEB10K"
-    output_fold = "../results/ES/MSLR10K"
-    # dataset_fold = "../datasets/2007_mq_dataset"
-    # output_fold = "mq2007"
+    #dataset_fold = "../datasets/MSLR-WEB10K"
+    #output_fold = "../results/ES/MSLR10K"
+    dataset_fold = "../datasets/2007_mq_dataset"
+    output_fold = "mq2007"
 
     num_rankers = 499
     tau = 1
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     sigma = 0.1
 
     # for 5 folds
-    for f in range(1, 6):
+    for f in range(1, 2):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
