@@ -59,9 +59,10 @@ class SDCM(CM):
                 a = (self.stat_dict[qid][docID][1] + self.alpha) / (self.stat_dict[qid][docID][0] + self.alpha + self.beta)
                 self.parameter_dict[qid][docID] = a
 
-        for rank in range(10):
-            stop_prob = self.rank_stat[rank][0] / self.rank_stat[rank][1]
-            print(rank, stop_prob)
+        # for rank in range(10):
+        #     stop_prob = self.rank_stat[rank][0] / self.rank_stat[rank][1]
+        #     # print(rank, stop_prob)
+
 
     def _get_train_stat(self, click_log):
         print("{} processing log.......".format(self.name))

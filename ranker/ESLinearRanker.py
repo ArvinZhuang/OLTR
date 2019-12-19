@@ -44,3 +44,7 @@ class ESLinearRanker(COLTRLinearRanker):
         if len(winners) == 0:
             return None
         return SNIPS * -1
+
+    def softmax(self, x):
+        e_x = np.exp(x - np.max(x)) + 1e-6
+        return e_x / (e_x.sum(axis=0) + 1e-6)
