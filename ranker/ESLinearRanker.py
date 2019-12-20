@@ -16,26 +16,36 @@ class ESLinearRanker(COLTRLinearRanker):
         new_weights = self.weights + unit_vectors
         return new_weights
 
-    def get_SNIPS(self, canditate_rankers, record):
+    def get_SNIPS(self, canditate_rankers, records, dataset):
         current_ranker = self.weights
         all_ranker = np.vstack((current_ranker, canditate_rankers))  # all rankers weights
-        query = record[0]
-        result_list = record[1]
-        click_label = record[2]
-        log_weight = np.array(record[3])
+        select_size = 50
+        if (len(records) < select_size) :
+            selected = records
+        else:
+            selected = records[-select_size:]
+        for record in selected:
+            query = record[0]
+            result_list = record[1]
+            click_label = record[2]
+            log_weight = np.array(record[3])
 
-        doc_indexes = [np.where(self.docid_list == i)[0][0] for i in result_list]
+            doc_indexes = get_doc_indexes(result_list, dataset.get_candidate_docids_by_query(query))
+            feature_matrix = dataset.get_all_features_by_query(query)
 
-        scores = np.dot(self.feature_matrix, all_ranker.T)
-        log_score = np.dot(self.feature_matrix, log_weight.T)
+            scores = np.dot(feature_matrix, all_ranker.T)
+            log_score = np.dot(feature_matrix, log_weight.T)
 
-        propensities = self.softmax(scores)[doc_indexes]
-        log_propensity = self.softmax(log_score)[doc_indexes]
-        log_propensity = log_propensity.reshape(len(result_list), 1)
+            propensities = self.softmax(scores)[doc_indexes]
+            log_propensity = self.softmax(log_score)[doc_indexes]
+            log_propensity = log_propensity.reshape(len(result_list), 1)
 
-
-        SNIPS = self.compute_SNIPS(log_propensity, propensities, click_label)
-
+            try:
+                SNIPS += self.compute_SNIPS(log_propensity, propensities, click_label)
+            except NameError:
+                SNIPS = self.compute_SNIPS(log_propensity, propensities, click_label)
+        SNIPS /= len(records)
+        #print(SNIPS)
         winners = np.where(SNIPS < SNIPS[0])[0]
 
         # IPS = self.compute_IPS(log_propensity, propensities, click_label)
@@ -48,3 +58,8 @@ class ESLinearRanker(COLTRLinearRanker):
     def softmax(self, x):
         e_x = np.exp(x - np.max(x)) + 1e-6
         return e_x / (e_x.sum(axis=0) + 1e-6)
+
+def get_doc_indexes(result_list, doc_ids):
+    doc_ids = np.array(doc_ids)
+    #return np.searchsorted(doc_ids,result_list, sorter=range(len(doc_ids)))
+    return [np.where(doc_ids==i)[0][0] for i in result_list]
