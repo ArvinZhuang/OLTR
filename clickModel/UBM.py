@@ -91,7 +91,7 @@ class UBM(CM):
                 doc_stat[docID].append((rank+1, clicks[rank], rank+1 - last_click))
 
         for rank in range(1, 11):
-            self.exam[rank] = {}
+            self.exam_parameters[rank] = {}
             for i in range(1, rank + 1):
-                self.exam[rank][i] = 0.5
+                self.exam_parameters[rank][i] = 0.5
 

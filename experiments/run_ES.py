@@ -119,7 +119,7 @@ if __name__ == "__main__":
     FEATURE_SIZE = 136
     NUM_INTERACTION = 10000
     # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["informational"]
+    click_models = ["perfect"]
     Learning_rate = 0.2
 
     dataset_fold = "../datasets/MSLR-WEB10K"
