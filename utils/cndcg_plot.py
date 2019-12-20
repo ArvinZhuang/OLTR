@@ -46,7 +46,7 @@ if __name__ == "__main__":
     num_interactions = 10000
 
     # plot(path1, parameters, folds, runs, 'informational', num_interactions, 1)
-    plot(path2, [0.1], folds, runs, 'informational', num_interactions, 2)
+    plot(path2, [0.1], folds, runs, 'perfect', num_interactions, 2)
     plt.ylabel('NDCG')
     plt.xlabel('EPOCH')
     plt.legend(parameters, loc='lower right')

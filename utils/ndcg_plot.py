@@ -38,10 +38,10 @@ if __name__ == "__main__":
     path2 = "../results/ES/MSLR10K"
     folds = list(range(1, 6))
     runs = list(range(1, 26))
-    click_models = ['informational']
+    click_models = ['perfect']
     parameters = [0.1]
     num_interactions = 10000
-    plot(path1, parameters, folds, runs, 'informational', num_interactions, 1)
+    plot(path1, parameters, folds, runs, 'perfect', num_interactions, 1)
     # plot(path2, ["5.0_decay"], folds, runs, 'informational', num_interactions, 2)
 
     plt.ylabel('NDCG')

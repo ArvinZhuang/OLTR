@@ -2,6 +2,7 @@ from clickModel.SDBN import SDBN
 from clickModel.SDCM import SDCM
 from clickModel.CM import CM
 from clickModel.DCTR import DCTR
+from clickModel.UBM import UBM
 from utils import read_file as rf
 from dataset import LetorDataset
 # import matplotlib.pyplot as plt
@@ -69,10 +70,11 @@ if __name__ == "__main__":
     datasets_simulator = [('SDBN', SDBN(pc, ps)),
                           ('SDCM', SDCM(pc)),
                           ('CM', CM(pc)),
-                          ('DCTR', DCTR(pc))]
+                          ('DCTR', DCTR(pc)),
+                          ('UBM', UBM(pc))]
     # datasets = ['CM']
     for dataset, simulator in datasets_simulator:
-        for id in range(1, 2):
+        for id in range(1, 16):
             click_log_path = "../feature_click_datasets/{}/train_set{}.txt".format(dataset, id)
             test_click_log_path = "../feature_click_datasets/{}/seen_set{}.txt".format(dataset, id)
             query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format(dataset, id)
@@ -83,7 +85,8 @@ if __name__ == "__main__":
             click_models = [SDBN(),
                             SDCM(),
                             CM(),
-                            DCTR()]
+                            DCTR(),
+                            UBM()]
 
             processors = []
             for cm in click_models:

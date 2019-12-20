@@ -65,7 +65,7 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         qid = train_queries[index]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
         clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
-        if len(clicked_doc) == 0 or not satisfied:
+        if not satisfied:
             continue
 
         ranker.update_to_clicks(click_label, result_list, scores, train_set.get_all_features_by_query(qid))
@@ -89,7 +89,7 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         qid = seen_queries[index]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
         clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
-        if len(clicked_doc) == 0 or not satisfied:
+        if not satisfied:
             continue
         index += 1
         line = qid + " "
@@ -111,7 +111,7 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         qid = unseen_queries[index]
         result_list, scores = ranker.get_query_result_list(test_set, qid)
         clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, test_set)
-        if len(clicked_doc) == 0 or not satisfied:
+        if not satisfied:
             continue
         index += 1
         line = qid + " "
@@ -141,26 +141,26 @@ if __name__ == "__main__":
     # ps = [0.1, 0.2, 0.3, 0.4, 0.5]
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-    for id in range(1, 16):
+    for id in range(2, 16):
         # p1 = mp.Process(target=generate_dataset,
         #                 args=(train_set, test_set, DCTR(pc), "../feature_click_datasets/DCTR/", id))
         # p2 = mp.Process(target=generate_dataset,
         #                 args=(train_set, test_set, CM(pc), "../feature_click_datasets/CM/", id))
         # p3 = mp.Process(target=generate_dataset,
         #                 args=(train_set, test_set, SDBN(pc, ps), "../feature_click_datasets/SDBN/", id))
-        p4 = mp.Process(target=generate_dataset,
-                        args=(train_set, test_set, SDCM(pc), "../feature_click_datasets/SDCM/", id))
+        # p4 = mp.Process(target=generate_dataset,
+        #                 args=(train_set, test_set, SDCM(pc), "../feature_click_datasets/SDCM/", id))
 
         p5 = mp.Process(target=generate_dataset,
                         args=(train_set, test_set, UBM(pc), "../feature_click_datasets/UBM/", id))
         # p1.start()
         # p2.start()
         # p3.start()
-        p4.start()
+        # p4.start()
         p5.start()
         # p1.join()
         # p2.join()
         # p3.join()
-        p4.join()
-        p5.join()
-        print(" ")
+        # p4.join()
+        # p5.join()
+
