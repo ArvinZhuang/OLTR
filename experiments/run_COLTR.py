@@ -7,6 +7,8 @@ from utils import evl_tool
 import numpy as np
 import multiprocessing as mp
 import pickle
+import copy
+from utils import utility
 
 
 def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
@@ -15,7 +17,9 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
     query_set = train_set.get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
 
+    num_interation = 0
     for i in index:
+        num_interation += 1
         qid = query_set[i]
 
         result_list = ranker.get_query_result_list(train_set, qid)
@@ -55,7 +59,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         ndcg_scores.append(ndcg)
         cndcg_scores.append(cndcg)
         final_weight = ranker.get_current_weights()
-        print(ndcg, cndcg)
+        print(num_interation, ndcg, cndcg)
 
     return ndcg_scores, cndcg_scores, final_weight
 
@@ -104,7 +108,7 @@ if __name__ == "__main__":
     output_fold = "mq2007"
 
     num_rankers = 499
-    tau = 1
+    tau = 0.1
     gamma = 1
     learning_rate_decay = 0.99966
     step_size = 1
