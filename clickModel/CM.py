@@ -115,6 +115,7 @@ class CM(AbstractClickModel):
         return np.multiply(exam_probs, a_probs)
 
     def get_perplexity(self, test_click_log):
+        print(self.name, "computing perplexity")
         perplexity = np.zeros(10)
         size = test_click_log.shape[0]
         for i in range(size):
@@ -124,9 +125,21 @@ class CM(AbstractClickModel):
             for rank, click_prob in enumerate(click_probs):
                 if click_label[rank] == '1':
                     p = click_prob
+                    if p < 0:
+                        print("test1")
+
                 else:
                     p = 1 - click_prob
-                perplexity[rank] += np.log2(p)
+                    if p < 0:
+                        print("test2")
+
+                with np.errstate(invalid='raise'):
+                    try:
+                        perplexity[rank] += np.log2(p)
+                    except:
+                        print("error!, p=", p)
+                        print(session, rank + 1)
+                        perplexity[rank] += 0
 
         perplexity = [2 ** (-x / size) for x in perplexity]
         return perplexity

@@ -62,7 +62,7 @@ class SDBN(CM):
             if qid in self.stat_dict.keys():
                 if docID in self.stat_dict[qid].keys():
                     # print(self.stat_dict[qid][docID], clicks[rank])
-                    if clicks[rank] == 1 and self.stat_dict[qid][docID][0] >= 10:
+                    if clicks[rank] == 1 and self.stat_dict[qid][docID][0] >= 100:
                         # print(self.stat_dict[qid][docID][1] / self.stat_dict[qid][docID][0])
                         if self.stat_dict[qid][docID][1]/self.stat_dict[qid][docID][0] < threshold:
                             clicks[rank] = 0

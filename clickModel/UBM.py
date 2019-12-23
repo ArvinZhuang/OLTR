@@ -43,15 +43,22 @@ class UBM(CM):
 
         print("{} training.......".format(self.name))
         for i in range(self.iter):
+            print(i)
             new_attr_params = copy.deepcopy(self.attr_parameters)
             new_exam_params = copy.deepcopy(self.exam_parameters)
 
             for qid in self.attr_parameters.keys():
                 for docid in self.attr_parameters[qid].keys():
+
+                    if qid == "4726" and docid == "15":
+                        print(new_attr_params[qid][docid])
+                        print(self.query_stat[qid][docid])
+
                     numerator = 0
                     denominator = 0
                     attr = self.attr_parameters[qid][docid]
                     for rank, click, last_click in self.query_stat[qid][docid]:
+
                         if click == '1':
                             numerator += 1
                         else:
@@ -59,6 +66,10 @@ class UBM(CM):
                             numerator += ((1 - exam) * attr) / (1 - exam * attr)
 
                         denominator += 1
+
+                        if qid == "4726" and docid == "15":
+                            print(numerator, denominator)
+
 
                     new_attr_params[qid][docid] = numerator / denominator
 
@@ -150,9 +161,14 @@ class UBM(CM):
                     click_prob += click_probs[prev_rank] * no_click_between * self.attr_parameters[qid][docIds[rank-1]] \
                                  * self.exam_parameters[rank][rank - prev_rank]
 
+                if click_prob > 1:
+                    print(qid, docIds, rank)
+
+            # make sure every document has chance to be clicked (at lest 1%)
+            if click_prob < 0.01:
+                click_prob = 0.01
             click_probs[rank] = click_prob
-            if np.isinf(np.log2(click_prob)):
-                print(session, rank)
+
         return click_probs[1:]
 
     def get_real_click_probs(self, session, dataset):

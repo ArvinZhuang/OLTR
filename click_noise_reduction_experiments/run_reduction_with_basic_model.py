@@ -20,7 +20,7 @@ def run(train_set, test_set, ranker1, ranker2, num_interation, click_model):
     index = np.random.randint(query_set.shape[0], size=num_interation)
 
     pdf = np.random.normal(size=query_set.shape[0])
-    e_x = np.exp((pdf - np.max(pdf)) / 1)
+    e_x = np.exp((pdf - np.max(pdf)) / 0.2)
     probs = e_x / e_x.sum(axis=0)
 
     querys = np.random.choice(query_set,
@@ -87,7 +87,7 @@ def job(model_type, f, train_set, test_set, tau):
         print("PDGD tau{} fold{} {} run{} start!".format(tau, f, model_type, r))
         ndcg_scores1, cndcg_scores1, final_weight1, ndcg_scores2, cndcg_scores2, final_weight2 = run(train_set, test_set, ranker1, ranker2, NUM_INTERACTION, cm)
         with open(
-                "../results/reduction/mq2007/PDGD/fold{}/{}_ranker{}__run{}_ndcg.txt".format(f, model_type, 1, r),
+                "../results/reduction/mq2007/PDGD/fold{}/{}_ranker{}_run{}_ndcg.txt".format(f, model_type, 1, r),
                 "wb") as fp:
             pickle.dump(ndcg_scores1, fp)
         with open(
@@ -100,7 +100,7 @@ def job(model_type, f, train_set, test_set, tau):
             pickle.dump(final_weight1, fp)
 
         with open(
-                "../results/reduction/mq2007/PDGD/fold{}/_{}_ranker{}_run{}_ndcg.txt".format(f, model_type, 2, r),
+                "../results/reduction/mq2007/PDGD/fold{}/{}_ranker{}_run{}_ndcg.txt".format(f, model_type, 2, r),
                 "wb") as fp:
             pickle.dump(ndcg_scores2, fp)
         with open(
@@ -108,7 +108,7 @@ def job(model_type, f, train_set, test_set, tau):
                 "wb") as fp:
             pickle.dump(cndcg_scores2, fp)
         with open(
-                "../results/reduction/mq2007/PDGD/fold{}/_{}_ranker{}_run{}_final_weight.txt".format(f, model_type, 2, r),
+                "../results/reduction/mq2007/PDGD/fold{}/{}_ranker{}_run{}_final_weight.txt".format(f, model_type, 2, r),
                 "wb") as fp:
             pickle.dump(final_weight2, fp)
         print("PDGD tau{} fold{} {} run{} finished!".format(tau, f, model_type, r))
