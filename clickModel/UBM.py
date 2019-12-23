@@ -136,13 +136,23 @@ class UBM(CM):
             for prev_rank in range(rank):  # prev_rank = 0, 1
                 no_click_between = 1
                 for rank_between in range(prev_rank + 1, rank):  # rank_between = 1
-                    no_click_between *= (1 - self.attr_parameters[qid][docIds[rank_between-1]] *
-                                         self.exam_parameters[rank_between][rank_between - prev_rank])
-                    
-                click_prob += click_probs[prev_rank] * no_click_between * self.attr_parameters[qid][docIds[rank-1]] \
-                              * self.exam_parameters[rank][rank - prev_rank]
+                    if docIds[rank_between-1] not in self.attr_parameters[qid].keys():
+                        no_click_between *= (1 - 0.2 *
+                                             self.exam_parameters[rank_between][rank_between - prev_rank])
+                    else:
+                        no_click_between *= (1 - self.attr_parameters[qid][docIds[rank_between-1]] *
+                                             self.exam_parameters[rank_between][rank_between - prev_rank])
+
+                if docIds[rank-1] not in self.attr_parameters[qid].keys():
+                    click_prob += click_probs[prev_rank] * no_click_between * 0.2 \
+                                  * self.exam_parameters[rank][rank - prev_rank]
+                else:
+                    click_prob += click_probs[prev_rank] * no_click_between * self.attr_parameters[qid][docIds[rank-1]] \
+                                 * self.exam_parameters[rank][rank - prev_rank]
 
             click_probs[rank] = click_prob
+            if np.isinf(np.log2(click_prob)):
+                print(session, rank)
         return click_probs[1:]
 
     def get_real_click_probs(self, session, dataset):

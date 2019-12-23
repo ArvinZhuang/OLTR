@@ -67,7 +67,8 @@ if __name__ == "__main__":
     # test_set = LetorDataset(test_path, 700)
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-    datasets_simulator = [('SDBN', SDBN(pc, ps)),
+    datasets_simulator = [
+                        ('SDBN', SDBN(pc, ps)),
                           ('SDCM', SDCM(pc)),
                           ('CM', CM(pc)),
                           ('DCTR', DCTR(pc)),

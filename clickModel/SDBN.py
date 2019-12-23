@@ -1,6 +1,6 @@
 import numpy as np
 from clickModel.CM import CM
-
+import copy
 
 class SDBN(CM):
 
@@ -37,6 +37,41 @@ class SDBN(CM):
 
         return clicked_doc, click_label, satisfied
 
+    def online_training(self, qid, result_list, clicks):
+        lastClickRank = np.where(clicks == 1)[0][-1] + 1
+        if qid not in self.stat_dict.keys():
+            self.stat_dict[qid] = {}
+        doc_stat = self.stat_dict[qid]
+        for rank in range(lastClickRank):
+            docID = result_list[rank]
+            if docID not in doc_stat.keys():
+                doc_stat[docID] = (0, 0, 0)
+            exam = doc_stat[docID][0] + 1
+            c = doc_stat[docID][1]
+            lc = doc_stat[docID][2]
+            if clicks[rank] == 1:
+                c += 1
+                if rank == lastClickRank - 1:
+                    lc += 1
+            doc_stat[docID] = (exam, c, lc)
+
+    def click_noise_reduce(self, qid, result_list, clicks, threshold):
+        reduce = False
+        for rank in range(len(result_list)):
+            docID = result_list[rank]
+            if qid in self.stat_dict.keys():
+                if docID in self.stat_dict[qid].keys():
+                    # print(self.stat_dict[qid][docID], clicks[rank])
+                    if clicks[rank] == 1 and self.stat_dict[qid][docID][0] >= 10:
+                        # print(self.stat_dict[qid][docID][1] / self.stat_dict[qid][docID][0])
+                        if self.stat_dict[qid][docID][1]/self.stat_dict[qid][docID][0] < threshold:
+                            clicks[rank] = 0
+                            # print("reduce for ", qid, docID, self.stat_dict[qid][docID][0])
+                            reduce = True
+        return reduce
+
+
+
     def train(self, click_log):
         self._get_train_stat(click_log)
         print("{} training.......".format(self.name))
@@ -55,6 +90,10 @@ class SDBN(CM):
             qid = click_log[line][0]
             docIds = click_log[line][1:11]
             clicks = click_log[line][11:]
+
+            if np.where(clicks == '1')[0].size == 0:
+                continue
+
             lastClickRank = np.where(clicks == '1')[0][-1] + 1
             if qid not in self.stat_dict.keys():
                 self.stat_dict[qid] = {}
