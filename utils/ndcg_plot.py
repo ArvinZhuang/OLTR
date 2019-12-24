@@ -37,7 +37,7 @@ if __name__ == "__main__":
     path1 = "../results/reduction/mq2007/PDGD"
     # path2 = "../results/reduction/mq2007/PDGD"
     folds = list(range(1, 6))
-    runs = list(range(1, 2))
+    runs = list(range(1, 10))
     click_models = ['informational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     parameters = [1, 2]

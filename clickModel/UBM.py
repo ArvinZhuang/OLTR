@@ -50,9 +50,9 @@ class UBM(CM):
             for qid in self.attr_parameters.keys():
                 for docid in self.attr_parameters[qid].keys():
 
-                    if qid == "4726" and docid == "15":
-                        print(new_attr_params[qid][docid])
-                        print(self.query_stat[qid][docid])
+                    # if qid == "4726" and docid == "15":
+                    #     print(new_attr_params[qid][docid])
+                    #     print(self.query_stat[qid][docid])
 
                     numerator = 0
                     denominator = 0
@@ -67,8 +67,8 @@ class UBM(CM):
 
                         denominator += 1
 
-                        if qid == "4726" and docid == "15":
-                            print(numerator, denominator)
+                        # if qid == "4726" and docid == "15":
+                        #     print(numerator, denominator)
 
 
                     new_attr_params[qid][docid] = numerator / denominator
@@ -124,15 +124,15 @@ class UBM(CM):
 
                 self.rank_stat[rank+1][rank+1-last_click].append((rank+1, clicks[rank], rank+1 - last_click, qid, docID))
 
-                if clicks[rank] == '1':
-                    last_click = rank + 1
-
 
                 if docID not in doc_attract.keys():
                     doc_attract[docID] = 0.2
                     doc_stat[docID] = []
 
                 doc_stat[docID].append((rank+1, clicks[rank], rank+1 - last_click))   # store rank, click, previous click.
+
+                if clicks[rank] == '1':
+                    last_click = rank + 1
 
 
     def get_click_probs(self, session):
@@ -161,13 +161,14 @@ class UBM(CM):
                     click_prob += click_probs[prev_rank] * no_click_between * self.attr_parameters[qid][docIds[rank-1]] \
                                  * self.exam_parameters[rank][rank - prev_rank]
 
-                if click_prob > 1:
-                    print(qid, docIds, rank)
+                # if click_prob > 1:
+                #     print(qid, docIds, rank)
 
             # make sure every document has chance to be clicked (at lest 1%)
-            if click_prob < 0.01:
-                click_prob = 0.01
+
             click_probs[rank] = click_prob
+        if np.where(click_probs < 0.01)[0].shape[0] > 0:
+            click_probs[np.where(click_probs < 0.01)[0]] = 0.01
 
         return click_probs[1:]
 

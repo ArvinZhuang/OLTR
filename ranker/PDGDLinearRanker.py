@@ -51,20 +51,33 @@ class PDGDLinearRanker(LinearRanker):
         else:
             return ranking
 
-    def update_to_clicks(self, click_label, ranking, doc_scores, feature_matrix):
-        clicks = np.array(click_label == 1)
+    def update_to_clicks(self, click_label, ranking, doc_scores, feature_matrix, last_exam=None):
 
-        n_docs = ranking.shape[0]
-        n_results = 10
-        cur_k = np.minimum(n_docs, n_results)
+        if last_exam is None:
 
-        included = np.ones(cur_k, dtype=np.int32)
+            clicks = np.array(click_label == 1)
 
-        if not clicks[-1]:
-            included[1:] = np.cumsum(clicks[::-1])[:0:-1]
+            n_docs = ranking.shape[0]
+            n_results = 10
+            cur_k = np.minimum(n_docs, n_results)
 
-        neg_ind = np.where(np.logical_xor(clicks, included))[0]
-        pos_ind = np.where(clicks)[0]
+            included = np.ones(cur_k, dtype=np.int32)
+
+            if not clicks[-1]:
+                included[1:] = np.cumsum(clicks[::-1])[:0:-1]
+
+            neg_ind = np.where(np.logical_xor(clicks, included))[0]
+            pos_ind = np.where(clicks)[0]
+
+        else:
+
+            if last_exam == 10:
+                neg_ind = np.where(click_label[:last_exam] == 0)[0]
+                pos_ind = np.where(click_label[:last_exam] == 1)[0]
+            else:
+                neg_ind = np.where(click_label[:last_exam + 1] == 0)[0]
+                pos_ind = np.where(click_label[:last_exam] == 1)[0]
+
 
         n_pos = pos_ind.shape[0]
         n_neg = neg_ind.shape[0]

@@ -30,6 +30,8 @@ def run(train_set, test_set, ranker1, ranker2, num_interation, click_model):
 
 
     num_interaction = 0
+    correct = 0
+    wrong = 0
     for qid in querys:
         num_interaction += 1
         # qid = query_set[i]
@@ -39,14 +41,29 @@ def run(train_set, test_set, ranker1, ranker2, num_interation, click_model):
 
         clicked_doc1, click_label1, _ = click_model.simulate(qid, result_list1, train_set)
         clicked_doc2, click_label2, _ = click_model.simulate(qid, result_list2, train_set)
+        #
+        last_exam = None
+        if len(clicked_doc2) > 0:
+            last_exam = np.where(click_label2 == 1)[0][-1] + 1
 
-        if len(clicked_doc2) > 1:
             click_predictor.online_training(qid, result_list2, click_label2)
-            click_predictor.click_noise_reduce(qid, result_list2, click_label2, 0.5)
+            reduce, reduced_index = click_predictor.click_noise_reduce(qid, result_list2, click_label2, 0.5, 20)
+
+            if reduce:
+                for rank in reduced_index:
+                    # print(train_set.get_relevance_label_by_query_and_docid(qid, result_list2[rank]))
+                    if train_set.get_relevance_label_by_query_and_docid(qid, result_list2[rank]) == 0:
+                        correct += 1
+                    else:
+                        wrong += 1
+                # print(correct, wrong)
+
 
 
         ranker1.update_to_clicks(click_label1, result_list1, scores1, train_set.get_all_features_by_query(qid))
-        ranker2.update_to_clicks(click_label2, result_list2, scores2, train_set.get_all_features_by_query(qid))
+        ranker2.update_to_clicks(click_label2, result_list2, scores2, train_set.get_all_features_by_query(qid), last_exam)
+
+
 
         all_result1 = ranker1.get_all_query_result_list(test_set)
         ndcg1 = evl_tool.average_ndcg_at_k(test_set, all_result1, 10)
@@ -62,7 +79,8 @@ def run(train_set, test_set, ranker1, ranker2, num_interation, click_model):
         cndcg_scores2.append(cndcg2)
         final_weight1 = ranker1.get_current_weights()
         final_weight2 = ranker2.get_current_weights()
-        # print(ndcg1, ndcg2)
+
+    print(np.mean(ndcg_scores1), np.mean(ndcg_scores2))
 
     return ndcg_scores1, cndcg_scores1, final_weight1, ndcg_scores2, cndcg_scores2, final_weight2
 
@@ -117,14 +135,14 @@ def job(model_type, f, train_set, test_set, tau):
 if __name__ == "__main__":
 
     FEATURE_SIZE = 46
-    NUM_INTERACTION = 100000
+    NUM_INTERACTION = 10000
     # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["informational"]
+    click_model = "informational"
     Learning_rate = 0.1
     dataset_fold = "../datasets/2007_mq_dataset"
     output_fold = "mq2007"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
-    taus = [1]
+    tau = 1
     # for 5 folds
     for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
@@ -133,4 +151,4 @@ if __name__ == "__main__":
         test_set = LetorDataset(test_path, FEATURE_SIZE)
 
 
-        mp.Process(target=job, args=("informational", f, train_set, test_set, 1)).start()
+        mp.Process(target=job, args=(click_model, f, train_set, test_set, tau)).start()

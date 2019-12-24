@@ -55,20 +55,22 @@ class SDBN(CM):
                     lc += 1
             doc_stat[docID] = (exam, c, lc)
 
-    def click_noise_reduce(self, qid, result_list, clicks, threshold):
+    def click_noise_reduce(self, qid, result_list, clicks, threshold, num_exam):
         reduce = False
+        reduced_index = []
         for rank in range(len(result_list)):
             docID = result_list[rank]
             if qid in self.stat_dict.keys():
                 if docID in self.stat_dict[qid].keys():
                     # print(self.stat_dict[qid][docID], clicks[rank])
-                    if clicks[rank] == 1 and self.stat_dict[qid][docID][0] >= 100:
+                    if clicks[rank] == 1 and self.stat_dict[qid][docID][0] >= num_exam:
                         # print(self.stat_dict[qid][docID][1] / self.stat_dict[qid][docID][0])
-                        if self.stat_dict[qid][docID][1]/self.stat_dict[qid][docID][0] < threshold:
+                        if self.stat_dict[qid][docID][1]/self.stat_dict[qid][docID][0] <= threshold:
                             clicks[rank] = 0
+                            reduced_index.append(rank)
                             # print("reduce for ", qid, docID, self.stat_dict[qid][docID][0])
                             reduce = True
-        return reduce
+        return reduce, reduced_index
 
 
 
@@ -91,14 +93,16 @@ class SDBN(CM):
             docIds = click_log[line][1:11]
             clicks = click_log[line][11:]
 
-            if np.where(clicks == '1')[0].size == 0:
-                continue
-
-            lastClickRank = np.where(clicks == '1')[0][-1] + 1
             if qid not in self.stat_dict.keys():
                 self.stat_dict[qid] = {}
 
             doc_stat = self.stat_dict[qid]
+
+            if np.where(clicks == '1')[0].size == 0:
+                continue
+
+            lastClickRank = np.where(clicks == '1')[0][-1] + 1
+
             for rank in range(lastClickRank):
                 docID = docIds[rank]
                 if docID not in doc_stat.keys():
