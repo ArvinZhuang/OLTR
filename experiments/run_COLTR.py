@@ -12,12 +12,16 @@ from utils import utility
 
 
 def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
+
     ndcg_scores = []
     cndcg_scores = []
     query_set = train_set.get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
 
     num_interation = 0
+    winner_rankers = ranker.get_current_weights()
+    correct = 0
+    wrong = 0
     for i in index:
         num_interation += 1
         qid = query_set[i]
@@ -46,11 +50,32 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         unit_vectors = ranker.sample_unit_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)
 
-        winner_rankers = ranker.infer_winners(canditate_rankers, record)
+        canditate_rankers = np.vstack((canditate_rankers, winner_rankers))
+
+
+        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)
+
+        # if winner_rankers is not None:
+        #     all_result = utility.get_query_result_list(ranker.get_current_weights(), train_set, qid)
+        #     current_ndcg = evl_tool.query_ndcg_at_k(train_set, all_result, qid, 10)
+        #     for weights in canditate_rankers[winner_rankers - 1]:
+        #         canditate_all_result = utility.get_query_result_list(weights, train_set, qid)
+        #         canditate_all_result_ndcg = evl_tool.query_ndcg_at_k(train_set, canditate_all_result, qid, 10)
+        #
+        #         if canditate_all_result_ndcg >= current_ndcg:
+        #             correct += 1
+        #         else:
+        #             wrong += 1
+        #     print(correct, wrong, correct / (correct + wrong))
 
         if winner_rankers is not None:
             gradient = np.sum(unit_vectors[winner_rankers - 1], axis=0) / winner_rankers.shape[0]
             ranker.update(gradient)
+
+        if winner_rankers is not None:
+            winner_rankers = canditate_rankers[winner_rankers - 1]
+        else:
+            winner_rankers = ranker.get_current_weights()
 
         all_result = ranker.get_all_query_result_list(test_set)
         ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
@@ -102,7 +127,7 @@ if __name__ == "__main__":
     FEATURE_SIZE = 46
     NUM_INTERACTION = 10000
     # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["informational"]
+    click_models = ["perfect"]
     Learning_rate = 0.1
     dataset_fold = "../datasets/2007_mq_dataset"
     output_fold = "mq2007"
@@ -110,11 +135,11 @@ if __name__ == "__main__":
     num_rankers = 499
     tau = 0.1
     gamma = 1
-    learning_rate_decay = 0.99966
+    learning_rate_decay = 1
     step_size = 1
 
     # for 5 folds
-    for f in range(1, 2):
+    for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE)
