@@ -32,6 +32,8 @@ def run(train_set, test_set, ranker1, ranker2, num_interation, click_model):
     num_interaction = 0
     correct = 0
     wrong = 0
+    test1 = 0
+    test2 = 0
     for qid in querys:
         num_interaction += 1
         # qid = query_set[i]
@@ -43,20 +45,26 @@ def run(train_set, test_set, ranker1, ranker2, num_interation, click_model):
         clicked_doc2, click_label2, _ = click_model.simulate(qid, result_list2, train_set)
         #
         last_exam = None
-        if len(clicked_doc2) > 0:
-            last_exam = np.where(click_label2 == 1)[0][-1] + 1
-
-            click_predictor.online_training(qid, result_list2, click_label2)
-            reduce, reduced_index = click_predictor.click_noise_reduce(qid, result_list2, click_label2, 0.5, 20)
-
-            if reduce:
-                for rank in reduced_index:
-                    # print(train_set.get_relevance_label_by_query_and_docid(qid, result_list2[rank]))
-                    if train_set.get_relevance_label_by_query_and_docid(qid, result_list2[rank]) == 0:
-                        correct += 1
-                    else:
-                        wrong += 1
-                # print(correct, wrong)
+        # if len(clicked_doc2) > 0:
+        #     last_exam = np.where(click_label2 == 1)[0][-1] + 1
+        #
+        #     click_predictor.online_training(qid, result_list2, click_label2)
+        #     reduce, reduced_index = click_predictor.click_noise_reduce(qid, result_list2, click_label2, 0.5, 20)
+        #
+        #     if reduce:
+        #         for rank in reduced_index:
+        #             # print(train_set.get_relevance_label_by_query_and_docid(qid, result_list2[rank]))
+        #             if train_set.get_relevance_label_by_query_and_docid(qid, result_list2[rank]) == 0:
+        #                 correct += 1
+        #             else:
+        #                 wrong += 1
+        #         # print(correct, wrong)
+        clicked_doc_index = 0
+        for j in np.where(click_label2 == 1)[0]:
+            rel = train_set.get_relevance_label_by_query_and_docid(qid, result_list2[clicked_doc_index])
+            if rel == 0:
+                click_label2[j] = 0
+            clicked_doc_index += 1
 
 
 
@@ -80,6 +88,9 @@ def run(train_set, test_set, ranker1, ranker2, num_interation, click_model):
         final_weight1 = ranker1.get_current_weights()
         final_weight2 = ranker2.get_current_weights()
 
+        test1 += ndcg1
+        test2 += ndcg2
+    print(test1, test2)
     print(np.mean(ndcg_scores1), np.mean(ndcg_scores2))
 
     return ndcg_scores1, cndcg_scores1, final_weight1, ndcg_scores2, cndcg_scores2, final_weight2

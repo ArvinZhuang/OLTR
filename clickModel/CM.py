@@ -53,7 +53,6 @@ class CM(AbstractClickModel):
             docIds = click_log[line][1:11]
             clicks = click_log[line][11:]
 
-            lastClickRank = np.where(clicks == '1')[0][-1] + 1
             if qid not in self.stat_dict.keys():
                 self.stat_dict[qid] = {}
 
@@ -61,6 +60,8 @@ class CM(AbstractClickModel):
 
             if np.where(clicks == '1')[0].size == 0:
                 continue
+
+            lastClickRank = np.where(clicks == '1')[0][-1] + 1
 
             for rank in range(lastClickRank):
                 docID = docIds[rank]

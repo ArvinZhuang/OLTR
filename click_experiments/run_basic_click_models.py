@@ -4,6 +4,7 @@ from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from clickModel.UBM import UBM
 from utils import read_file as rf
+from utils import utility
 from dataset import LetorDataset
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -74,6 +75,7 @@ if __name__ == "__main__":
                           ('DCTR', DCTR(pc)),
                           ('UBM', UBM(pc))]
     # datasets = ['CM']
+    progress = 0
     for dataset, simulator in datasets_simulator:
         for id in range(1, 16):
             click_log_path = "../feature_click_datasets/{}/train_set{}.txt".format(dataset, id)
@@ -101,5 +103,12 @@ if __name__ == "__main__":
 
             for p in processors:
                 p.join()
+
+            progress += 1
+
+            if not utility.send_progress("Basic click model experiments", progress, 30, "{} run {}".format(dataset, id)):
+                print("internet disconnect")
+
+
 
 

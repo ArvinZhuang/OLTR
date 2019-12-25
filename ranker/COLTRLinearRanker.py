@@ -20,6 +20,14 @@ class COLTRLinearRanker(LinearRanker):
 
         sample_size = np.minimum(10, len(self.docid_list))
 
+        if np.sum(props > 0) < sample_size:
+            safe_size = np.sum(props > 0)
+            query_result_list = np.random.choice(self.docid_list, safe_size, replace=False, p=props)
+            rest = np.setdiff1d(self.docid_list, query_result_list)
+            np.random.shuffle(rest)
+            self.query_result_list = np.append(query_result_list, rest)
+            return query_result_list[:sample_size]
+
         self.query_result_list = np.random.choice(self.docid_list, sample_size,
                                              replace=False, p=props)
         return self.query_result_list
@@ -92,3 +100,4 @@ class COLTRLinearRanker(LinearRanker):
     def softmax(self, x):
         e_x = np.exp(x - np.max(x))
         return e_x / e_x.sum(axis=0)
+

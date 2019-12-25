@@ -9,7 +9,9 @@ from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from clickModel.SDBN import SDBN
 from clickModel.UBM import UBM
+from clickModel.Mixed import Mixed
 from utils import evl_tool
+from utils import utility
 
 
 def get_experimental_queries(train_set, test_set, out_path, id):
@@ -64,7 +66,10 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
     while index < num_queries:
         qid = train_queries[index]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
-        clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
+        if cm.name == "Mixed":
+            clicked_doc, click_label, satisfied, real_probs = cm.simulate(qid, result_list, train_set)
+        else:
+            clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
         if not satisfied:
             continue
 
@@ -88,7 +93,10 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
     while index < num_queries:
         qid = seen_queries[index]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
-        clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
+        if cm.name == "Mixed":
+            clicked_doc, click_label, satisfied, real_probs = cm.simulate(qid, result_list, train_set)
+        else:
+            clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
         if not satisfied:
             continue
         index += 1
@@ -97,6 +105,9 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
             line += str(d) + " "
         for c in click_label.tolist():
             line += str(int(c)) + " "
+        if cm.name == "Mixed":
+            for p in real_probs.tolist():
+                line += str(int(p)) + " "
         line += "\n"
         f.write(line)
         # if index % 10000 == 0:
@@ -110,7 +121,10 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
     while index < num_queries:
         qid = unseen_queries[index]
         result_list, scores = ranker.get_query_result_list(test_set, qid)
-        clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, test_set)
+        if cm.name == "Mixed":
+            clicked_doc, click_label, satisfied, real_probs = cm.simulate(qid, result_list, train_set)
+        else:
+            clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
         if not satisfied:
             continue
         index += 1
@@ -119,6 +133,9 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
             line += str(d) + " "
         for c in click_label.tolist():
             line += str(int(c)) + " "
+        if cm.name == "Mixed":
+            for p in real_probs.tolist():
+                line += str(int(p)) + " "
         line += "\n"
         f.write(line)
         # if index % 10000 == 0:
@@ -141,26 +158,22 @@ if __name__ == "__main__":
     # ps = [0.1, 0.2, 0.3, 0.4, 0.5]
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+    click_models = []
+    click_models.extend([DCTR(pc), CM(pc), SDBN(pc, ps), SDCM(pc), UBM(pc)])
+    Mixed_model = Mixed(click_models)
     for id in range(1, 16):
-        p1 = mp.Process(target=generate_dataset,
-                        args=(train_set, test_set, DCTR(pc), "../feature_click_datasets/DCTR/", id))
-        # p2 = mp.Process(target=generate_dataset,
-        #                 args=(train_set, test_set, CM(pc), "../feature_click_datasets/CM/", id))
-        # p3 = mp.Process(target=generate_dataset,
-        #                 args=(train_set, test_set, SDBN(pc, ps), "../feature_click_datasets/SDBN/", id))
-        # p4 = mp.Process(target=generate_dataset,
-        #                 args=(train_set, test_set, SDCM(pc), "../feature_click_datasets/SDCM/", id))
+        # pool = []
+        # for cm in click_models:
+        #     p = mp.Process(target=generate_dataset,
+        #                 args=(train_set, test_set, cm, "../feature_click_datasets/{}/".format(cm.name), id))
+        #     p.start()
+        #     pool.append(p)
+        # for p in pool:
+        #     p.join()
+        #
+        p = mp.Process(target=generate_dataset,
+                        args=(train_set, test_set, Mixed_model, "../feature_click_datasets/{}/".format(Mixed_model.name), id))
 
-        # p5 = mp.Process(target=generate_dataset,
-        #                 args=(train_set, test_set, UBM(pc), "../feature_click_datasets/UBM/", id))
-        p1.start()
-        # p2.start()
-        # p3.start()
-        # p4.start()
-        # p5.start()
-        # p1.join()
-        # p2.join()
-        # p3.join()
-        # p4.join()
-        # p5.join()
-
+        p.start()
+        p.join()
+        utility.send_progress("Mixed basic model", id, 15, "First try")

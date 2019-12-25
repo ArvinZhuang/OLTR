@@ -1,4 +1,5 @@
 import numpy as np
+import requests
 
 def get_all_query_result_list(weights, dataset):
     query_result_list = {}
@@ -38,3 +39,12 @@ def get_scores(weights, features):
     weights = np.array([weights])
     score = np.dot(features, weights.T)[:, 0]
     return score
+
+def send_progress(name, current, total, comment):
+    url = "https://ielab-sysrev1.uqcloud.net?name={}&current={}&total={}&comment={}".format(name, current, total, comment)
+    try:
+        requests.put(url)
+        success = True
+    except:
+        success = False
+    return success
