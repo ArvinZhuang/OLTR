@@ -51,7 +51,7 @@ class CM(AbstractClickModel):
 
             qid = click_log[line][0]
             docIds = click_log[line][1:11]
-            clicks = click_log[line][11:]
+            clicks = click_log[line][11:21]
 
             if qid not in self.stat_dict.keys():
                 self.stat_dict[qid] = {}
@@ -78,7 +78,7 @@ class CM(AbstractClickModel):
 
     def get_click_probs(self, session):
         qid = session[0]
-        docIds = session[1:]
+        docIds = session[1:11]
         a_probs = np.zeros(10)
         exam_probs = np.zeros(10)
         exam_probs[0] = 1
@@ -100,7 +100,7 @@ class CM(AbstractClickModel):
 
     def get_real_click_probs(self, session, dataset):
         qid = session[0]
-        docIds = session[1:]
+        docIds = session[1:11]
         exam_probs = np.zeros(10)
         exam_probs[0] = 1
         a_probs = np.zeros(10)
@@ -146,7 +146,7 @@ class CM(AbstractClickModel):
         MSE = np.zeros(10)
         size = test_click_log.shape[0]
         for i in range(size):
-            session = test_click_log[i][:11]
+            session = test_click_log[i]
             click_probs = self.get_click_probs(session)
             real_click_probs = simulator.get_real_click_probs(session, dataset)
             MSE += np.square(click_probs - real_click_probs)

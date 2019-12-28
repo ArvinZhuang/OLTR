@@ -110,7 +110,7 @@ class UBM(CM):
         for line in range(dataset_size):
             qid = click_log[line][0]
             docIds = click_log[line][1:11]
-            clicks = click_log[line][11:]
+            clicks = click_log[line][11:21]
             last_click = 0
             if qid not in self.attr_parameters.keys():
                 self.attr_parameters[qid] = {}
@@ -137,7 +137,7 @@ class UBM(CM):
 
     def get_click_probs(self, session):
         qid = session[0]
-        docIds = session[1:]
+        docIds = session[1:11]
 
         click_probs = np.zeros(11)
         click_probs[0] = 1
@@ -174,7 +174,7 @@ class UBM(CM):
 
     def get_real_click_probs(self, session, dataset):
         qid = session[0]
-        docIds = session[1:]
+        docIds = session[1:11]
 
         click_probs = np.zeros(11)
         click_probs[0] = 1

@@ -51,7 +51,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         unit_vectors = ranker.sample_unit_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)  # canditate_rankers are ranker weights, not ranker class
 
-        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)
+        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)  # winner_rankers are index of candidates rankers who win the evaluation
 
         """ This part of code is used to test correctness of counterfactual evaluation
         # if winner_rankers is not None:
@@ -79,7 +79,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         ndcg_scores.append(ndcg)
         cndcg_scores.append(cndcg)
         final_weight = ranker.get_current_weights()
-        # print(num_interation, ndcg, cndcg)
+        print(num_interation, ndcg, cndcg)
 
     return ndcg_scores, cndcg_scores, final_weight
 
@@ -110,7 +110,8 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
     for r in range(1, 26):
         # np.random.seed(r)
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
-        print("COTLR start!")
+
+        print("COTLR {} tau{} fold{} {} run{} start!".format(output_fold, tau, f, model_type, r))
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm, num_rankers)
         with open(
                 "{}/fold{}/{}_tau{}_run{}_ndcg.txt".format(output_fold, f, model_type, tau, r),
@@ -133,8 +134,8 @@ if __name__ == "__main__":
 
     FEATURE_SIZE = 136
     NUM_INTERACTION = 10000
-    click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["perfect"]
+    # click_models = ["informational", "navigational", "perfect"]
+    click_models = ["perfect"]
     Learning_rate = 0.1
     dataset_fold = "../datasets/MSLR-WEB10K"
     output_fold = "../results/COLTR/MSLR-WEB10K"

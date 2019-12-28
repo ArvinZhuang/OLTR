@@ -38,6 +38,7 @@ class NCM(CM):
             self._predictions = self.predictions()
             self._loss = self._compute_loss()
 
+
     def _build_model(self):
 
         with tf.variable_scope('states'):
@@ -97,11 +98,11 @@ class NCM(CM):
         predictions = tf.round(self._probabilities)
         return predictions
 
-    def train(self, train_log):
-        train_log = train_log.reshape(-1, self._batch_size, 21)
+    def train(self, X, Y):
+        # train_log = train_log.reshape(-1, self._batch_size, 21)
 
         global_step = tf.Variable(0, trainable=False, dtype=tf.int32, name='global_step')
-        starter_learning_rate = 0.001
+        starter_learning_rate = 0.01
 
         optimizer = tf.train.AdadeltaOptimizer(starter_learning_rate, epsilon=1e-06)
 
@@ -114,23 +115,23 @@ class NCM(CM):
         apply_gradients_op = optimizer.apply_gradients(zip(grads_clipped, variables), global_step=global_step)
 
         # start the Session
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+        self.sess = tf.Session()
+        self.sess.run(tf.global_variables_initializer())
 
-        step = 0
-        for batch_session in train_log:
-            inputs, targets = self._get_batch_train_sample(batch_session)
 
-            # get the loss and the probabilities that the model outputs
-            _, loss_, pred, probs = sess.run([apply_gradients_op, self._loss, self._predictions, self._probabilities],
-                                             feed_dict={self._inputs: inputs,
-                                                        self._targets: targets,
+        # for batch_session in train_log:
+        # inputs, targets = self._get_batch_train_sample(batch_session)
+
+        # get the loss and the probabilities that the model outputs
+        for iter in range(1000):
+            _, loss_, pred, probs = self.sess.run([apply_gradients_op, self._loss, self._predictions, self._probabilities],
+                                             feed_dict={self._inputs: X,
+                                                        self._targets: Y,
                                                         self._state_placeholder: np.zeros((self._lstm_num_layers, 2,
                                                                                             self._batch_size,
                                                                                             self._lstm_num_hidden)),
                                                         self.keep_prob: 0.9})
-            print(step, loss_)
-            step += 1
+            print(iter, loss_)
 
     def _get_batch_train_sample(self, batch_session):
 
@@ -141,7 +142,7 @@ class NCM(CM):
         for session in batch_session:
             qid = session[0]
             docids = session[1:11]
-            clicks = session[11:]
+            clicks = session[11:21]
             q_rep = self.query_rep[qid]
 
             t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
@@ -157,6 +158,23 @@ class NCM(CM):
             index += 1
         return input, target
 
+    def _session_to_representations(self, session):
+        qid = session[0]
+        docids = session[1:11]
+        clicks = session[11:21]
+        q_rep = self.query_rep[qid]
+
+        t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
+        t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
+        input[0] = t0
+        input[1] = t1
+
+        for rank in range(2, 11):
+            t = np.append(np.zeros(1024), np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank - 1]]))
+            input[rank] = t
+
+        target = clicks
+
     def save_training_set(self, train_log, path):
         # train_log = train_log.reshape(-1, self._batch_size, 21)
         train_size = train_log.shape[0]
@@ -169,7 +187,7 @@ class NCM(CM):
         for session in train_log:
             qid = session[0]
             docids = session[1:11]
-            clicks = session[11:]
+            clicks = session[11:21]
             q_rep = self.query_rep[qid]
 
             t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
@@ -189,9 +207,9 @@ class NCM(CM):
             print(i/train_size)
 
 
-        with open(path+"X.json", "wb") as fp:
+        with open(path+"X.txt", "wb") as fp:
             pickle.dump(np.array(training_inputs), fp)
-        with open(path+"Y.json", "wb") as fp:
+        with open(path+"Y.txt", "wb") as fp:
             pickle.dump(np.array(traninig_labels), fp)
 
 
@@ -206,7 +224,7 @@ class NCM(CM):
         for line in range(dataset_size):
             qid = click_log[line][0]
             docIds = click_log[line][1:11]
-            clicks = click_log[line][11:]
+            clicks = click_log[line][11:21]
 
             if qid not in self.query_rep.keys():
                 self.query_rep[qid] = np.zeros(1024)

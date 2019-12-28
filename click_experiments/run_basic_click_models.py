@@ -3,6 +3,7 @@ from clickModel.SDCM import SDCM
 from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from clickModel.UBM import UBM
+from clickModel.Mixed import Mixed
 from utils import read_file as rf
 from utils import utility
 from dataset import LetorDataset
@@ -68,16 +69,18 @@ if __name__ == "__main__":
     # test_set = LetorDataset(test_path, 700)
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+    mixed_models = [DCTR(pc), CM(pc), SDBN(pc, ps), SDCM(pc), UBM(pc)]
     datasets_simulator = [
                         # ('SDBN', SDBN(pc, ps)),
                           # ('SDCM', SDCM(pc)),
                           # ('CM', CM(pc)),
-                          ('DCTR', DCTR(pc)),
-                          ('UBM', UBM(pc))]
+                          # ('DCTR', DCTR(pc)),
+                          # ('UBM', UBM(pc)),
+                        ('Mixed', Mixed(mixed_models))]
     # datasets = ['CM']
     progress = 0
     for dataset, simulator in datasets_simulator:
-        for id in range(1, 16):
+        for id in range(1, 12):
             click_log_path = "../feature_click_datasets/{}/train_set{}.txt".format(dataset, id)
             test_click_log_path = "../feature_click_datasets/{}/seen_set{}.txt".format(dataset, id)
             query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format(dataset, id)
@@ -106,7 +109,7 @@ if __name__ == "__main__":
 
             progress += 1
 
-            if not utility.send_progress("Basic click model experiments", progress, 30, "{} run {}".format(dataset, id)):
+            if not utility.send_progress("Basic click model experiments", progress, 10, "{} run {}".format(dataset, id)):
                 print("internet disconnect")
 
 

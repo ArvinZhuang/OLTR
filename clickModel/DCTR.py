@@ -48,7 +48,7 @@ class DCTR(CM):
 
             qid = click_log[line][0]
             docIds = click_log[line][1:11]
-            clicks = click_log[line][11:]
+            clicks = click_log[line][11:21]
 
             if qid not in self.stat_dict.keys():
                 self.stat_dict[qid] = {}
@@ -68,7 +68,7 @@ class DCTR(CM):
 
     def get_click_probs(self, session):
         qid = session[0]
-        docIds = session[1:]
+        docIds = session[1:11]
         a_probs = np.zeros(10)
 
         for i in range(10):
@@ -82,7 +82,7 @@ class DCTR(CM):
 
     def get_real_click_probs(self, session, dataset):
         qid = session[0]
-        docIds = session[1:]
+        docIds = session[1:11]
         a_probs = np.zeros(10)
 
         for i in range(10):

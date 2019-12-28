@@ -25,7 +25,7 @@ def read_set_result_file(simulator, click_model, id):
 def plot_perplexity_MSE_for_each_rank(simulator, click_model, p1, p2):
     avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
 
-    for id in range(1,16):
+    for id in range(1,2):
         perplexities, MSEs = read_set_result_file(simulator, click_model, id)
         for i in range(5):
             avg_perplexities[i].append(perplexities[i][0])
@@ -67,7 +67,7 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
     for click_model in click_models:
         avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
 
-        for id in range(1, 16):
+        for id in range(1, 2):
             perplexities, MSEs = read_set_result_file(simulator, click_model, id)
             for i in range(5):
                 avg_perplexities[i].append(perplexities[i][0])
@@ -104,7 +104,7 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
         p1.plot(range(1, 11), mse_mean, color=COLORS[color_index], alpha=1)
         p1.fill_between(range(1, 11), mse_low, mse_high, color=COLORS[color_index], alpha=0.2)
         p1.set_ylabel('MSE')
-        p1.set_ylim([0, 0.05])
+        p1.set_ylim([0, 0.04])
 
         p2.plot(range(1, 11), perp_mean, color=COLORS[color_index], alpha=1)
         p2.fill_between(range(1, 11), perp_low, perp_high, color=COLORS[color_index], alpha=0.2)
@@ -116,45 +116,43 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
 
 
 if __name__ == "__main__":
-    simulators = ["UBM"]
-    # simulators = ["SDBN", 'SDCM', 'DCTR', 'CM', 'UBM']
+    # simulators = ["Mixed"]
+    simulators = ["SDBN", 'DCTR', 'UBM', 'SDCM', "Mixed"]
     # click_models = ["SDBN"]
-    click_models = ["SDBN", 'SDCM', 'DCTR', 'CM', 'UBM']
+    click_models = ["SDBN", 'DCTR', 'SDCM']
 
-
-    for s in simulators:
-        f = plt.figure(1)
-        f.suptitle("simulator: {}.".format(s))
-        plot_index = 1
-        for cm in click_models:
-            p1 = plt.subplot(len(click_models), 2, plot_index)
-            p2 = plt.subplot(len(click_models), 2, plot_index + 1)
-            avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
-            plot_index += 2
-        p1.legend(['10', '100', '1000', '10000', '100000'], loc='upper right')
-        p2.legend(['10', '100', '1000', '10000', '100000'], loc='upper right')
-        p1.set_xlabel('rank')
-        p2.set_xlabel('rank')
-        plt.show()
-
-    # f = plt.figure(1)
-    #
-    # plot_index = 1
     # for s in simulators:
-    #     p1 = plt.subplot(len(simulators), 2, plot_index)
-    #     p2 = plt.subplot(len(simulators), 2, plot_index + 1)
-    #     p1.set_title("simulator: " + s)
-    #     p2.set_title("simulator: " + s)
-    #
-    #     plot_for_each_simulator(s, click_models, p1, p2)
-    #     plot_index += 2
-    #
-    #     p1.legend(click_models, loc='upper right')
-    #     p2.legend(click_models, loc='upper right')
-    #
-    #
-    # p1.set_xlabel('rank')
-    # p2.set_xlabel('rank')
-    # f.subplots_adjust(wspace=0.3, hspace=0.3)
-    #
-    # plt.show()
+    #     f = plt.figure(1)
+    #     f.suptitle("simulator: {}.".format(s))
+    #     plot_index = 1
+    #     for cm in click_models:
+    #         p1 = plt.subplot(len(click_models), 2, plot_index)
+    #         p2 = plt.subplot(len(click_models), 2, plot_index + 1)
+    #         avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
+    #         plot_index += 2
+    #     p1.legend(['10', '100', '1000', '10000', '100000'], loc='upper right')
+    #     p2.legend(['10', '100', '1000', '10000', '100000'], loc='upper right')
+    #     p1.set_xlabel('rank')
+    #     p2.set_xlabel('rank')
+    #     plt.show()
+
+    f = plt.figure(1)
+    plot_index = 1
+    for s in simulators:
+        p1 = plt.subplot(len(simulators), 2, plot_index)
+        p2 = plt.subplot(len(simulators), 2, plot_index + 1)
+        p1.set_title("simulator: " + s)
+        p2.set_title("simulator: " + s)
+
+        plot_for_each_simulator(s, click_models, p1, p2)
+        plot_index += 2
+
+        p1.legend(click_models, loc='upper right')
+        p2.legend(click_models, loc='upper right')
+
+
+    p1.set_xlabel('rank')
+    p2.set_xlabel('rank')
+    f.subplots_adjust(wspace=0.3, hspace=0.3)
+
+    plt.show()
