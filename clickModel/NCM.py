@@ -5,7 +5,7 @@ from __future__ import print_function
 import numpy as np
 # from clickModel.AbstractClickModel import AbstractClickModel
 from clickModel.CM import CM
-
+import pickle
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -98,10 +98,12 @@ class NCM(CM):
         return predictions
 
     def train(self, train_log):
-        global_step = tf.Variable(0, trainable=False, dtype=tf.int32, name='global_step')
-        starter_learning_rate = 0.01
+        train_log = train_log.reshape(-1, self._batch_size, 21)
 
-        optimizer = tf.train.AdadeltaOptimizer(starter_learning_rate, epsilon=1e-05)
+        global_step = tf.Variable(0, trainable=False, dtype=tf.int32, name='global_step')
+        starter_learning_rate = 0.001
+
+        optimizer = tf.train.AdadeltaOptimizer(starter_learning_rate, epsilon=1e-06)
 
         # Compute the gradients for each variable
         grads_and_vars = optimizer.compute_gradients(-self._loss)
@@ -115,8 +117,9 @@ class NCM(CM):
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
-        for session in train_log:
-            inputs, targets = self._get_batch_train_sample(session)
+        step = 0
+        for batch_session in train_log:
+            inputs, targets = self._get_batch_train_sample(batch_session)
 
             # get the loss and the probabilities that the model outputs
             _, loss_, pred, probs = sess.run([apply_gradients_op, self._loss, self._predictions, self._probabilities],
@@ -126,29 +129,72 @@ class NCM(CM):
                                                                                             self._batch_size,
                                                                                             self._lstm_num_hidden)),
                                                         self.keep_prob: 0.9})
-            print(loss_)
+            print(step, loss_)
+            step += 1
 
-    def _get_batch_train_sample(self, session):
+    def _get_batch_train_sample(self, batch_session):
 
-        qid = session[0]
-        docids = session[1:11]
-        clicks = session[11:]
-        q_rep = self.query_rep[qid]
+        input = np.zeros((self._batch_size, 11, self._representations_dims))
+        target = np.zeros((self._batch_size, 10))
 
-        input = np.zeros((1, 11, self._representations_dims))
-        target = np.zeros((1, 10))
+        index = 0
+        for session in batch_session:
+            qid = session[0]
+            docids = session[1:11]
+            clicks = session[11:]
+            q_rep = self.query_rep[qid]
 
-        t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
-        t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
-        input[0][0] = t0
-        input[0][1] = t1
+            t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
+            t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
+            input[index][0] = t0
+            input[index][1] = t1
 
-        for rank in range(1, 10):
-            t = np.append(np.zeros(1024), np.append(clicks[rank-1],self.doc_rep[qid][docids[rank]]))
-            input[0][rank] = t
+            for rank in range(1, 10):
+                t = np.append(np.zeros(1024), np.append(clicks[rank-1],self.doc_rep[qid][docids[rank]]))
+                input[index][rank] = t
 
-        target[0] = clicks
+            target[index] = clicks
+            index += 1
         return input, target
+
+    def save_training_set(self, train_log, path):
+        # train_log = train_log.reshape(-1, self._batch_size, 21)
+        train_size = train_log.shape[0]
+        training_inputs = []
+        traninig_labels = []
+
+        input = np.zeros((11, self._representations_dims))
+
+        i = 0
+        for session in train_log:
+            qid = session[0]
+            docids = session[1:11]
+            clicks = session[11:]
+            q_rep = self.query_rep[qid]
+
+            t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
+            t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
+            input[0] = t0
+            input[1] = t1
+
+            for rank in range(2, 11):
+                t = np.append(np.zeros(1024), np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
+                input[rank] = t
+
+            target = clicks
+
+            training_inputs.append(input)
+            traninig_labels.append(target)
+            i += 1
+            print(i/train_size)
+
+
+        with open(path+"X.json", "wb") as fp:
+            pickle.dump(np.array(training_inputs), fp)
+        with open(path+"Y.json", "wb") as fp:
+            pickle.dump(np.array(traninig_labels), fp)
+
+
 
 
 
