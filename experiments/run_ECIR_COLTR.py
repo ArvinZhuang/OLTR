@@ -20,7 +20,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
 
     num_interation = 0
 
-    has_winners = False
+
     correct = 0
     wrong = 0
     for i in index:
@@ -51,10 +51,6 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         unit_vectors = ranker.sample_unit_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)  # canditate_rankers are ranker weights, not ranker class
 
-        if has_winners:
-            canditate_rankers = np.vstack((winner_rankers, canditate_rankers))
-
-
         winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)
 
         """ This part of code is used to test correctness of counterfactual evaluation
@@ -75,10 +71,6 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         if winner_rankers is not None:
             gradient = np.sum(unit_vectors[winner_rankers - 1], axis=0) / winner_rankers.shape[0]
             ranker.update(gradient)
-            winner_rankers = canditate_rankers[winner_rankers - 1]
-            has_winners = True
-        else:
-            has_winners = False
 
         all_result = ranker.get_all_query_result_list(test_set)
         ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
@@ -117,10 +109,8 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
 
     for r in range(1, 26):
         # np.random.seed(r)
-        # new a new ranker
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
-
-        print("COTLR {} tau{} fold{} {} run{} start!".format(output_fold, tau, f, model_type, r))
+        print("COTLR start!")
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm, num_rankers)
         with open(
                 "{}/fold{}/{}_tau{}_run{}_ndcg.txt".format(output_fold, f, model_type, tau, r),
@@ -173,6 +163,6 @@ if __name__ == "__main__":
         for p in processors:
             p.join()
 
-        utility.send_progress("COLTR", f, 5, "MSLR-WEB10K")
+        utility.send_progress("COLTR", f, 5, "MSLR-WEB10K")  # send experiment progress to ielab server.
 
 

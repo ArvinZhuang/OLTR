@@ -16,8 +16,7 @@ class Mixed(AbstractClickModel):
         simolator = np.random.choice(self.models)
         session = [query]
         session.extend(result_list)
-        real_probs = simolator.get_real_click_probs(session, dataset)
         clicked_doc, click_label, satisfied = simolator.simulate(query, result_list, dataset)
-        return clicked_doc, click_label, satisfied, real_probs
+        return clicked_doc, click_label, satisfied, simolator.name
 
 

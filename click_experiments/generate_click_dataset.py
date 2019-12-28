@@ -67,7 +67,7 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         qid = train_queries[index]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
         if cm.name == "Mixed":
-            clicked_doc, click_label, satisfied, real_probs = cm.simulate(qid, result_list, train_set)
+            clicked_doc, click_label, satisfied, s_name = cm.simulate(qid, result_list, train_set)
         else:
             clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
         if not satisfied:
@@ -80,6 +80,8 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
             line += str(d) + " "
         for c in click_label.tolist():
             line += str(int(c)) + " "
+        if cm.name == "Mixed":
+            line += s_name + " "
         line += "\n"
         f.write(line)
         # if index % 10000 == 0:
@@ -94,7 +96,7 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         qid = seen_queries[index]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
         if cm.name == "Mixed":
-            clicked_doc, click_label, satisfied, real_probs = cm.simulate(qid, result_list, train_set)
+            clicked_doc, click_label, satisfied, s_name = cm.simulate(qid, result_list, train_set)
         else:
             clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
         if not satisfied:
@@ -106,8 +108,7 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         for c in click_label.tolist():
             line += str(int(c)) + " "
         if cm.name == "Mixed":
-            for p in real_probs.tolist():
-                line += str(int(p)) + " "
+            line += s_name + " "
         line += "\n"
         f.write(line)
         # if index % 10000 == 0:
@@ -122,9 +123,9 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         qid = unseen_queries[index]
         result_list, scores = ranker.get_query_result_list(test_set, qid)
         if cm.name == "Mixed":
-            clicked_doc, click_label, satisfied, real_probs = cm.simulate(qid, result_list, train_set)
+            clicked_doc, click_label, satisfied, s_name = cm.simulate(qid, result_list, test_set)
         else:
-            clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, train_set)
+            clicked_doc, click_label, satisfied = cm.simulate(qid, result_list, test_set)
         if not satisfied:
             continue
         index += 1
@@ -134,8 +135,7 @@ def generate_dataset(train_set, test_set, cm, out_path, id):
         for c in click_label.tolist():
             line += str(int(c)) + " "
         if cm.name == "Mixed":
-            for p in real_probs.tolist():
-                line += str(int(p)) + " "
+            line += s_name + " "
         line += "\n"
         f.write(line)
         # if index % 10000 == 0:
