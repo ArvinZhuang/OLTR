@@ -5,6 +5,7 @@ from clickModel.LSTMv2 import LSTMv2
 from utils import read_file as rf
 from clickModel.DCTR import DCTR
 from clickModel.SDBN import SDBN
+from utils import utility
 
 # %%
 
@@ -58,11 +59,11 @@ train_path = "../datasets/ltrc_yahoo/set1.train.txt"
 print("loading training set.......")
 train_set = LetorDataset(train_path, 700)
 
-click_log_path = "../feature_click_datasets/DCTR/train_set1.txt"
-test_click_log_path =  "../feature_click_datasets/DCTR/seen_set1.txt"
+click_log_path = "../feature_click_datasets/Mixed/train_set1.txt"
+test_click_log_path =  "../feature_click_datasets/Mixed/seen_set1.txt"
 click_log = rf.read_click_log(click_log_path)
 test_click_log = rf.read_click_log(test_click_log_path)
-query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format("DCTR", 1)
+query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format("Mixed", 1)
 query_frequency = rf.read_query_frequency(query_frequency_path)
 #
 # test_logs = {'10': [],
@@ -77,17 +78,20 @@ query_frequency = rf.read_query_frequency(query_frequency_path)
 #     test_logs[query_frequency[qid]].append(click_log[i])
 #
 
-writer = tf.io.TFRecordWriter("../feature_click_datasets/DCTR/train_set1.tfrecord")
+writer = tf.io.TFRecordWriter("../feature_click_datasets/Mixed/train_set1.tfrecord")
 num_session = 0
 for session in click_log:
     inputs = session_to_features(session, train_set)
-    labels = clicks_to_bitmap(session[11:])
+    labels = clicks_to_bitmap(session[11:21])
     example = make_sequence_example(inputs, labels)
     serialized = example.SerializeToString()
     writer.write(serialized)
     num_session += 1
-    if num_session % 100 == 0:
+    if num_session % 1000 == 0:
         print("\r", end='')
         print("num_of_writen:", num_session / 1800000, end="", flush=True)
+        if not utility.send_progress("@arvin generate Mixed model .tf file", num_session, 1800000, "train_set1"):
+            print("internet disconnect")
+
 writer.close()
 print(num_session)

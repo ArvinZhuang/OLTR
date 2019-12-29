@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # datasets = ['CM']
     progress = 0
     for dataset, simulator in datasets_simulator:
-        for id in range(1, 12):
+        for id in range(13, 16):
             click_log_path = "../feature_click_datasets/{}/train_set{}.txt".format(dataset, id)
             test_click_log_path = "../feature_click_datasets/{}/seen_set{}.txt".format(dataset, id)
             query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format(dataset, id)
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
             progress += 1
 
-            if not utility.send_progress("Basic click model experiments", progress, 10, "{} run {}".format(dataset, id)):
+            if not utility.send_progress("Basic click model experiments", progress, 12, "{} run {}".format(dataset, id)):
                 print("internet disconnect")
 
 

@@ -111,7 +111,7 @@ class LSTMv2(CM):
             if i % 1000 == 0:
                 print("\r", end='')
                 print(str(i / size) + " complete!", end="", flush=True)
-            session = test_click_log[i][:11]
+            session = test_click_log[i]
             features = self._sessions_to_features(np.array([session]))
             click_probs = self.get_click_probs(features)
             real_click_probs = simulator.get_real_click_probs(session, dataset)
