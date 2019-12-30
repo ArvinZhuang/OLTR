@@ -19,17 +19,17 @@ model.initial_representation(click_log)
 
 # session = np.array(['1112', '16', '3', '45', '37', '31', '22', '5', '34', '17', '21', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0' ])
 #
-# model.save_training_set(click_log, "")
+model.save_training_set(click_log, "")
 
-with open("X.txt", "rb") as fp:
-    X = pickle.load(fp)
-
-with open("Y.txt", "rb") as fp:
-    Y = pickle.load(fp)
-
-train_path = "../datasets/ltrc_yahoo/set1.train.txt"
-
-print("loading training set.......")
-train_set = LetorDataset(train_path, 700)
-model.train(X, Y)
-# model.get_MSE(click_log, train_set, simulator)
+# with open("X.txt", "rb") as fp:
+#     X = pickle.load(fp)
+#
+# with open("Y.txt", "rb") as fp:
+#     Y = pickle.load(fp)
+#
+# train_path = "../datasets/ltrc_yahoo/set1.train.txt"
+#
+# print("loading training set.......")
+# train_set = LetorDataset(train_path, 700)
+# model.train(X, Y)
+# # model.get_MSE(click_log, train_set, simulator)

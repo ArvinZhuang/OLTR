@@ -5,6 +5,7 @@ from __future__ import print_function
 import numpy as np
 # from clickModel.AbstractClickModel import AbstractClickModel
 from clickModel.CM import CM
+import bz2
 import pickle
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
@@ -207,10 +208,11 @@ class NCM(CM):
             print(i/train_size)
 
 
-        with open(path+"X.txt", "wb") as fp:
-            pickle.dump(np.array(training_inputs), fp)
-        with open(path+"Y.txt", "wb") as fp:
-            pickle.dump(np.array(traninig_labels), fp)
+
+        with bz2.BZ2File(path+'Xv2.txt', 'w') as sfile:
+            pickle.dump(np.array(training_inputs), sfile)
+        with bz2.BZ2File(path+'Yv2.txt', 'w') as sfile:
+            pickle.dump(np.array(traninig_labels), sfile)
 
 
 
