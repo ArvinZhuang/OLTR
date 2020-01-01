@@ -1,5 +1,7 @@
 # %%
-from dataset import LetorDataset
+import sys
+sys.path.append('../')
+from dataset.LetorDataset import LetorDataset
 import numpy as np
 import multiprocessing as mp
 import random
@@ -48,8 +50,6 @@ def get_experimental_queries(train_set, out_path, id):
 
     for query in clean_unseen_queries:
         unseen_query_stream.extend([query] * 10)
-
-    print(len(train_query_stream), len(seen_query_stream), len(unseen_query_stream))
 
     return train_query_stream, seen_query_stream, unseen_query_stream
 
@@ -162,19 +162,13 @@ if __name__ == "__main__":
     simulators = [DCTR(pc), SDBN(pc, ps), UBM(pc), Mixed_model]
 
     for id in range(1, 16):
-        # pool = []
-        # for cm in click_models:
-        #     p = mp.Process(target=generate_dataset,
-        #                 args=(train_set, test_set, cm, "../feature_click_datasets/{}/".format(cm.name), id))
-        #     p.start()
-        #     pool.append(p)
-        # for p in pool:
-        #     p.join()
-        #
-        p = mp.Process(target=generate_dataset,
-                        args=(train_set, Mixed_model, "../click_logs/{}/".format(Mixed_model.name), id))
-
-        p.start()
-        p.join()
-        utility.send_progress("@arvin generating "+Mixed_model.name + " click log.",
+        pool = []
+        for cm in simulators:
+            p = mp.Process(target=generate_dataset,
+                        args=(train_set, cm, "../click_logs/{}/".format(cm.name), id))
+            p.start()
+            pool.append(p)
+        for p in pool:
+            p.join()
+            utility.send_progress("@arvin generating "+cm.name + " click log.",
                               id, 15, "generating smaller click log.")
