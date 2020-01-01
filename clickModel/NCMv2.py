@@ -3,26 +3,29 @@ import numpy as np
 from clickModel.CM import CM
 
 import tensorflow as tf
-from keras.models import load_model, Model
-from keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector, Concatenate
-from keras.initializers import glorot_uniform
-from keras.utils import to_categorical
-from keras.optimizers import Adadelta, Adam
+from tensorflow import keras
+from tensorflow.keras.models import load_model, Model
+from tensorflow.keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector, Concatenate
+
+from tensorflow.keras.optimizers import Adadelta, Adam
 from keras import backend as K
+from utils import utility
 
 
 
 
 class NCMv2(CM):
     def __init__(self, n_a, rep_dim):
-        self.name = 'NCMv2'
         super().__init__()
+        self.name = 'NCMv2'
         self.n_a = n_a
         self.rep_dim = rep_dim
         self.reshapor = Reshape((1, self.rep_dim))  # Used in Step 2.B of djmodel(), below
         self.LSTM_cell = LSTM(n_a, return_state=True)  # Used in Step 2.C
         self.densor = Dense(1, activation='sigmoid')
         self.model = self._build_model()
+        opt = Adam(lr=0.01, beta_1=0.9, beta_2=0.999, decay=0.01)
+        self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
         # print(self.model.summary())
 
         self.query_rep = {}
@@ -32,33 +35,19 @@ class NCMv2(CM):
     def _build_model(self):
         # Define the input layer and specify the shape
         X = Input(shape=(11, self.rep_dim))
-
-        # Define the initial hidden state a0 and initial cell state c0
-        # using `Input`
         a0 = Input(shape=(self.n_a,), name='a0')
         c0 = Input(shape=(self.n_a,), name='c0')
         a = a0
         c = c0
-
-        ### START CODE HERE ###
-        # Step 1: Create empty list to append the outputs while you iterate (≈1 line)
         outputs = []
 
-        # Step 2: Loop
         for t in range(11):
-            # Step 2.A: select the "t"th time step vector from X.
             x = Lambda(lambda X: X[:, t, :])(X)
-            # Step 2.B: Use reshapor to reshape x to be (1, n_values) (≈1 line)
             x = self.reshapor(x)
-            # Step 2.C: Perform one step of the LSTM_cell
             a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
             if t >= 1:
-                # Step 2.D: Apply densor to the hidden state output of LSTM_Cell
                 out = self.densor(a)
-                # Step 2.E: add the output to "outputs"
                 outputs.append(out)
-
-        # Step 3: Create model instance
         model = Model(inputs=[X, a0, c0], outputs=outputs)
         return model
 
@@ -90,7 +79,6 @@ class NCMv2(CM):
             if t > 0:
                 out = self.densor(a)
 
-                # Step 2.C: Append the prediction "out" to "outputs". out.shape = (None, 78) (≈1 line)
                 outputs.append(out)
                 if t < 10:
                     x = Lambda(self._concatebate)([q0, out, x])
@@ -115,14 +103,44 @@ class NCMv2(CM):
 
     def train(self, X, Y):
         Y = Y.T.reshape((10, -1, 1))
-        # opt = Adadelta(clipnorm=1.)
-        opt = Adam(lr=0.01, beta_1=0.9, beta_2=0.999, decay=0.01)
-        self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+
         a0 = np.zeros((X.shape[0], self.n_a))
         c0 = np.zeros((X.shape[0], self.n_a))
         self.model.fit([X, a0, c0], list(Y), batch_size=774, epochs=300)
         self.inference_model = self._build_inference_model()
 
+    def train_tfrecord(self, path, batch_size, epoch):
+        print("start")
+
+        tfrecord = tf.data.TFRecordDataset(path)
+
+
+        tfrecord = tfrecord.map(self._read_tfrecord)
+        tfrecord = tfrecord.repeat(epoch)
+        tfrecord = tfrecord.shuffle(batch_size*10)
+        tfrecord = tfrecord.batch(batch_size, drop_remainder=True)
+
+        a0 = np.zeros((batch_size, self.n_a))
+        c0 = np.zeros((batch_size, self.n_a))
+        i = 0
+        for batch in tfrecord:
+            print(i)
+            i += 1
+
+            X, Y = batch
+            Y = tf.reshape(Y, (10, -1, 1))
+            self.model.fit([X, a0, c0], list(Y), verbose=0)
+        self.inference_model = self._build_inference_model()
+        print("done")
+
+        #
+        # raw_example = next(iter(tfrecord))
+        # print(raw_example)
+        # f, l = self._read_tfrecord(raw_example)
+        # print(f, l)
+        # # test_log = test_log.map(self._read_tfrecord)
+        # # test_log = test_log.batch(self.batch_size, drop_remainder=False)
+        # self.model.fit(tfrecord, epochs=100)
 
 
     def predict(self, session):
@@ -159,7 +177,7 @@ class NCMv2(CM):
             clicks = click_log[line][11:21]
 
             if qid not in self.query_rep.keys():
-                self.query_rep[qid] = np.zeros(1024)
+                self.query_rep[qid] = np.zeros(1024, dtype=int)
                 self.doc_rep[qid] = {}
             clicks = clicks.astype(np.int)
             pattern_index = clicks.dot(1 << np.arange(clicks.shape[-1] - 1, -1, -1))
@@ -168,41 +186,51 @@ class NCMv2(CM):
             for rank in range(10):
                 docid = docIds[rank]
                 if docid not in self.doc_rep[qid].keys():
-                    self.doc_rep[qid][docid] = np.zeros(1024*10)
+                    self.doc_rep[qid][docid] = np.zeros(1024*10, dtype=int)
                 self.doc_rep[qid][docid][rank * 1024 + pattern_index] += 1
 
-    def save_training_set(self, train_log, path):
+    def save_training_set(self, train_log, path, simulator):
         # train_log = train_log.reshape(-1, self._batch_size, 21)
-        train_size = train_log.shape[0]
-        writer = tf.io.TFRecordWriter("test.tfrecord")
+        print("writing tfrecord file.......")
+        writer = tf.io.TFRecordWriter(path)
 
-        i = 0
+        num_session = 0
+
+        input = np.zeros((11, self.rep_dim), dtype=int)
+        i0 = np.zeros(1, dtype=int)
+        q0 = np.zeros(1024, dtype=int)
+
         for session in train_log:
             qid = session[0]
             docids = session[1:11]
             clicks = session[11:21]
             q_rep = self.query_rep[qid]
 
-            t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
-            t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
+            t0 = np.append(q_rep, np.append(i0, np.zeros(10240, dtype=int)))
+            t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
 
-            input = np.zeros((11, self.rep_dim))
             input[0] = t0
             input[1] = t1
 
             for rank in range(2, 11):
-                t = np.append(np.zeros(1024), np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
+                t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
                 input[rank] = t
 
-            target = np.array(clicks).T.reshape((10, -1, 1))
-            print(input.shape)
+            output = np.array(clicks).T.reshape((-1, 1))
 
-            example = self._make_sequence_example(input.tolist(), target.tolist())
-            writer.write(example.SerializeToString())
-            i += 1
-            print(i/train_size)
+            example = self.make_sequence_example(input, output)
+            serialized = example.SerializeToString()
+            writer.write(serialized)
+            num_session += 1
+            if num_session % 1000 == 0:
+                print("\r", end='')
+                print("num_of_writen:", num_session / 1800000, end="", flush=True)
+                if not utility.send_progress("@arvin generate {} model .tfrecord file".format(simulator), num_session, 1800000,
+                                             "train_set1_NCM"):
+                    print("internet disconnect")
+        writer.close()
 
-    def _make_sequence_example(self, input, label):
+    def make_sequence_example(self, inputs, labels):
         """Returns a SequenceExample for the given inputs and labels.
 
         Args:
@@ -212,15 +240,36 @@ class NCMv2(CM):
         Returns:
           A tf.train.SequenceExample containing inputs and labels.
         """
-        print(len(input[0]))
-        input_feature = tf.train.Feature(float_list=tf.train.FloatList(value=[input]))
+        input_features = [
+            tf.train.Feature(int64_list=tf.train.Int64List(value=input_))
+            for input_ in inputs]
+        label_features = [
+            tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
+            for label in labels]
+        # init_state = [
+        #     tf.train.Feature(int64_list=tf.train.Int64List(value=[state]))
+        #     for state in np.zeros(10, dtype=int)]
+        # init_cell = [
+        #     tf.train.Feature(int64_list=tf.train.Int64List(value=[c]))
+        #     for c in np.zeros(10, dtype=int)]
 
-        label_feature = tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
-
-        feature = {
-            'input': input_feature,
-            'label': label_feature
+        feature_list = {
+            'inputs': tf.train.FeatureList(feature=input_features),
+            'labels': tf.train.FeatureList(feature=label_features)
+            # 'init_state': tf.train.FeatureList(feature=init_state),
+            # 'init_cell': tf.train.FeatureList(feature=init_cell)
         }
+        feature_lists = tf.train.FeatureLists(feature_list=feature_list)
+        return tf.train.SequenceExample(feature_lists=feature_lists)
 
-        return tf.train.Example(features=tf.train.Features(feature=feature))
+    def _read_tfrecord(self, example):
+        sequence_features = {
+            "inputs": tf.io.FixedLenSequenceFeature([11265], dtype=tf.int64),
+            "labels": tf.io.FixedLenSequenceFeature([1], dtype=tf.int64)
+            # "init_state": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
+            # "init_cell": tf.io.FixedLenSequenceFeature([], dtype=tf.int64)
+        }
+        # decode the TFRecord
+        _, example = tf.io.parse_single_sequence_example(serialized=example, sequence_features=sequence_features)
 
+        return example['inputs'], example['labels']

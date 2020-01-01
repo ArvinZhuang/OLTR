@@ -6,6 +6,7 @@ def read_click_log(path):
     print("reading {}.......".format(path))
     if path.split('.')[-1] == "tfrecord":
         log = tf.data.TFRecordDataset(filenames='test.tfrecord')
+        print("test")
         return log
     log = []
     num_session = 0
