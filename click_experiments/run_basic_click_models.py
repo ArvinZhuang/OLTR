@@ -19,8 +19,7 @@ def run(click_log, test_click_log, query_frequency, click_model, train_set, simu
     test_logs = {'10': [],
                  '100': [],
                  '1000': [],
-                 '10000': [],
-                 '100000': []
+                 '10000': []
                  }
 
     for i in range(test_click_log.shape[0]):
@@ -29,7 +28,7 @@ def run(click_log, test_click_log, query_frequency, click_model, train_set, simu
 
     click_model.train(click_log)
 
-    frequencies = ['10', '100', '1000', '10000', '100000']
+    frequencies = ['10', '100', '1000', '10000']
     # i = 0
 
     f.write("Click Model:" + cm.name + "\n")
@@ -61,36 +60,33 @@ def run(click_log, test_click_log, query_frequency, click_model, train_set, simu
 if __name__ == "__main__":
     # %%
     train_path = "../datasets/ltrc_yahoo/set1.train.txt"
-    test_path = "../datasets/ltrc_yahoo/set1.test.txt"
     print("loading training set.......")
     train_set = LetorDataset(train_path, 700)
     # %%
-    # print("loading testing set.......")
-    # test_set = LetorDataset(test_path, 700)
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-    mixed_models = [DCTR(pc), CM(pc), SDBN(pc, ps), SDCM(pc), UBM(pc)]
+    mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
     datasets_simulator = [
-                        # ('SDBN', SDBN(pc, ps)),
+                        ('SDBN', SDBN(pc, ps)),
                           # ('SDCM', SDCM(pc)),
                           # ('CM', CM(pc)),
-                          # ('DCTR', DCTR(pc)),
-                          # ('UBM', UBM(pc)),
+                          ('DCTR', DCTR(pc)),
+                          ('UBM', UBM(pc)),
                         ('Mixed', Mixed(mixed_models))]
     # datasets = ['CM']
     progress = 0
     for dataset, simulator in datasets_simulator:
         for id in range(1, 16):
-            click_log_path = "../feature_click_datasets/{}/train_set{}.txt".format(dataset, id)
-            test_click_log_path = "../feature_click_datasets/{}/seen_set{}.txt".format(dataset, id)
-            query_frequency_path = "../feature_click_datasets/{}/query_frequency{}.txt".format(dataset, id)
+            click_log_path = "../click_logs/{}/train_set{}.txt".format(dataset, id)
+            test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(dataset, id)
+            query_frequency_path = "../click_logs/{}/query_frequency{}.txt".format(dataset, id)
             click_log = rf.read_click_log(click_log_path)
             test_click_log = rf.read_click_log(test_click_log_path)
             query_frequency = rf.read_query_frequency(query_frequency_path)
 
             click_models = [SDBN(),
-                            SDCM(),
-                            CM(),
+                            # SDCM(),
+                            # CM(),
                             DCTR(),
                             UBM()]
 
@@ -109,7 +105,7 @@ if __name__ == "__main__":
 
             progress += 1
 
-            if not utility.send_progress("Basic click model experiments", progress, 12, "{} run {}".format(dataset, id)):
+            if not utility.send_progress("Basic click model experiments", progress, 15, "{} run {}".format(dataset, id)):
                 print("internet disconnect")
 
 
