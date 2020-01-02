@@ -1,13 +1,14 @@
 import numpy as np
 # from clickModel.AbstractClickModel import AbstractClickModel
 from clickModel.CM import CM
-
+import bz2
+import pickle
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.models import load_model, Model
-from tensorflow.keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector, Concatenate
+from keras.models import load_model, Model
+from keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector, Concatenate
 
-from tensorflow.keras.optimizers import Adadelta, Adam
+from keras.optimizers import Adadelta, Adam
 from keras import backend as K
 from utils import utility
 
@@ -49,7 +50,9 @@ class NCMv2(CM):
                 out = self.densor(a)
                 outputs.append(out)
         model = Model(inputs=[X, a0, c0], outputs=outputs)
+        self.test_model = Model(inputs=[X, a0, c0], outputs=outputs)
         return model
+
 
     def _build_inference_model(self):
         x0 = Input(shape=(1, self.rep_dim))
@@ -71,7 +74,7 @@ class NCMv2(CM):
         # Step 2: Loop over Ty and generate a value at every time step
         for t in range(11):
             # Step 2.A: Perform one step of LSTM_cell (≈1 line)
-            a, _, c = self.LSTM_cell(x, initial_state=[a, c])
+            a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
 
             # Step 2.B: Apply Dense layer to the hidden state output of the LSTM_cell (≈1 line)
             if t < 10:
@@ -93,7 +96,7 @@ class NCMv2(CM):
         q = rep[0]
         out = rep[1]
         # print("1", out)
-        # out = K.round(out)
+        out = K.round(out)
         # print("2", out)
         x = rep[2]
         x = K.concatenate((q, out, x))
@@ -102,11 +105,9 @@ class NCMv2(CM):
 
 
     def train(self, X, Y):
-        Y = Y.T.reshape((10, -1, 1))
-
         a0 = np.zeros((X.shape[0], self.n_a))
         c0 = np.zeros((X.shape[0], self.n_a))
-        self.model.fit([X, a0, c0], list(Y), batch_size=774, epochs=300)
+        self.model.fit([X, a0, c0], list(Y), batch_size=30, epochs=300)
         self.inference_model = self._build_inference_model()
 
     def train_tfrecord(self, path, batch_size, epoch):
@@ -143,8 +144,7 @@ class NCMv2(CM):
         # self.model.fit(tfrecord, epochs=100)
 
 
-    def predict(self, session):
-        print(session)
+    def get_click_probs(self, session, input):
         qid = session[0]
         docids = session[1:11]
         clicks = session[11:21]
@@ -161,8 +161,7 @@ class NCMv2(CM):
             D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
 
         pred = self.inference_model.predict([x0, a0, c0, D, i0, q0])
-        print(pred)
-        print(len(pred))
+        return np.array(pred)[:, 0, 0]
 
 
 
@@ -229,6 +228,52 @@ class NCMv2(CM):
                                              "train_set1_NCM"):
                     print("internet disconnect")
         writer.close()
+
+    def save_training_set_numpy(self, train_log, path, simulator):
+        # train_log = train_log.reshape(-1, self._batch_size, 21)
+        print("writing numpy file.......")
+
+        num_session = 0
+
+
+        input = np.zeros((train_log.shape[0], 11, self.rep_dim))
+        i0 = np.zeros(1)
+        q0 = np.zeros(1024)
+        label = np.zeros((10, len(train_log), 1))
+
+        for session in train_log:
+            qid = session[0]
+            docids = session[1:11]
+            clicks = session[11:21]
+            q_rep = self.query_rep[qid]
+
+            t0 = np.append(q_rep, np.append(i0, np.zeros(10240)))
+            t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
+
+            input[num_session][0] = t0
+            input[num_session][1] = t1
+
+            for rank in range(2, 11):
+                t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
+                input[num_session][rank] = t
+
+            label[:, num_session, :] = clicks.reshape(10, 1)
+
+
+
+            num_session += 1
+            if num_session % 1000 == 0:
+                print("\r", end='')
+                print("num_of_writen:", num_session / 400000, end="", flush=True)
+                if not utility.send_progress("@arvin generate {} model numpy file".format(simulator), num_session, 40000,
+                                             "train_set1_NCM"):
+                    print("internet disconnect")
+
+        with bz2.BZ2File(path+"input.txt", 'w') as fp:
+            pickle.dump(input, fp)
+        with bz2.BZ2File(path+"label.txt", 'w') as fp:
+            pickle.dump(label, fp)
+
 
     def make_sequence_example(self, inputs, labels):
         """Returns a SequenceExample for the given inputs and labels.
