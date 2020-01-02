@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 # from clickModel.AbstractClickModel import AbstractClickModel
 from clickModel.CM import CM
 import bz2
@@ -238,6 +239,7 @@ class NCMv2(CM):
         input = np.zeros((train_log.shape[0], 11, self.rep_dim))
         i0 = np.zeros(1)
         q0 = np.zeros(1024)
+        d0 = np.zeros(10240)
         label = np.zeros((10, len(train_log), 1))
 
         for session in train_log:
@@ -246,7 +248,7 @@ class NCMv2(CM):
             clicks = session[11:21]
             q_rep = self.query_rep[qid]
 
-            t0 = np.append(q_rep, np.append(i0, np.zeros(10240)))
+            t0 = np.append(q_rep, np.append(i0, d0))
             t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
 
             input[num_session][0] = t0
@@ -261,6 +263,8 @@ class NCMv2(CM):
 
 
             num_session += 1
+
+
             if num_session % 1000 == 0:
                 print("\r", end='')
                 print("num_of_writen:", num_session / 400000, end="", flush=True)
@@ -268,10 +272,11 @@ class NCMv2(CM):
                                              "train_set1_NCM"):
                     print("internet disconnect")
 
-        with bz2.BZ2File(path+"input.txt", 'w') as fp:
-            pickle.dump(input, fp)
-        with bz2.BZ2File(path+"label.txt", 'w') as fp:
-            pickle.dump(label, fp)
+        np.savez(path, input=input, label=label)
+        # with bz2.BZ2File(path+"input.txt", 'w') as fp:
+        #     pickle.dump(input, fp)
+        # with bz2.BZ2File(path+"label.txt", 'w') as fp:
+        #     pickle.dump(label, fp)
 
 
     def make_sequence_example(self, inputs, labels):
