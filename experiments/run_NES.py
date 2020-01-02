@@ -2,12 +2,14 @@ import sys
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
 from ranker.ESLinearRanker import ESLinearRanker
+from ranker.NESLinearRanker import NESLinearRanker
 from clickModel.SDBN import SDBN
 from utils import evl_tool
 import numpy as np
 import multiprocessing as mp
 import pickle
 import pdb
+import copy
 
 class ForkedPdb(pdb.Pdb):
     """A Pdb subclass that may be used
@@ -31,42 +33,55 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
 
     batch_size = 100
     iterated = 0
-    for j in range(0, num_interation // batch_size):
+    # for j in range(0, num_interation // batch_size):
+    for i in range(num_interation):
         R = np.zeros((num_rankers,))
         canditate_rankers = ranker.sample_new_pop(num_rankers)
         canditate_rankers[0] = ranker.get_current_weights()
-        for i in index[j * batch_size:j * batch_size + batch_size]:
-            record = []
-            iterated += 1
-            qid = query_set[i]
 
-            result_list = ranker.get_query_result_list(train_set, qid)
+        new_rankers = []
+        for weights in canditate_rankers:
+            new_ranker = copy.deepcopy(ranker)
+            new_ranker.assign_weights(weights)
+            new_rankers.append(new_ranker)
+        # for i in index[j * batch_size:j * batch_size + batch_size]:
+        # record = []
+        iterated += 1
+        qid = query_set[index[i]]
 
-            clicked_doc, click_label, _ = click_model.simulate(qid, result_list, train_set)
+        # result_list = ranker.get_query_result_list(train_set, qid)
+        query_features = train_set.get_all_features_by_query(qid)
+        (result_list, a) = ranker.probabilistic_multileave(new_rankers, query_features, 10)
 
-            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-            cndcg_scores.append(cndcg)
 
-            # if no clicks, skip.
-            if len(clicked_doc) == 0:
-                # all_result = ranker.get_all_query_result_list(test_set)
-                # ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-                # cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-                #
-                # ndcg_scores.append(ndcg)
-                # cndcg_scores.append(cndcg)
-                continue
+        clicked_doc, click_label, _ = click_model.simulate(qid, result_list, train_set)
 
-            # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
-            last_click = np.where(click_label == 1)[0][-1]
-            click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
 
-            # bandit record
-            record.append((qid, result_list, click_label, ranker.get_current_weights()))
-            snips = ranker.get_SNIPS(canditate_rankers, record, train_set)
+        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+        cndcg_scores.append(cndcg)
 
-            if snips is not None:
-                R += snips
+        # if no clicks, skip.
+        if len(clicked_doc) == 0:
+            # all_result = ranker.get_all_query_result_list(test_set)
+            # ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+            # cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+            #
+            # ndcg_scores.append(ndcg)
+            # cndcg_scores.append(cndcg)
+            continue
+
+        # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
+        # last_click = np.where(click_label == 1)[0][-1]
+        # click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
+
+        # bandit record
+        # record.append((qid, result_list, click_label, ranker.get_current_weights()))
+        # snips = ranker.get_SNIPS(canditate_rankers, record, train_set)
+
+        R = np.array(ranker.probabilistic_multileave_outcome(result_list, new_rankers, click_label, query_features))
+
+        # if snips is not None:
+        #     R += snips
 
         #R = R[1:]
         R = np.interp(R, (R.min(), R.max()), (0, 1))
@@ -96,7 +111,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         ranker.update(mu_update, cov_update)
         #ranker.assign_weights(canditate_rankers[np.argmax(R)])
         ranker.assign_weights(ranker.mu)
-        print(ranker.mu)
+        # print(ranker.mu)
         all_result = ranker.get_all_query_result_list(test_set)
         ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
 
@@ -138,7 +153,7 @@ def job(model_type, f, train_set, test_set, tau, sigma, gamma, num_rankers, lear
         mu = np.zeros((FEATURE_SIZE))
         cov = np.eye(FEATURE_SIZE) * 0.1
 
-        ranker = ESLinearRanker(FEATURE_SIZE, Learning_rate, mu, cov, sigma, tau, gamma, learning_rate_decay=learning_rate_decay)
+        ranker = NESLinearRanker(FEATURE_SIZE, Learning_rate, mu, cov, sigma, tau, gamma, learning_rate_decay=learning_rate_decay)
         print("ES fold{} {} run{} start!".format(f, model_type, r))
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm, num_rankers)
         with open(
@@ -169,7 +184,7 @@ if __name__ == "__main__":
     dataset_fold = "../datasets/2007_mq_dataset"
     output_fold = "mq2007"
 
-    num_rankers = 500
+    num_rankers = 50
     tau = 1
     gamma = 1
     learning_rate_decay = 0.995
