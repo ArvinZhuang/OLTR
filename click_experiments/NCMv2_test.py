@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from clickModel.NCMv2 import NCMv2
 from utils import read_file as rf
 import numpy as np

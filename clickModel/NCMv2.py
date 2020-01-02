@@ -4,7 +4,6 @@ from clickModel.CM import CM
 import bz2
 import pickle
 import tensorflow as tf
-from tensorflow import keras
 from keras.models import load_model, Model
 from keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector, Concatenate
 
@@ -265,7 +264,7 @@ class NCMv2(CM):
             if num_session % 1000 == 0:
                 print("\r", end='')
                 print("num_of_writen:", num_session / 400000, end="", flush=True)
-                if not utility.send_progress("@arvin generate {} model numpy file".format(simulator), num_session, 40000,
+                if not utility.send_progress("@arvin generate {} model numpy file".format(simulator), num_session, 400000,
                                              "train_set1_NCM"):
                     print("internet disconnect")
 
