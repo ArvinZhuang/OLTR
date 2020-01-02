@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from clickModel.SDBN import SDBN
 from clickModel.SDCM import SDCM
 from clickModel.CM import CM
