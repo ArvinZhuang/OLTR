@@ -96,7 +96,7 @@ class NCMv2(CM):
         q = rep[0]
         out = rep[1]
         # print("1", out)
-        out = K.round(out)
+        # out = K.round(out)
         # print("2", out)
         x = rep[2]
         x = K.concatenate((q, out, x))
@@ -118,8 +118,8 @@ class NCMv2(CM):
 
         tfrecord = tfrecord.map(self._read_tfrecord)
         tfrecord = tfrecord.repeat(epoch)
-        tfrecord = tfrecord.shuffle(batch_size*10)
-        tfrecord = tfrecord.batch(batch_size, drop_remainder=True)
+        # tfrecord = tfrecord.shuffle(batch_size*10)
+        tfrecord = tfrecord.batch(batch_size, drop_remainder=False)
 
         a0 = np.zeros((batch_size, self.n_a))
         c0 = np.zeros((batch_size, self.n_a))
@@ -129,8 +129,11 @@ class NCMv2(CM):
             i += 1
 
             X, Y = batch
+            Y = tf.reshape(tf.transpose(Y), [10, -1, 1])
+
             Y = tf.reshape(Y, (10, -1, 1))
-            self.model.fit([X, a0, c0], list(Y), verbose=0)
+            loss = self.model.fit([X, a0, c0], list(Y), steps_per_epoch=1, verbose=0)
+            print(loss.history["loss"],loss.history['dense_1_accuracy_1'])
         self.inference_model = self._build_inference_model()
         print("done")
 
@@ -161,6 +164,7 @@ class NCMv2(CM):
             D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
 
         pred = self.inference_model.predict([x0, a0, c0, D, i0, q0])
+        print("test", self.model.predict([input.reshape(1,11,-1), a0, c0]))
         return np.array(pred)[:, 0, 0]
 
 
@@ -190,7 +194,7 @@ class NCMv2(CM):
 
     def save_training_set(self, train_log, path, simulator):
         # train_log = train_log.reshape(-1, self._batch_size, 21)
-        print("writing tfrecord file.......")
+        print("writing tfrecord file for.......".format(simulator))
         writer = tf.io.TFRecordWriter(path)
 
         num_session = 0
@@ -215,16 +219,14 @@ class NCMv2(CM):
                 t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
                 input[rank] = t
 
-            output = np.array(clicks).T.reshape((-1, 1))
+            output = np.array(clicks).reshape((-1, 1))
 
             example = self.make_sequence_example(input, output)
             serialized = example.SerializeToString()
             writer.write(serialized)
             num_session += 1
             if num_session % 1000 == 0:
-                print("\r", end='')
-                print("num_of_writen:", num_session / 1800000, end="", flush=True)
-                if not utility.send_progress("@arvin generate {} model .tfrecord file".format(simulator), num_session, 1800000,
+                if not utility.send_progress("@arvin generate {} model .tfrecord file".format(simulator), num_session, 400000,
                                              "train_set1_NCM"):
                     print("internet disconnect")
         writer.close()
