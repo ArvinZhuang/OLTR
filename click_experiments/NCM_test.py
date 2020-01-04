@@ -1,4 +1,4 @@
-from clickModel.NCM import NCM
+from clickModel.NCM_TF import NCM
 from utils import read_file as rf
 import numpy as np
 import pickle

@@ -119,42 +119,42 @@ if __name__ == "__main__":
     simulators = ["SDBN", 'DCTR', 'UBM', "Mixed"]
     click_models = ["SDBN", 'DCTR', 'UBM']
 
-    simulators = ["Mixed"]
+    # simulators = ["Mixed"]
     # click_models = ["SDBN"]
     # click_models = ["SDBN", 'DCTR', 'SDCM', 'UBM', 'CM', 'LSTM']
-
-    for s in simulators:
-        f = plt.figure(1)
-        f.suptitle("simulator: {}.".format(s))
-        plot_index = 1
-        for cm in click_models:
-            p1 = plt.subplot(len(click_models), 2, plot_index)
-            p2 = plt.subplot(len(click_models), 2, plot_index + 1)
-            avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
-            plot_index += 2
-        p1.legend(['10', '100', '1000', '10000'], loc='upper right')
-        p2.legend(['10', '100', '1000', '10000'], loc='upper right')
-        p1.set_xlabel('rank')
-        p2.set_xlabel('rank')
-        plt.show()
-
-    # f = plt.figure(1)
-    # plot_index = 1
+    #
     # for s in simulators:
-    #     p1 = plt.subplot(len(simulators), 2, plot_index)
-    #     p2 = plt.subplot(len(simulators), 2, plot_index + 1)
-    #     p1.set_title("simulator: " + s)
-    #     p2.set_title("simulator: " + s)
-    #
-    #     plot_for_each_simulator(s, click_models, p1, p2)
-    #     plot_index += 2
-    #
-    #     p1.legend(click_models, loc='upper right')
-    #     p2.legend(click_models, loc='upper right')
-    #
-    #
-    # p1.set_xlabel('rank')
-    # p2.set_xlabel('rank')
-    # f.subplots_adjust(wspace=0.3, hspace=0.3)
-    #
-    # plt.show()
+    #     f = plt.figure(1)
+    #     f.suptitle("simulator: {}.".format(s))
+    #     plot_index = 1
+    #     for cm in click_models:
+    #         p1 = plt.subplot(len(click_models), 2, plot_index)
+    #         p2 = plt.subplot(len(click_models), 2, plot_index + 1)
+    #         avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
+    #         plot_index += 2
+    #     p1.legend(['10', '100', '1000', '10000'], loc='upper right')
+    #     p2.legend(['10', '100', '1000', '10000'], loc='upper right')
+    #     p1.set_xlabel('rank')
+    #     p2.set_xlabel('rank')
+    #     plt.show()
+
+    f = plt.figure(1)
+    plot_index = 1
+    for s in simulators:
+        p1 = plt.subplot(len(simulators), 2, plot_index)
+        p2 = plt.subplot(len(simulators), 2, plot_index + 1)
+        p1.set_title("simulator: " + s)
+        p2.set_title("simulator: " + s)
+
+        plot_for_each_simulator(s, click_models, p1, p2)
+        plot_index += 2
+
+        p1.legend(click_models, loc='upper right')
+        p2.legend(click_models, loc='upper right')
+
+
+    p1.set_xlabel('rank')
+    p2.set_xlabel('rank')
+    f.subplots_adjust(wspace=0.3, hspace=0.3)
+
+    plt.show()

@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from clickModel.NCMv2 import NCMv2
+from clickModel.NCM import NCM
 from utils import read_file as rf
 import numpy as np
 import pickle
@@ -11,7 +11,11 @@ import sys
 import tensorflow as tf
 
 
-model = NCMv2(64, 10240+1024+1)
+train_path = "../datasets/ltrc_yahoo/set1.train.txt"
+print("loading training set.......")
+dataset = LetorDataset(train_path, 700)
+
+model = NCM(64, 1024, 10240)
 
 pc = [0.05, 0.3, 0.5, 0.7, 0.95]
 ps = [0.2, 0.3, 0.5, 0.7, 0.9]
@@ -26,13 +30,13 @@ model.initial_representation(click_log)
 # model.save_training_set_numpy(click_log, "test", "SDBN")
 
 # model.save_training_set(click_log, "../click_logs/{}/train_set{}_small_NCM.tfrecord".format("SDBN", "1"), "SDBN")
-# model.save_training_set(click_log, "test.tfrecord", "SDBN")
+model.save_training_tfrecord(click_log, "NCM_test.tfrecord", "SDBN")
 # model.save_training_set_numpy(click_log, "../click_logs/{}/train_set{}_NCM".format("SDBN", "1"), "SDBN")
-model.save_training_set_numpy(click_log, "test", "SDBN")
+# model.save_training_set_numpy(click_log, "test", "SDBN")
 
-data = np.load("test.npz")
-X = data["input"]
-Y = data["label"]
+# data = np.load("test.npz")
+# X = data["input"]
+# Y = data["label"]
 #
 # data = np.load("../click_logs/{}/train_set{}_NCM.npy.npz".format("SDBN", "1"))
 #
@@ -44,11 +48,11 @@ Y = data["label"]
 #
 # with bz2.BZ2File("../click_logs/{}/train_set{}_NCM_label.txt".format("SDBN", "1"), 'rb') as fp:
 #     Y = pickle.load(fp)
-model.train_tfrecord("test.tfrecord".format("SDBN", "1"), 774, 100)
+# model.train_tfrecord("test.tfrecord".format("SDBN", "1"), 200, 100, 32)
 # model.train(X, Y)
 #
 #
-# model.train_tfrecord("../click_logs/{}/train_set{}_small_NCM.tfrecord".format("SDBN", "1"), 30, 100)
+model.train_tfrecord("NCM_test.tfrecord".format("SDBN", "1"), batch_size=774, epoch=500, steps_per_epoch=1)
 #
 
 pc = [0.05, 0.3, 0.5, 0.7, 0.95]
@@ -56,6 +60,7 @@ ps = [0.2, 0.3, 0.5, 0.7, 0.9]
 base_line = SDBN(pc, ps)
 base_line.train(click_log)
 
-print(click_log[0])
-print(base_line.get_click_probs(click_log[0]))
-print(model.get_click_probs(click_log[0], X[0]))
+
+print(model.get_click_probs(click_log[0]))
+print(model.get_perplexity(click_log))
+print(model.get_MSE(click_log, dataset, simulator))

@@ -1,223 +1,168 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import numpy as np
+from pathlib import Path
 # from clickModel.AbstractClickModel import AbstractClickModel
 from clickModel.CM import CM
 import bz2
 import pickle
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+import tensorflow as tf
+from keras.models import load_model, Model
+from keras.layers import Dense, Activation, Dropout, Input, LSTM, Reshape, Lambda, RepeatVector, Concatenate
+
+from keras.optimizers import Adadelta, Adam
+from keras import backend as K
+from utils import utility
+
+
+
 
 class NCM(CM):
-
-    def __init__(self, batch_size, lstm_num_hidden, num_of_dims, lstm_num_layers):
+    def __init__(self, n_a, q_dim, d_dim):
         super().__init__()
         self.name = 'NCM'
+        self.n_a = n_a
+        self.q_dim = q_dim
+        self.d_dim = d_dim
+        self.rep_dim = q_dim + 1 + d_dim
+        self.reshapor = Reshape((1, self.rep_dim))  # Used in Step 2.B of djmodel(), below
+        self.LSTM_cell = LSTM(n_a, return_state=True)  # Used in Step 2.C
+        self.densor = Dense(1, activation='sigmoid')
+        self.model = self._build_model()
+        opt = Adam(lr=0.01, beta_1=0.9, beta_2=0.999, decay=0.01)
+        self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+        # print(self.model.summary())
+
         self.query_rep = {}
         self.doc_rep = {}
 
-        self._lstm_num_hidden = lstm_num_hidden
-        self._lstm_num_layers = lstm_num_layers
-        self._batch_size = batch_size
-        self._representations_dims = num_of_dims
-
-        # Initialization:
-        self._inputs = tf.placeholder(tf.float32,
-                                      shape=[self._batch_size, 11, self._representations_dims],
-                                      name='inputs')
-        self._targets = tf.placeholder(tf.float32,
-                                       shape=[self._batch_size, 10],
-                                       name='targets')
-
-        self._targets_rshaped = tf.reshape(self._targets, [-1, 1])
-
-        with tf.variable_scope('model'):
-            self._logits_per_step = self._build_model()
-            self._probabilities = self.probabilities()
-            self._predictions = self.predictions()
-            self._loss = self._compute_loss()
-
 
     def _build_model(self):
+        # Define the input layer and specify the shape
+        X = Input(shape=(11, self.rep_dim))
+        a0 = Input(shape=(self.n_a,), name='a0')
+        c0 = Input(shape=(self.n_a,), name='c0')
+        a = a0
+        c = c0
+        outputs = []
 
-        with tf.variable_scope('states'):
-            self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
-
-            stacked_cells = tf.nn.rnn_cell.MultiRNNCell(
-                [tf.nn.rnn_cell.DropoutWrapper(tf.nn.rnn_cell.BasicLSTMCell(num_units=self._lstm_num_hidden, forget_bias=1.0),
-                                    output_keep_prob=self.keep_prob)
-                 for _ in range(self._lstm_num_layers)])
-
-            self._state_placeholder = tf.placeholder(tf.float32,
-                                                     [self._lstm_num_layers, 2, None, self._lstm_num_hidden])
-
-            l = tf.unstack(self._state_placeholder, axis=1)
-
-            self._rnn_tuple_state = tuple([tf.nn.rnn_cell.LSTMStateTuple(l[idx][0], l[idx][1])
-                                           for idx in range(self._lstm_num_layers)])
-
-            outputs, self._states = tf.nn.dynamic_rnn(cell=stacked_cells,
-                                                      inputs=self._inputs,
-                                                      initial_state=self._rnn_tuple_state,
-                                                      dtype=tf.float32)
-
-            # since for the first we only have s_0 and no click prediction
-            outputs_ = outputs[:, 1:, :]
-
-            outputs_rshaped = tf.reshape(tensor=outputs_, shape=[-1, self._lstm_num_hidden])
-
-        with tf.variable_scope("predictions"):
-            W_out = tf.get_variable("W_out",
-                                    shape=[self._lstm_num_hidden, 1],
-                                    initializer=tf.variance_scaling_initializer())
-
-            b_out = tf.get_variable("b_out", shape=[1],
-                                    initializer=tf.constant_initializer(0.0))
-
-            predictions = tf.nn.bias_add(tf.matmul(outputs_rshaped, W_out), b_out)
-
-        return predictions
-
-    def _compute_loss(self):
-        # Returns the log-likelihood
-
-        with tf.name_scope('log_likelihood'):
-            loss = tf.reduce_mean(tf.log(tf.multiply(self._probabilities, self._targets_rshaped)
-                                         + tf.multiply((1 - self._targets_rshaped), (1 - self._probabilities))))
-
-        return loss
-
-    def probabilities(self):
-        # Returns the normalized per-step probabilities
-        probabilities = tf.nn.sigmoid(self._logits_per_step)
-        return probabilities
-
-    def predictions(self):
-        # Returns the per-step predictions
-        predictions = tf.round(self._probabilities)
-        return predictions
-
-    def train(self, X, Y):
-        # train_log = train_log.reshape(-1, self._batch_size, 21)
-
-        global_step = tf.Variable(0, trainable=False, dtype=tf.int32, name='global_step')
-        starter_learning_rate = 0.01
-
-        optimizer = tf.train.AdadeltaOptimizer(starter_learning_rate, epsilon=1e-06)
-
-        # Compute the gradients for each variable
-        grads_and_vars = optimizer.compute_gradients(-self._loss)
-
-        # gradient clipping
-        grads, variables = zip(*grads_and_vars)
-        grads_clipped, _ = tf.clip_by_global_norm(grads, clip_norm=1)
-        apply_gradients_op = optimizer.apply_gradients(zip(grads_clipped, variables), global_step=global_step)
-
-        # start the Session
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
+        for t in range(11):
+            x = Lambda(lambda X: X[:, t, :])(X)
+            x = self.reshapor(x)
+            a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
+            if t >= 1:
+                out = self.densor(a)
+                outputs.append(out)
+        model = Model(inputs=[X, a0, c0], outputs=outputs)
+        self.test_model = Model(inputs=[X, a0, c0], outputs=outputs)
+        return model
 
 
-        # for batch_session in train_log:
-        # inputs, targets = self._get_batch_train_sample(batch_session)
+    def _build_inference_model(self):
+        x0 = Input(shape=(1, self.rep_dim))
 
-        # get the loss and the probabilities that the model outputs
-        for iter in range(1000):
-            _, loss_, pred, probs = self.sess.run([apply_gradients_op, self._loss, self._predictions, self._probabilities],
-                                             feed_dict={self._inputs: X,
-                                                        self._targets: Y,
-                                                        self._state_placeholder: np.zeros((self._lstm_num_layers, 2,
-                                                                                            self._batch_size,
-                                                                                            self._lstm_num_hidden)),
-                                                        self.keep_prob: 0.9})
-            print(iter, loss_)
+        # Define s0, initial hidden state for the decoder LSTM
+        a0 = Input(shape=(self.n_a,), name='a0')
+        c0 = Input(shape=(self.n_a,), name='c0')
+        i0 = Input(shape=(1,), name='i0')
+        q0 = Input(shape=(self.q_dim,), name='q0')
+        D = Input(shape=(10, self.d_dim), name='D')
+        a = a0
+        c = c0
+        x = x0
 
-    def _get_batch_train_sample(self, batch_session):
 
-        input = np.zeros((self._batch_size, 11, self._representations_dims))
-        target = np.zeros((self._batch_size, 10))
+        ### START CODE HERE ###
+        # Step 1: Create an empty list of "outputs" to later store your predicted values (≈1 line)
+        outputs = []
+        # Step 2: Loop over Ty and generate a value at every time step
+        for t in range(11):
+            # Step 2.A: Perform one step of LSTM_cell (≈1 line)
+            a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
 
-        index = 0
-        for session in batch_session:
-            qid = session[0]
-            docids = session[1:11]
-            clicks = session[11:21]
-            q_rep = self.query_rep[qid]
+            # Step 2.B: Apply Dense layer to the hidden state output of the LSTM_cell (≈1 line)
+            if t < 10:
+                x = Lambda(lambda D: D[:, t, :])(D)
+            if t > 0:
+                out = self.densor(a)
 
-            t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
-            t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
-            input[index][0] = t0
-            input[index][1] = t1
+                outputs.append(out)
+                if t < 10:
+                    x = Lambda(self._concatebate)([q0, out, x])
+            else:
+                x = Lambda(self._concatebate)([q0, i0, x])
 
-            for rank in range(1, 10):
-                t = np.append(np.zeros(1024), np.append(clicks[rank-1],self.doc_rep[qid][docids[rank]]))
-                input[index][rank] = t
+        # Step 3: Create model instance with the correct "inputs" and "outputs" (≈1 line)
+        inference_model = Model(inputs=[x0, a0, c0, D, i0, q0], outputs=outputs)
+        return inference_model
 
-            target[index] = clicks
-            index += 1
-        return input, target
+    def _concatebate(self, rep):
+        q = rep[0]
+        out = rep[1]
+        # print("1", out)
+        # out = K.round(out)
+        # print("2", out)
+        x = rep[2]
+        x = K.concatenate((q, out, x))
+        x = RepeatVector(1)(x)
+        return x
 
-    def _session_to_representations(self, session):
+
+    def train_with_numpy(self, X, Y):
+        a0 = np.zeros((X.shape[0], self.n_a))
+        c0 = np.zeros((X.shape[0], self.n_a))
+        self.model.fit([X, a0, c0], list(Y), batch_size=30, epochs=300)
+        self.inference_model = self._build_inference_model()
+
+    def train_tfrecord(self, path, batch_size=32, epoch=5, steps_per_epoch=1):
+        print("start")
+
+        tfrecord = tf.data.TFRecordDataset(path)
+        tfrecord = tfrecord.map(self._read_tfrecord)
+        tfrecord = tfrecord.repeat(epoch)
+        # tfrecord = tfrecord.shuffle(batch_size*10)
+        tfrecord = tfrecord.batch(batch_size, drop_remainder=False)
+
+        a0 = np.zeros((batch_size, self.n_a))
+        c0 = np.zeros((batch_size, self.n_a))
+        i = 0
+        for batch in tfrecord:
+            i += 1
+
+            X, Y = batch
+            Y = tf.reshape(tf.transpose(Y), [10, -1, 1])
+
+            Y = tf.reshape(Y, (10, -1, 1))
+            loss = self.model.fit([X, a0, c0], list(Y), steps_per_epoch=steps_per_epoch, verbose=0)
+
+            trained = i * batch_size
+            if trained % 6400 == 0:
+                print("finished:", trained/(400000 * epoch), "loss:", loss.history["loss"][0])
+                if not utility.send_progress("@arvin training {} model, file: {}".format(self.name, path),
+                                             trained,
+                                             400000 * epoch,
+                                             "loss: " + str(loss.history["loss"][0])):
+                    print("internet disconnect")
+
+        self.inference_model = self._build_inference_model()
+
+
+    def get_click_probs(self, session):
         qid = session[0]
         docids = session[1:11]
         clicks = session[11:21]
         q_rep = self.query_rep[qid]
+        x0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(self.d_dim)))
+        x0 = x0.reshape((1, 1, -1))  # shape (1, 1, 11265)
+        a0 = np.zeros((1, self.n_a))  # shape (1, 64)
+        c0 = np.zeros((1, self.n_a))  # shape (1, 64)
+        i0 = np.zeros((1, 1))  # shape (1, 1)
+        q0 = np.zeros((1, self.q_dim))  # shape (1, 1024)
 
-        t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
-        t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
-        input[0] = t0
-        input[1] = t1
+        D = np.zeros((1, 10, self.d_dim))  # shape (1, 1, 10240)
+        for rank in range(10):
+            D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
 
-        for rank in range(2, 11):
-            t = np.append(np.zeros(1024), np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank - 1]]))
-            input[rank] = t
-
-        target = clicks
-
-    def save_training_set(self, train_log, path):
-        # train_log = train_log.reshape(-1, self._batch_size, 21)
-        train_size = train_log.shape[0]
-        training_inputs = []
-        traninig_labels = []
-
-        input = np.zeros((11, self._representations_dims))
-
-        i = 0
-        for session in train_log:
-            qid = session[0]
-            docids = session[1:11]
-            clicks = session[11:21]
-            q_rep = self.query_rep[qid]
-
-            t0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(10240)))
-            t1 = np.append(np.zeros(1024), np.append(np.zeros(1), self.doc_rep[qid][docids[0]]))
-            input[0] = t0
-            input[1] = t1
-
-            for rank in range(2, 11):
-                t = np.append(np.zeros(1024), np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
-                input[rank] = t
-
-            target = clicks
-
-            training_inputs.append(input)
-            traninig_labels.append(target)
-            i += 1
-            print(i/train_size)
-
-
-
-        with bz2.BZ2File(path+'Xv2.txt', 'w') as sfile:
-            pickle.dump(np.array(training_inputs), sfile)
-        with bz2.BZ2File(path+'Yv2.txt', 'w') as sfile:
-            pickle.dump(np.array(traninig_labels), sfile)
-
-
-
-
-
+        pred = self.inference_model.predict([x0, a0, c0, D, i0, q0])
+        return np.array(pred)[:, 0, 0]
 
     def initial_representation(self, click_log):
         print("{} processing log.......".format(self.name))
@@ -229,15 +174,133 @@ class NCM(CM):
             clicks = click_log[line][11:21]
 
             if qid not in self.query_rep.keys():
-                self.query_rep[qid] = np.zeros(1024)
+                self.query_rep[qid] = np.zeros(self.q_dim, dtype=int)
                 self.doc_rep[qid] = {}
             clicks = clicks.astype(np.int)
-            pattern_index = clicks.dot(1 << np.arange(clicks.shape[-1] - 1, -1, -1))
+            pattern_index = clicks.dot(1 << np.arange(clicks.shape[-1] - 1, -1, -1))  # binary to decimal
             self.query_rep[qid][pattern_index] += 1
 
             for rank in range(10):
                 docid = docIds[rank]
                 if docid not in self.doc_rep[qid].keys():
-                    self.doc_rep[qid][docid] = np.zeros(1024*10)
-                self.doc_rep[qid][docid][rank * 1024 + pattern_index] += 1
+                    self.doc_rep[qid][docid] = np.zeros(self.d_dim, dtype=int)
+                self.doc_rep[qid][docid][rank * self.q_dim + pattern_index] += 1
 
+    def save_training_tfrecord(self, train_log, path, simulator):
+        # train_log = train_log.reshape(-1, self._batch_size, 21)
+        print("writing tfrecord file for {}.......".format(simulator))
+        writer = tf.io.TFRecordWriter(path)
+
+        num_session = 0
+
+        input = np.zeros((11, self.rep_dim), dtype=int)
+        i0 = np.zeros(1, dtype=int)
+        q0 = np.zeros(self.q_dim, dtype=int)
+
+        for session in train_log:
+            qid = session[0]
+            docids = session[1:11]
+            clicks = session[11:21]
+            q_rep = self.query_rep[qid]
+
+            t0 = np.append(q_rep, np.append(i0, np.zeros(self.d_dim, dtype=int)))
+            t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
+
+            input[0] = t0
+            input[1] = t1
+
+            for rank in range(2, 11):
+                t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
+                input[rank] = t
+
+            output = np.array(clicks).reshape((-1, 1))
+
+            example = self.make_sequence_example(input, output)
+            serialized = example.SerializeToString()
+            writer.write(serialized)
+            num_session += 1
+            if num_session % 1000 == 0:
+                if not utility.send_progress("@arvin generate {} model .tfrecord file".format(simulator), num_session, 400000,
+                                             "train_set1_NCM"):
+                    print("internet disconnect")
+        writer.close()
+
+    def save_training_numpy(self, train_log, path, simulator):
+        # train_log = train_log.reshape(-1, self._batch_size, 21)
+        print("writing numpy file.......")
+
+        num_session = 0
+        input = np.zeros((train_log.shape[0], 11, self.rep_dim))
+        i0 = np.zeros(1)
+        q0 = np.zeros(self.q_dim)
+        d0 = np.zeros(self.d_dim)
+        label = np.zeros((10, len(train_log), 1))
+
+        for session in train_log:
+            qid = session[0]
+            docids = session[1:11]
+            clicks = session[11:21]
+            q_rep = self.query_rep[qid]
+
+            t0 = np.append(q_rep, np.append(i0, d0))
+            t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
+
+            input[num_session][0] = t0
+            input[num_session][1] = t1
+
+            for rank in range(2, 11):
+                t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
+                input[num_session][rank] = t
+
+            label[:, num_session, :] = clicks.reshape(10, 1)
+
+            num_session += 1
+
+            if num_session % 1000 == 0:
+                print("\r", end='')
+                print("num_of_writen:", num_session / 400000, end="", flush=True)
+                if not utility.send_progress("@arvin generate {} model numpy file".format(simulator), num_session, 400000,
+                                             "train_set1_NCM"):
+                    print("internet disconnect")
+
+        np.savez(path, input=input, label=label)
+        # with bz2.BZ2File(path+"input.txt", 'w') as fp:
+        #     pickle.dump(input, fp)
+        # with bz2.BZ2File(path+"label.txt", 'w') as fp:
+        #     pickle.dump(label, fp)
+
+
+    def make_sequence_example(self, inputs, labels):
+        """Returns a SequenceExample for the given inputs and labels.
+
+        Args:
+          inputs: A list of input vectors. Each input vector is a list of floats.
+          labels: A list of ints.
+
+        Returns:
+          A tf.train.SequenceExample containing inputs and labels.
+        """
+        input_features = [
+            tf.train.Feature(int64_list=tf.train.Int64List(value=input_))
+            for input_ in inputs]
+        label_features = [
+            tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
+            for label in labels]
+        feature_list = {
+            'inputs': tf.train.FeatureList(feature=input_features),
+            'labels': tf.train.FeatureList(feature=label_features)
+        }
+        feature_lists = tf.train.FeatureLists(feature_list=feature_list)
+        return tf.train.SequenceExample(feature_lists=feature_lists)
+
+    def _read_tfrecord(self, example):
+        sequence_features = {
+            "inputs": tf.io.FixedLenSequenceFeature([self.rep_dim], dtype=tf.int64),
+            "labels": tf.io.FixedLenSequenceFeature([1], dtype=tf.int64)
+            # "init_state": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
+            # "init_cell": tf.io.FixedLenSequenceFeature([], dtype=tf.int64)
+        }
+        # decode the TFRecord
+        _, example = tf.io.parse_single_sequence_example(serialized=example, sequence_features=sequence_features)
+
+        return example['inputs'], example['labels']
