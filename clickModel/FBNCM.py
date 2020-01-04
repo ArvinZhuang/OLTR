@@ -73,7 +73,7 @@ class FBNCM(NCM):
             writer.write(serialized)
             num_session += 1
             if num_session % 1000 == 0:
-                if not utility.send_progress("@arvin generate {} model .tfrecord file".format(simulator), num_session, 400000,
+                if not utility.send_progress("@arvin {} generate {} model .tfrecord file".format(self.name, simulator), num_session, 400000,
                                              path):
                     print("internet disconnect")
         writer.close()
