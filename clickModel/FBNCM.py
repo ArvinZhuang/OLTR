@@ -38,6 +38,30 @@ class FBNCM(NCM):
                 if docid not in self.doc_rep[qid].keys():
                     self.doc_rep[qid][docid] = self.dataset.get_features_by_query_and_docid(qid, int(docid))
 
+    def get_click_probs(self, session):
+        qid = session[0]
+        docids = session[1:11]
+        clicks = session[11:21]
+        q_rep = self.query_rep[qid]
+        x0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(self.d_dim)))
+        x0 = x0.reshape((1, 1, -1))  # shape (1, 1, 11265)
+        a0 = np.zeros((1, self.n_a))  # shape (1, 64)
+        c0 = np.zeros((1, self.n_a))  # shape (1, 64)
+        i0 = np.zeros((1, 1))  # shape (1, 1)
+        q0 = np.zeros((1, self.q_dim))  # shape (1, 1024)
+
+        D = np.zeros((1, 10, self.d_dim))  # shape (1, 1, 10240)
+        for rank in range(10):
+            docid = docids[rank]
+            if docid not in self.doc_rep[qid].keys():
+                D[0][rank] = self.dataset.get_features_by_query_and_docid(qid, int(docid))
+                print("find unseen document: ", qid, docid)
+            else:
+                D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
+
+        pred = self.inference_model.predict([x0, a0, c0, D, i0, q0])
+        return np.array(pred)[:, 0, 0]
+
 
     def save_training_tfrecord(self, train_log, path, simulator):
         # train_log = train_log.reshape(-1, self._batch_size, 21)

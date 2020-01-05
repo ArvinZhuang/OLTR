@@ -8,25 +8,22 @@ from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from clickModel.UBM import UBM
 from clickModel.Mixed import Mixed
-from clickModel.NCM import NCM
+from clickModel.FBNCM import FBNCM
 
 
 
 
 def run(simulator, dataset, run):
 
-    click_model = NCM(64, 1024, 10240)
+    click_model = FBNCM(64, 700, 700, dataset)
 
     click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator.name, "1")
     click_log = rf.read_click_log(click_log_path)
     click_model.initial_representation(click_log)
 
-    click_model.train_tfrecord('../click_logs/{}/train_set{}_NCM.tfrecord'.format(simulator.name, run),
-                               batch_size=64,
-                               epoch=5,
-                               steps_per_epoch=1)
+    click_model.train_tfrecord('../click_logs/{}/train_set{}_FBNCM.tfrecord'.format(simulator.name, run), batch_size=64, epoch=5, steps_per_epoch=1)
 
-    click_model.inference_model.save("../click_model_results/NCM_model/{}/train_set{}.h5".format(simulator.name, run))
+    click_model.inference_model.save("../click_model_results/FBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
 
 
     test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(simulator.name, run)
@@ -34,7 +31,7 @@ def run(simulator, dataset, run):
     test_click_log = rf.read_click_log(test_click_log_path)
     query_frequency = rf.read_query_frequency(query_frequency_path)
 
-    f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(simulator.name, run, "NCM")
+    f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(simulator.name, run, "FBNCM")
                              , "w+")
 
     test_logs = {'10': [],
@@ -50,7 +47,7 @@ def run(simulator, dataset, run):
     frequencies = ['10', '100', '1000', '10000']
     # i = 0
 
-    f.write("Click Model:" + "NCM" + "\n")
+    f.write("Click Model:" + "FBNCM" + "\n")
 
     for freq in frequencies:
         perplexities = click_model.get_perplexity(np.array(test_logs[freq]))

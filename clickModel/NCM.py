@@ -97,9 +97,9 @@ class NCM(CM):
     def _concatebate(self, rep):
         q = rep[0]
         out = rep[1]
-        # print("1", out)
-        # out = K.round(out)
-        # print("2", out)
+
+        out = K.round(out)
+
         x = rep[2]
         x = K.concatenate((q, out, x))
         x = RepeatVector(1)(x)
@@ -115,7 +115,8 @@ class NCM(CM):
     def train_tfrecord(self, path, batch_size=32, epoch=5, steps_per_epoch=1):
         print("start")
 
-        tfrecord = tf.data.TFRecordDataset(path, compression_type='GZIP')
+        # tfrecord = tf.data.TFRecordDataset(path, compression_type='GZIP')
+        tfrecord = tf.data.TFRecordDataset(path)
         tfrecord = tfrecord.map(self._read_tfrecord)
         tfrecord = tfrecord.repeat(epoch)
         # tfrecord = tfrecord.shuffle(batch_size*10)
@@ -192,7 +193,7 @@ class NCM(CM):
     def save_training_tfrecord(self, train_log, path, simulator):
         # train_log = train_log.reshape(-1, self._batch_size, 21)
         print("writing tfrecord file for {}.......".format(simulator))
-        writer = tf.io.TFRecordWriter(path)
+        writer = tf.io.TFRecordWriter(path, options='GZIP')
 
         num_session = 0
 
