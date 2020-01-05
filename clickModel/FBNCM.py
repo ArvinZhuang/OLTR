@@ -42,7 +42,7 @@ class FBNCM(NCM):
     def save_training_tfrecord(self, train_log, path, simulator):
         # train_log = train_log.reshape(-1, self._batch_size, 21)
         print("writing tfrecord file for {}.......".format(simulator))
-        writer = tf.io.TFRecordWriter(path)
+        writer = tf.io.TFRecordWriter(path, options='GZIP')
 
         num_session = 0
 

@@ -115,7 +115,7 @@ class NCM(CM):
     def train_tfrecord(self, path, batch_size=32, epoch=5, steps_per_epoch=1):
         print("start")
 
-        tfrecord = tf.data.TFRecordDataset(path)
+        tfrecord = tf.data.TFRecordDataset(path, compression_type='GZIP')
         tfrecord = tfrecord.map(self._read_tfrecord)
         tfrecord = tfrecord.repeat(epoch)
         # tfrecord = tfrecord.shuffle(batch_size*10)
@@ -159,7 +159,10 @@ class NCM(CM):
 
         D = np.zeros((1, 10, self.d_dim))  # shape (1, 1, 10240)
         for rank in range(10):
-            D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
+            if docids[rank] not in self.doc_rep[qid].keys():
+                D[0][rank] = np.zeros(self.d_dim, dtype=int)
+            else:
+                D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
 
         pred = self.inference_model.predict([x0, a0, c0, D, i0, q0])
         return np.array(pred)[:, 0, 0]
