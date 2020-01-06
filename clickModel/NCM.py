@@ -23,13 +23,13 @@ class NCM(CM):
         self.q_dim = q_dim
         self.d_dim = d_dim
         self.rep_dim = q_dim + 1 + d_dim
-        self.reshapor = Reshape((1, self.rep_dim))  # Used in Step 2.B of djmodel(), below
-        self.LSTM_cell = LSTM(n_a, return_state=True)  # Used in Step 2.C
+        self.reshapor = Reshape((1, self.rep_dim))
+        self.LSTM_cell = LSTM(n_a, return_state=True)
         self.densor = Dense(1, activation='sigmoid')
         self.model = self._build_model()
-        opt = Adam(lr=0.01, beta_1=0.9, beta_2=0.999, decay=0.01)
+        opt = Adadelta()
         self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-        # print(self.model.summary())
+        print(self.model.summary())
 
         self.query_rep = {}
         self.doc_rep = {}
@@ -52,7 +52,7 @@ class NCM(CM):
                 out = self.densor(a)
                 outputs.append(out)
         model = Model(inputs=[X, a0, c0], outputs=outputs)
-        self.test_model = Model(inputs=[X, a0, c0], outputs=outputs)
+        # self.test_model = Model(inputs=[X, a0, c0], outputs=outputs)
         return model
 
 
@@ -69,16 +69,10 @@ class NCM(CM):
         c = c0
         x = x0
 
-
-        ### START CODE HERE ###
-        # Step 1: Create an empty list of "outputs" to later store your predicted values (≈1 line)
         outputs = []
-        # Step 2: Loop over Ty and generate a value at every time step
         for t in range(11):
-            # Step 2.A: Perform one step of LSTM_cell (≈1 line)
             a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
 
-            # Step 2.B: Apply Dense layer to the hidden state output of the LSTM_cell (≈1 line)
             if t < 10:
                 x = Lambda(lambda D: D[:, t, :])(D)
             if t > 0:
@@ -90,7 +84,6 @@ class NCM(CM):
             else:
                 x = Lambda(self._concatebate)([q0, i0, x])
 
-        # Step 3: Create model instance with the correct "inputs" and "outputs" (≈1 line)
         inference_model = Model(inputs=[x0, a0, c0, D, i0, q0], outputs=outputs)
         return inference_model
 
@@ -115,28 +108,49 @@ class NCM(CM):
     def train_tfrecord(self, path, batch_size=32, epoch=5, steps_per_epoch=1):
         print("start")
 
-        # tfrecord = tf.data.TFRecordDataset(path, compression_type='GZIP')
-        tfrecord = tf.data.TFRecordDataset(path)
+        tfrecord = tf.data.TFRecordDataset(path, compression_type='GZIP')
+        # tfrecord = tf.data.TFRecordDataset(path)
+        # c = 0
+        # for record in tf.io.tf_record_iterator(path):
+        #     c += 1
+        # print(c)
         tfrecord = tfrecord.map(self._read_tfrecord)
         tfrecord = tfrecord.repeat(epoch)
-        # tfrecord = tfrecord.shuffle(batch_size*10)
+        tfrecord = tfrecord.shuffle(batch_size*10)
         tfrecord = tfrecord.batch(batch_size, drop_remainder=False)
 
         a0 = np.zeros((batch_size, self.n_a))
         c0 = np.zeros((batch_size, self.n_a))
         i = 0
+        num_batch = 0
+        epoch_loss = 0
+        num_epoch = 0
         for batch in tfrecord:
             i += 1
 
             X, Y = batch
+
             Y = tf.reshape(tf.transpose(Y), [10, -1, 1])
 
-            Y = tf.reshape(Y, (10, -1, 1))
             loss = self.model.fit([X, a0, c0], list(Y), steps_per_epoch=steps_per_epoch, verbose=0)
 
             trained = i * batch_size
+            if num_batch < 400000/batch_size:
+                num_batch += 1
+                epoch_loss += loss.history["loss"][0]
+            else:
+                print(epoch_loss/num_batch)
+                # if not utility.send_progress("@arvin training {} model, file: {}".format(self.name, path),
+                #                              num_epoch,
+                #                              epoch,
+                #                              "loss: " + str(epoch_loss/num_batch)):
+                #     print("internet disconnect")
+                # num_batch = 0
+                # epoch_loss = 0
+                # num_epoch += 1
+
             if trained % 6400 == 0:
-                print("finished:", trained/(400000 * epoch), "loss:", loss.history["loss"][0])
+                # print("finished:", trained/(400000 * epoch), "loss:", loss.history["loss"][0])
                 if not utility.send_progress("@arvin training {} model, file: {}".format(self.name, path),
                                              trained,
                                              400000 * epoch,
@@ -159,14 +173,19 @@ class NCM(CM):
         q0 = np.zeros((1, self.q_dim))  # shape (1, 1024)
 
         D = np.zeros((1, 10, self.d_dim))  # shape (1, 1, 10240)
+        unseen_docs = []
         for rank in range(10):
             if docids[rank] not in self.doc_rep[qid].keys():
                 D[0][rank] = np.zeros(self.d_dim, dtype=int)
+                unseen_docs.append(rank)
             else:
                 D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
 
         pred = self.inference_model.predict([x0, a0, c0, D, i0, q0])
-        return np.array(pred)[:, 0, 0]
+        pred = np.array(pred)[:, 0, 0]
+        for rank in unseen_docs:
+            pred[rank] = 0.5
+        return pred
 
     def initial_representation(self, click_log):
         print("{} processing log.......".format(self.name))
@@ -192,7 +211,7 @@ class NCM(CM):
 
     def save_training_tfrecord(self, train_log, path, simulator):
         # train_log = train_log.reshape(-1, self._batch_size, 21)
-        print("writing tfrecord file for {}.......".format(simulator))
+        print("writing {} for {}.......".format(path, simulator))
         writer = tf.io.TFRecordWriter(path, options='GZIP')
 
         num_session = 0
@@ -224,8 +243,8 @@ class NCM(CM):
             writer.write(serialized)
             num_session += 1
             if num_session % 1000 == 0:
-                if not utility.send_progress("@arvin {} generate {} model .tfrecord file".format(self.name, simulator), num_session, 400000,
-                                             "train_set1_NCM"):
+                if not utility.send_progress("@arvin {} generate {}".format(self.name, path), num_session, 400000,
+                                             "num_session {}".format(num_session)):
                     print("internet disconnect")
         writer.close()
 

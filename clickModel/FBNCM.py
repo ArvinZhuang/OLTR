@@ -65,7 +65,7 @@ class FBNCM(NCM):
 
     def save_training_tfrecord(self, train_log, path, simulator):
         # train_log = train_log.reshape(-1, self._batch_size, 21)
-        print("writing tfrecord file for {}.......".format(simulator))
+        print("writing {} for {}.......".format(path, simulator))
         writer = tf.io.TFRecordWriter(path, options='GZIP')
 
         num_session = 0
@@ -97,8 +97,8 @@ class FBNCM(NCM):
             writer.write(serialized)
             num_session += 1
             if num_session % 1000 == 0:
-                if not utility.send_progress("@arvin {} generate {} model .tfrecord file".format(self.name, simulator), num_session, 400000,
-                                             path):
+                if not utility.send_progress("@arvin {} generate {}".format(self.name, path), num_session, 400000,
+                                             "num_session {}".format(num_session)):
                     print("internet disconnect")
         writer.close()
 

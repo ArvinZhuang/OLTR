@@ -25,16 +25,16 @@ def read_set_result_file(simulator, click_model, id):
 def plot_perplexity_MSE_for_each_rank(simulator, click_model, p1, p2):
     avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
 
-    for id in range(1, 2):
-        perplexities, MSEs = read_set_result_file(simulator, click_model, id)
-        for i in range(4):
-            avg_perplexities[i].append(perplexities[i][0])
-            avg_MSEs[i].append(MSEs[i][0])
+    # for id in range(1, 2):
+    #     perplexities, MSEs = read_set_result_file(simulator, click_model, id)
+    #     for i in range(4):
+    #         avg_perplexities[i].append(perplexities[i][0])
+    #         avg_MSEs[i].append(MSEs[i][0])
 
     avg_perplexities = np.array(avg_perplexities)
     avg_MSEs = np.array(avg_MSEs)
     print("test")
-    for i in range(4):
+    for i in range(0, 1):
         mse_mean = np.mean(avg_MSEs[i].T, axis=1)
         mse_std_err = sem(avg_MSEs[i].T, axis=1)
         mse_h = mse_std_err * t.ppf((1 + 0.95) / 2, 25 - 1)
@@ -67,11 +67,11 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
     for click_model in click_models:
         avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
 
-        for id in range(1, 2):
-            perplexities, MSEs = read_set_result_file(simulator, click_model, id)
-            for i in range(4):
-                avg_perplexities[i].append(perplexities[i][0])
-                avg_MSEs[i].append(MSEs[i][0])
+        # for id in range(1, 2):
+        #     perplexities, MSEs = read_set_result_file(simulator, click_model, id)
+        #     for i in range(4):
+        #         avg_perplexities[i].append(perplexities[i][0])
+        #         avg_MSEs[i].append(MSEs[i][0])
 
         avg_perplexities = np.array(avg_perplexities)
         avg_MSEs = np.array(avg_MSEs)
@@ -83,7 +83,7 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
         model_perplexity = np.zeros((num_runs, 10))
         model_MSE = np.zeros((num_runs, 10))
 
-        for i in range(num_freq):
+        for i in range(0, 1):
             model_perplexity += avg_perplexities[i]
             model_MSE += avg_MSEs[i]
         model_perplexity = model_perplexity/num_freq
@@ -117,44 +117,44 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
 
 if __name__ == "__main__":
     simulators = ["SDBN", 'DCTR', 'UBM', "Mixed"]
-    click_models = ["SDBN", 'DCTR', 'UBM', "FBNCM"]
+    click_models = ["SDBN", 'DCTR', 'UBM', "NCM", "FBNCM"]
 
-    simulators = ["DCTR"]
-    click_models = ["FBNCM"]
-    # click_models = ["SDBN", 'DCTR', 'SDCM', 'UBM', 'CM', 'LSTM']
+    # simulators = ["Mixed"]
+    # click_models = ["NCM", "FBNCM" ,"UBM"]
 
-    for s in simulators:
-        f = plt.figure(1)
-        f.suptitle("simulator: {}.".format(s))
-        plot_index = 1
-        for cm in click_models:
-            p1 = plt.subplot(len(click_models), 2, plot_index)
-            p2 = plt.subplot(len(click_models), 2, plot_index + 1)
-            avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
-            plot_index += 2
-        p1.legend(['10', '100', '1000', '10000'], loc='upper right')
-        p2.legend(['10', '100', '1000', '10000'], loc='upper right')
-        p1.set_xlabel('rank')
-        p2.set_xlabel('rank')
-        plt.show()
-
-    # f = plt.figure(1)
-    # plot_index = 1
+    #
     # for s in simulators:
-    #     p1 = plt.subplot(len(simulators), 2, plot_index)
-    #     p2 = plt.subplot(len(simulators), 2, plot_index + 1)
-    #     p1.set_title("simulator: " + s)
-    #     p2.set_title("simulator: " + s)
+    #     f = plt.figure(1)
+    #     f.suptitle("simulator: {}.".format(s))
+    #     plot_index = 1
+    #     for cm in click_models:
+    #         p1 = plt.subplot(len(click_models), 2, plot_index)
+    #         p2 = plt.subplot(len(click_models), 2, plot_index + 1)
+    #         avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
+    #         plot_index += 2
+    #     p1.legend(['10', '100', '1000', '10000'], loc='upper right')
+    #     p2.legend(['10', '100', '1000', '10000'], loc='upper right')
+    #     p1.set_xlabel('rank')
+    #     p2.set_xlabel('rank')
+    #     plt.show()
     #
-    #     plot_for_each_simulator(s, click_models, p1, p2)
-    #     plot_index += 2
-    #
-    #     p1.legend(click_models, loc='upper right')
-    #     p2.legend(click_models, loc='upper right')
-    #
-    #
-    # p1.set_xlabel('rank')
-    # p2.set_xlabel('rank')
-    # f.subplots_adjust(wspace=0.3, hspace=0.3)
-    #
-    # plt.show()
+    f = plt.figure(1)
+    plot_index = 1
+    for s in simulators:
+        p1 = plt.subplot(len(simulators), 2, plot_index)
+        p2 = plt.subplot(len(simulators), 2, plot_index + 1)
+        p1.set_title("simulator: " + s)
+        p2.set_title("simulator: " + s)
+
+        plot_for_each_simulator(s, click_models, p1, p2)
+        plot_index += 2
+
+        p1.legend(click_models, loc='upper right')
+        p2.legend(click_models, loc='upper right')
+
+
+    p1.set_xlabel('rank')
+    p2.set_xlabel('rank')
+    f.subplots_adjust(wspace=0.3, hspace=0.3)
+
+    plt.show()
