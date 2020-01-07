@@ -67,7 +67,7 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
     for click_model in click_models:
         avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
 
-        # for id in range(1, 2):
+        # for id in range(2, 16):
         #     perplexities, MSEs = read_set_result_file(simulator, click_model, id)
         #     for i in range(4):
         #         avg_perplexities[i].append(perplexities[i][0])
@@ -83,11 +83,11 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
         model_perplexity = np.zeros((num_runs, 10))
         model_MSE = np.zeros((num_runs, 10))
 
-        for i in range(0, 1):
+        for i in range(2, 3):
             model_perplexity += avg_perplexities[i]
             model_MSE += avg_MSEs[i]
-        model_perplexity = model_perplexity/num_freq
-        model_MSE = model_MSE / num_freq
+        model_perplexity = model_perplexity/1
+        model_MSE = model_MSE / 1
 
         mse_mean = np.mean(model_MSE.T, axis=1)
         mse_std_err = sem(model_MSE.T, axis=1)
@@ -117,10 +117,10 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
 
 if __name__ == "__main__":
     simulators = ["SDBN", 'DCTR', 'UBM', "Mixed"]
-    click_models = ["SDBN", 'DCTR', 'UBM', "NCM", "FBNCM"]
+    # click_models = ["SDBN", 'DCTR', 'UBM', "NCM", "FBNCM"]
 
-    # simulators = ["Mixed"]
-    # click_models = ["NCM", "FBNCM" ,"UBM"]
+    simulators = ["SDBN"]
+    click_models = ["SDBN", 'DCTR', 'UBM', "FBNCM"]
 
     #
     # for s in simulators:

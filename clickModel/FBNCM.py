@@ -42,7 +42,12 @@ class FBNCM(NCM):
         qid = session[0]
         docids = session[1:11]
         clicks = session[11:21]
-        q_rep = self.query_rep[qid]
+        if qid not in self.query_rep.keys():
+            feature_matrix = self.dataset.get_all_features_by_query(qid)
+            self.query_rep[qid] = np.mean(feature_matrix, axis=0)
+            self.doc_rep[qid] = {}
+        else:
+            q_rep = self.query_rep[qid]
         x0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(self.d_dim)))
         x0 = x0.reshape((1, 1, -1))  # shape (1, 1, 11265)
         a0 = np.zeros((1, self.n_a))  # shape (1, 64)

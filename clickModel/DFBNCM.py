@@ -56,3 +56,37 @@ class DFBNCM(FBNCM):
                     self.doc_rep[qid][docid] = np.append(feature_rep, distribution_rep)
                 else:
                     self.doc_rep[qid][docid][self.fd_dim + rank * self.dq_dim + pattern_index] += 1
+
+    def get_click_probs(self, session):
+        qid = session[0]
+        docids = session[1:11]
+        clicks = session[11:21]
+        if qid not in self.query_rep.keys():
+            feature_matrix = self.dataset.get_all_features_by_query(qid)
+            feature_rep = np.mean(feature_matrix, axis=0)
+            distribution_rep = np.zeros(self.dq_dim)
+
+            self.query_rep[qid] = np.append(feature_rep, distribution_rep)
+            self.doc_rep[qid] = {}
+        else:
+            q_rep = self.query_rep[qid]
+        x0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(self.d_dim)))
+        x0 = x0.reshape((1, 1, -1))  # shape (1, 1, 11265)
+        a0 = np.zeros((1, self.n_a))  # shape (1, 64)
+        c0 = np.zeros((1, self.n_a))  # shape (1, 64)
+        i0 = np.zeros((1, 1))  # shape (1, 1)
+        q0 = np.zeros((1, self.q_dim))  # shape (1, 1024)
+
+        D = np.zeros((1, 10, self.d_dim))  # shape (1, 1, 10240)
+        for rank in range(10):
+            docid = docids[rank]
+            if docid not in self.doc_rep[qid].keys():
+                feature_rep = self.dataset.get_features_by_query_and_docid(qid, int(docid))
+                distribution_rep = np.zeros(self.dd_dim, dtype=int)
+                D[0][rank] = np.append(feature_rep, distribution_rep)
+                print("find unseen document: ", qid, docid)
+            else:
+                D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
+
+        pred = self.inference_model.predict([x0, a0, c0, D, i0, q0])
+        return np.array(pred)[:, 0, 0]

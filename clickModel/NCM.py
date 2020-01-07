@@ -16,7 +16,7 @@ from utils import utility
 
 
 class NCM(CM):
-    def __init__(self, n_a, q_dim, d_dim):
+    def __init__(self, n_a, q_dim, d_dim, inference_model=None):
         super().__init__()
         self.name = 'NCM'
         self.n_a = n_a
@@ -24,8 +24,9 @@ class NCM(CM):
         self.d_dim = d_dim
         self.rep_dim = q_dim + 1 + d_dim
         self.reshapor = Reshape((1, self.rep_dim))
-        self.LSTM_cell = LSTM(n_a, return_state=True)
-        self.densor = Dense(1, activation='sigmoid')
+        self.LSTM_cell = LSTM(n_a, return_state=True, name="lstm_cell")
+        self.densor = Dense(1, activation='sigmoid', name="dense")
+        self.dropout = Dropout(0.2)
         self.model = self._build_model()
         opt = Adadelta()
         self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
@@ -33,6 +34,7 @@ class NCM(CM):
 
         self.query_rep = {}
         self.doc_rep = {}
+        self.inference_model = inference_model
 
 
     def _build_model(self):
@@ -47,7 +49,9 @@ class NCM(CM):
         for t in range(11):
             x = Lambda(lambda X: X[:, t, :])(X)
             x = self.reshapor(x)
+            x = self.dropout(x)
             a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
+            a = self.dropout(a)
             if t >= 1:
                 out = self.densor(a)
                 outputs.append(out)
@@ -109,11 +113,6 @@ class NCM(CM):
         print("start")
 
         tfrecord = tf.data.TFRecordDataset(path, compression_type='GZIP')
-        # tfrecord = tf.data.TFRecordDataset(path)
-        # c = 0
-        # for record in tf.io.tf_record_iterator(path):
-        #     c += 1
-        # print(c)
         tfrecord = tfrecord.map(self._read_tfrecord)
         tfrecord = tfrecord.repeat(epoch)
         tfrecord = tfrecord.shuffle(batch_size*10)
@@ -139,15 +138,15 @@ class NCM(CM):
                 num_batch += 1
                 epoch_loss += loss.history["loss"][0]
             else:
-                print(epoch_loss/num_batch)
+                print(num_epoch, epoch_loss/num_batch)
                 # if not utility.send_progress("@arvin training {} model, file: {}".format(self.name, path),
                 #                              num_epoch,
                 #                              epoch,
                 #                              "loss: " + str(epoch_loss/num_batch)):
                 #     print("internet disconnect")
-                # num_batch = 0
-                # epoch_loss = 0
-                # num_epoch += 1
+                num_batch = 0
+                epoch_loss = 0
+                num_epoch += 1
 
             if trained % 6400 == 0:
                 # print("finished:", trained/(400000 * epoch), "loss:", loss.history["loss"][0])

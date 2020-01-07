@@ -22,11 +22,11 @@ def run(simulator, dataset, run):
     click_model.initial_representation(click_log)
 
     click_model.train_tfrecord('../click_logs/{}/train_set{}_FBNCM.tfrecord'.format(simulator.name, run),
-                               batch_size=128,
+                               batch_size=64,
                                epoch=20,
                                steps_per_epoch=1)
 
-    click_model.inference_model.save("../click_model_results/FBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
+    click_model.model.save("../click_model_results/FBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
 
 
     test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(simulator.name, run)
@@ -71,8 +71,8 @@ if __name__ == "__main__":
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
-    simulators = [DCTR(pc), SDBN(pc, ps), UBM(pc), Mixed(Mixed_models)]
-    # simulators = [DCTR(pc)]
+    simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
+    simulators = [Mixed(Mixed_models), DCTR(pc), UBM(pc)]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")

@@ -132,6 +132,7 @@ class CM(AbstractClickModel):
 
                 with np.errstate(invalid='raise'):
                     try:
+                        p = 0.001 if p < 0.001 else p
                         perplexity[rank] += np.log2(p)
                     except:
                         print("error!, p=", p)

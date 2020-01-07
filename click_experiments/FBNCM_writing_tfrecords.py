@@ -19,15 +19,15 @@ def job(click_log_path, output_path, simulator, dataset):
 if __name__ == "__main__":
 
     # simulators = ["SDBN", "DCTR", "UBM", "Mixed"]
-    simulators = ["DCTR"]
+    simulators = ["SDBN"]
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")
     dataset = LetorDataset(dataset_path, 700)
-    for r in range(3, 16):
+    for r in range(1, 2):
         pool = []
         for simulator in simulators:
-            click_log_path = "../click_logs/{}/train_set{}_small.txt".format(simulator, r)
-            output_path = "../click_logs/{}/train_set{}_small_FBNCM.tfrecord".format(simulator, r)
+            click_log_path = "../click_logs/{}/seen_set{}.txt".format(simulator, r)
+            output_path = "../click_logs/{}/seen_set{}_FBNCM.tfrecord".format(simulator, r)
 
             p = mp.Process(target=job, args=(click_log_path, output_path, simulator, dataset))
             p.start()
