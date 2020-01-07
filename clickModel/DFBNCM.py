@@ -19,8 +19,8 @@ from utils import utility
 
 
 class DFBNCM(FBNCM):
-    def __init__(self, n_a, dq_dim, dd_dim, fq_dim, fd_dim, dataset):
-        super().__init__(n_a, dq_dim+fq_dim, dd_dim+fd_dim, dataset)
+    def __init__(self, n_a, dq_dim, dd_dim, fq_dim, fd_dim, dataset, model=None):
+        super().__init__(n_a, dq_dim+fq_dim, dd_dim+fd_dim, dataset, model)
         self.name = "DFBNCM"
         self.dq_dim = dq_dim
         self.dd_dim = dd_dim

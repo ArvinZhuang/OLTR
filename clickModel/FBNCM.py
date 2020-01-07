@@ -19,7 +19,7 @@ from utils import utility
 
 
 class FBNCM(NCM):
-    def __init__(self, n_a, q_dim, d_dim, dataset, model):
+    def __init__(self, n_a, q_dim, d_dim, dataset, model=None):
         super().__init__(n_a, q_dim, d_dim, model)
         self.dataset = dataset
         self.name = "FBNCM"
