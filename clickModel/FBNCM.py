@@ -1,3 +1,8 @@
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID";
+
+# The GPU id to use, usually either "0" or "1";
+os.environ["CUDA_VISIBLE_DEVICES"] = "2";
 import numpy as np
 from pathlib import Path
 # from clickModel.AbstractClickModel import AbstractClickModel
@@ -14,8 +19,8 @@ from utils import utility
 
 
 class FBNCM(NCM):
-    def __init__(self, n_a, q_dim, d_dim, dataset):
-        super().__init__(n_a, q_dim, d_dim)
+    def __init__(self, n_a, q_dim, d_dim, dataset, model):
+        super().__init__(n_a, q_dim, d_dim, model)
         self.dataset = dataset
         self.name = "FBNCM"
 
@@ -46,8 +51,8 @@ class FBNCM(NCM):
             feature_matrix = self.dataset.get_all_features_by_query(qid)
             self.query_rep[qid] = np.mean(feature_matrix, axis=0)
             self.doc_rep[qid] = {}
-        else:
-            q_rep = self.query_rep[qid]
+
+        q_rep = self.query_rep[qid]
         x0 = np.append(q_rep, np.append(np.zeros(1), np.zeros(self.d_dim)))
         x0 = x0.reshape((1, 1, -1))  # shape (1, 1, 11265)
         a0 = np.zeros((1, self.n_a))  # shape (1, 64)

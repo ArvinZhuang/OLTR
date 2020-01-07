@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 import tensorflow as tf
 from dataset import LetorDataset
 import numpy as np

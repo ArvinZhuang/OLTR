@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 import tensorflow as tf
 from dataset import LetorDataset
 import numpy as np
@@ -9,62 +11,81 @@ from clickModel.DCTR import DCTR
 from clickModel.UBM import UBM
 from clickModel.Mixed import Mixed
 from clickModel.FBNCM import FBNCM
-
+from keras.models import load_model
 
 
 
 def run(simulator, dataset, run):
 
-    click_model = FBNCM(256, 700, 700, dataset)
+    click_model = FBNCM(256, 700, 700, dataset,
+                        model=load_model('../click_model_results/FBNCM_model/{}/train_set{}.h5'.format(simulator.name, run)))
 
     click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator.name, run)
     click_log = rf.read_click_log(click_log_path)
     click_model.initial_representation(click_log)
-
-    click_model.train_tfrecord('../click_logs/{}/train_set{}_FBNCM.tfrecord'.format(simulator.name, run),
-                               batch_size=64,
-                               epoch=20,
-                               steps_per_epoch=1)
-
-    click_model.model.save("../click_model_results/FBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
-
+    #
+    # click_model.train_tfrecord('../click_logs/{}/train_set{}_FBNCM.tfrecord'.format(simulator.name, run),
+    #                            batch_size=64,
+    #                            epoch=20,
+    #                            steps_per_epoch=1)
+    #
+    # click_model.model.save("../click_model_results/FBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
+    #
 
     test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(simulator.name, run)
+    unseen_test_click_log_path = "../click_logs/{}/unseen_set{}.txt".format(simulator.name, run)
     query_frequency_path = "../click_logs/{}/query_frequency{}.txt".format(simulator.name, run)
     test_click_log = rf.read_click_log(test_click_log_path)
+    unseen_test_click_log = rf.read_click_log(unseen_test_click_log_path)
     query_frequency = rf.read_query_frequency(query_frequency_path)
+    #
+    # f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(simulator.name, run, "FBNCM")
+    #                          , "w+")
+    #
+    # test_logs = {'10': [],
+    #                  '100': [],
+    #                  '1000': [],
+    #                  '10000': []
+    #                  }
+    #
+    # for i in range(test_click_log.shape[0]):
+    #     qid = test_click_log[i][0]
+    #     test_logs[query_frequency[qid]].append(test_click_log[i])
+    #
+    # frequencies = ['10', '100', '1000', '10000']
+    # # i = 0
+    #
+    # f.write("Click Model:" + "FBNCM" + "\n")
+    #
+    # for freq in frequencies:
+    #     perplexities = click_model.get_perplexity(np.array(test_logs[freq]))
+    #     MSEs = click_model.get_MSE(np.array(test_logs[freq]), dataset, simulator)
+    #
+    #     perplexity_line = "Frequency " + freq + " perplexities:"
+    #     MSEs_line = "Frequency " + freq + " MSE:"
+    #     for perp in perplexities:
+    #         perplexity_line += " " + str(perp)
+    #     for MSE in MSEs:
+    #         MSEs_line += " " + str(MSE)
+    #     f.write(perplexity_line + "\n")
+    #     f.write(MSEs_line + "\n")
+    #
+    # f.close()
 
-    f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(simulator.name, run, "FBNCM")
+    f = open("../click_model_results/{}/unseen_set{}_{}_result.txt".format(simulator.name, run, "FBNCM")
                              , "w+")
-
-    test_logs = {'10': [],
-                     '100': [],
-                     '1000': [],
-                     '10000': []
-                     }
-
-    for i in range(test_click_log.shape[0]):
-        qid = test_click_log[i][0]
-        test_logs[query_frequency[qid]].append(test_click_log[i])
-
-    frequencies = ['10', '100', '1000', '10000']
-    # i = 0
-
     f.write("Click Model:" + "FBNCM" + "\n")
+    perplexities = click_model.get_perplexity(np.array(unseen_test_click_log))
+    MSEs = click_model.get_MSE(np.array(unseen_test_click_log), dataset, simulator)
 
-    for freq in frequencies:
-        perplexities = click_model.get_perplexity(np.array(test_logs[freq]))
-        MSEs = click_model.get_MSE(np.array(test_logs[freq]), dataset, simulator)
-
-        perplexity_line = "Frequency " + freq + " perplexities:"
-        MSEs_line = "Frequency " + freq + " MSE:"
-        for perp in perplexities:
-            perplexity_line += " " + str(perp)
-        for MSE in MSEs:
-            MSEs_line += " " + str(MSE)
-        f.write(perplexity_line + "\n")
-        f.write(MSEs_line + "\n")
-
+    perplexity_line = "perplexities:"
+    MSEs_line = "MSE:"
+    for perp in perplexities:
+        perplexity_line += " " + str(perp)
+    for MSE in MSEs:
+        MSEs_line += " " + str(MSE)
+    f.write(perplexity_line + "\n")
+    f.write(MSEs_line + "\n")
     f.close()
 
 if __name__ == "__main__":
@@ -72,7 +93,7 @@ if __name__ == "__main__":
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
     simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
-    simulators = [Mixed(Mixed_models), DCTR(pc), UBM(pc)]
+    simulators = [SDBN(pc, ps)]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")

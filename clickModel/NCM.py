@@ -1,3 +1,8 @@
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID";
+
+# The GPU id to use, usually either "0" or "1";
+os.environ["CUDA_VISIBLE_DEVICES"] = "2";
 import numpy as np
 from pathlib import Path
 # from clickModel.AbstractClickModel import AbstractClickModel
@@ -16,7 +21,7 @@ from utils import utility
 
 
 class NCM(CM):
-    def __init__(self, n_a, q_dim, d_dim, inference_model=None):
+    def __init__(self, n_a, q_dim, d_dim, model=None):
         super().__init__()
         self.name = 'NCM'
         self.n_a = n_a
@@ -27,14 +32,19 @@ class NCM(CM):
         self.LSTM_cell = LSTM(n_a, return_state=True, name="lstm_cell")
         self.densor = Dense(1, activation='sigmoid', name="dense")
         self.dropout = Dropout(0.2)
-        self.model = self._build_model()
-        opt = Adadelta()
-        self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+        if model is not None:
+            self.model = model
+            self.LSTM_cell = self.model.get_layer("lstm_cell")
+            self.densor = self.model.get_layer("dense")
+            self.inference_model = self._build_inference_model()
+        else:
+            self.model = self._build_model()
+            opt = Adadelta()
+            self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
         print(self.model.summary())
 
         self.query_rep = {}
         self.doc_rep = {}
-        self.inference_model = inference_model
 
 
     def _build_model(self):
