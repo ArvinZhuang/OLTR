@@ -89,7 +89,6 @@ class DFBNCM(FBNCM):
                 feature_rep = self.dataset.get_features_by_query_and_docid(qid, int(docid))
                 distribution_rep = np.zeros(self.dd_dim, dtype=int)
                 D[0][rank] = np.append(feature_rep, distribution_rep)
-                print("find unseen document: ", qid, docid)
             else:
                 D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
 

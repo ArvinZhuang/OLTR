@@ -10,6 +10,7 @@ from clickModel.SDCM import SDCM
 from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from clickModel.SDBN import SDBN
+from clickModel.SDBN_reverse import SDBN_reverse
 from clickModel.UBM import UBM
 from clickModel.Mixed import Mixed
 from utils import evl_tool
@@ -157,11 +158,12 @@ if __name__ == "__main__":
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
 
-    click_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
-    Mixed_model = Mixed(click_models)
-    simulators = [DCTR(pc), SDBN(pc, ps), UBM(pc), Mixed_model]
+    # click_models = [DCTR(pc), SDBN(pc, ps), UBM(pc), SDBN_reverse(pc, ps)]
+    # Mixed_model = Mixed(click_models)
+    # simulators = [DCTR(pc), SDBN(pc, ps), UBM(pc), SDBN_reverse(pc, ps), Mixed_model]
+    simulators = [SDBN_reverse(pc, ps)]
 
-    for id in range(1, 16):
+    for id in range(2, 16):
         pool = []
         for cm in simulators:
             p = mp.Process(target=generate_dataset,
@@ -170,5 +172,5 @@ if __name__ == "__main__":
             pool.append(p)
         for p in pool:
             p.join()
-            utility.send_progress("@arvin generating "+cm.name + " click log.",
-                              id, 15, "generating smaller click log.")
+            # utility.send_progress("@arvin generating "+cm.name + " click log.",
+            #                   id, 15, "generating smaller click log.")

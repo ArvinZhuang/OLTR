@@ -11,24 +11,26 @@ from clickModel.DCTR import DCTR
 from clickModel.UBM import UBM
 from clickModel.Mixed import Mixed
 from clickModel.DFBNCM import DFBNCM
+from keras.models import load_model
 
 
 
 
 def run(simulator, dataset, run):
 
-    click_model = DFBNCM(256, 1024, 10240, 700, 700, dataset)
+    click_model = DFBNCM(256, 1024, 10240, 700, 700, dataset,
+                         model=load_model('../click_model_results/DFBNCM_model/{}/train_set{}.h5'.format(simulator.name, run)))
 
     click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator.name, run)
     click_log = rf.read_click_log(click_log_path)
     click_model.initial_representation(click_log)
 
-    click_model.train_tfrecord('../click_logs/{}/train_set{}_DFBNCM.tfrecord'.format(simulator.name, run),
-                               batch_size=64,
-                               epoch=20,
-                               steps_per_epoch=1)
-
-    click_model.model.save("../click_model_results/DFBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
+    # click_model.train_tfrecord('../click_logs/{}/train_set{}_DFBNCM.tfrecord'.format(simulator.name, run),
+    #                            batch_size=64,
+    #                            epoch=20,
+    #                            steps_per_epoch=1)
+    #
+    # click_model.model.save("../click_model_results/DFBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
 
 
     test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(simulator.name, run)
@@ -74,7 +76,7 @@ if __name__ == "__main__":
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
     simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
-    # simulators = [DCTR(pc)]
+    simulators = [Mixed(Mixed_models)]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")

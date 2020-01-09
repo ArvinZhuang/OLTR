@@ -65,7 +65,6 @@ class FBNCM(NCM):
             docid = docids[rank]
             if docid not in self.doc_rep[qid].keys():
                 D[0][rank] = self.dataset.get_features_by_query_and_docid(qid, int(docid))
-                print("find unseen document: ", qid, docid)
             else:
                 D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
 

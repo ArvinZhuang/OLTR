@@ -60,6 +60,7 @@ class NCM(CM):
             x = Lambda(lambda X: X[:, t, :])(X)
             x = self.reshapor(x)
             x = self.dropout(x)
+            print(x)
             a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
             a = self.dropout(a)
             if t >= 1:
@@ -71,6 +72,7 @@ class NCM(CM):
 
 
     def _build_inference_model(self):
+        print(self.rep_dim)
         x0 = Input(shape=(1, self.rep_dim))
 
         # Define s0, initial hidden state for the decoder LSTM
@@ -105,7 +107,7 @@ class NCM(CM):
         q = rep[0]
         out = rep[1]
 
-        out = K.round(out)
+        # out = K.round(out)
 
         x = rep[2]
         x = K.concatenate((q, out, x))
@@ -163,7 +165,7 @@ class NCM(CM):
                 if not utility.send_progress("@arvin training {} model, file: {}".format(self.name, path),
                                              trained,
                                              400000 * epoch,
-                                             "loss: " + str(loss.history["loss"][0])):
+                                             "epoch:{}, loss:{}".format(num_epoch, epoch_loss/num_batch)):
                     print("internet disconnect")
 
         self.inference_model = self._build_inference_model()

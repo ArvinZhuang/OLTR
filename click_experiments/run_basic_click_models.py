@@ -1,6 +1,7 @@
 import sys
 sys.path.append('../')
 from clickModel.SDBN import SDBN
+from clickModel.SDBN_reverse import SDBN_reverse
 from clickModel.SDCM import SDCM
 from clickModel.CM import CM
 from clickModel.DCTR import DCTR
@@ -73,12 +74,14 @@ if __name__ == "__main__":
                           # ('SDCM', SDCM(pc)),
                           # ('CM', CM(pc)),
                           ('DCTR', DCTR(pc)),
-                          ('UBM', UBM(pc)),
-                        ('Mixed', Mixed(mixed_models))]
+                          ('UBM', UBM(pc))
+                            ]
+
+    # datasets_simulator = [('SDBN_reverse', SDBN_reverse(pc, ps))]
     # datasets = ['CM']
     progress = 0
     for dataset, simulator in datasets_simulator:
-        for id in range(1, 16):
+        for id in range(1, 2):
             click_log_path = "../click_logs/{}/train_set{}.txt".format(dataset, id)
             test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(dataset, id)
             query_frequency_path = "../click_logs/{}/query_frequency{}.txt".format(dataset, id)
@@ -86,11 +89,13 @@ if __name__ == "__main__":
             test_click_log = rf.read_click_log(test_click_log_path)
             query_frequency = rf.read_query_frequency(query_frequency_path)
 
-            click_models = [SDBN(),
+            click_models = [SDBN_reverse(),
                             # SDCM(),
                             # CM(),
-                            DCTR(),
-                            UBM()]
+                            # DCTR(),
+                            # UBM(),
+                            # SDBN()
+                            ]
 
             processors = []
             for cm in click_models:
@@ -107,8 +112,8 @@ if __name__ == "__main__":
 
             progress += 1
 
-            if not utility.send_progress("Basic click model experiments", progress, 15, "{} run {}".format(dataset, id)):
-                print("internet disconnect")
+            # if not utility.send_progress("Basic click model experiments", progress, 15, "{} run {}".format(dataset, id)):
+            #     print("internet disconnect")
 
 
 

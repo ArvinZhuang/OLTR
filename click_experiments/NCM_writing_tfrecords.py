@@ -17,9 +17,9 @@ def job(click_log_path, output_path, simulator):
 
 if __name__ == "__main__":
 
-    simulators = ["SDBN", "DCTR", "UBM", "Mixed"]
+    simulators = ["SDBN", "DCTR", "UBM"]
 
-    for r in range(2, 16):
+    for r in range(3, 16):
         pool = []
         for simulator in simulators:
             click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator, r)
@@ -31,6 +31,3 @@ if __name__ == "__main__":
 
         for p in pool:
                 p.join()
-        if not utility.send_progress("@arvin writing tfrecord files.".format(simulator), r,
-                                     5, "First 5 runs"):
-            print("internet disconnect")
