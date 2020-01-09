@@ -75,8 +75,8 @@ if __name__ == "__main__":
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
-    simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
-    simulators = [Mixed(Mixed_models)]
+    # simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
+    simulators = [SDBN(pc, ps), DCTR(pc), UBM(pc)]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")

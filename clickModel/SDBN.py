@@ -125,6 +125,7 @@ class SDBN(CM):
         a_probs = np.zeros(10)
         exam_probs = np.zeros(10)
         exam_probs[0] = 1
+        unseen_docs_index = []
         for i in range(1, 10):
             if docIds[i - 1] not in self.parameter_dict[qid].keys():
                 ar = self.alpha / (self.alpha + self.beta)
@@ -136,12 +137,15 @@ class SDBN(CM):
 
         for i in range(10):
             if docIds[i] not in self.parameter_dict[qid].keys():
+                unseen_docs_index.append(i)
                 a = self.alpha / (self.alpha + self.beta)
             else:
                 a = self.parameter_dict[qid][docIds[i]][0]
             a_probs[i] = a
 
-        return np.multiply(exam_probs, a_probs)
+        probs = np.multiply(exam_probs, a_probs)
+
+        return probs
 
     def get_real_click_probs(self, session, dataset):
         qid = session[0]

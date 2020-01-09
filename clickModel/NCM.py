@@ -60,7 +60,6 @@ class NCM(CM):
             x = Lambda(lambda X: X[:, t, :])(X)
             x = self.reshapor(x)
             x = self.dropout(x)
-            print(x)
             a, _, c = self.LSTM_cell(inputs=x, initial_state=[a, c])
             a = self.dropout(a)
             if t >= 1:
@@ -72,7 +71,6 @@ class NCM(CM):
 
 
     def _build_inference_model(self):
-        print(self.rep_dim)
         x0 = Input(shape=(1, self.rep_dim))
 
         # Define s0, initial hidden state for the decoder LSTM
@@ -122,7 +120,7 @@ class NCM(CM):
         self.inference_model = self._build_inference_model()
 
     def train_tfrecord(self, path, batch_size=32, epoch=5, steps_per_epoch=1):
-        print("start")
+        print("start training...")
 
         tfrecord = tf.data.TFRecordDataset(path, compression_type='GZIP')
         tfrecord = tfrecord.map(self._read_tfrecord)
@@ -151,11 +149,6 @@ class NCM(CM):
                 epoch_loss += loss.history["loss"][0]
             else:
                 print(num_epoch, epoch_loss/num_batch)
-                # if not utility.send_progress("@arvin training {} model, file: {}".format(self.name, path),
-                #                              num_epoch,
-                #                              epoch,
-                #                              "loss: " + str(epoch_loss/num_batch)):
-                #     print("internet disconnect")
                 num_batch = 0
                 epoch_loss = 0
                 num_epoch += 1

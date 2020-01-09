@@ -7,7 +7,7 @@ import matplotlib.gridspec as gridspec
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 
-def read_set_result_file(simulator, click_model, id):
+def read_seen_result_file(simulator, click_model, id):
     path = "../click_model_results/{}/seen_set{}_{}_result.txt".format(simulator, id, click_model)
     f = open(path, "r")
     f.readline()
@@ -21,9 +21,67 @@ def read_set_result_file(simulator, click_model, id):
 
     return perplexities, MSEs
 
+def read_unseen_result_file(simulator, click_model, id):
+    path = "../click_model_results/{}/unseen_set{}_{}_result.txt".format(simulator, id, click_model)
+    f = open(path, "r")
+    f.readline()
+    for line in f:
+        perplexity = list(map(float, line.split(" ")[1:]))
+        MSE = list(map(float, f.readline().split(" ")[1:]))
+
+    return perplexity, MSE
+
+def plot_perplexity_MSE_for_unseen_queries(simulator, click_models, p1, p2):
+    color_index = 0
+    print(click_models)
+    for click_model in click_models:
+        print(click_model)
+        perplexities = []
+        MSEs = []
+        perplexity, MSE = read_unseen_result_file(simulator, click_model, 1)
+        perplexities.append(perplexity)
+        MSEs.append(MSE)
+
+        # for id in range(2, 16):
+        #     perplexity, MSE = read_unseen_result_file(simulator, click_model, id)
+        #
+        #     perplexities.append(perplexity)
+        #     MSEs.append(MSE)
+
+        perplexities = np.array(perplexities)
+        MSEs = np.array(MSEs)
+
+        mse_mean = np.mean(MSEs.T, axis=1)
+        mse_std_err = sem(MSEs.T, axis=1)
+        mse_h = mse_std_err * t.ppf((1 + 0.95) / 2, 25 - 1)
+        mse_low = np.subtract(mse_mean, mse_h)
+        mse_high = np.add(mse_mean, mse_h)
+
+        perp_mean = np.mean(perplexities.T, axis=1)
+        perp_std_err = sem(perplexities.T, axis=1)
+        perp_h = perp_std_err * t.ppf((1 + 0.95) / 2, 25 - 1)
+        perp_low = np.subtract(perp_mean, perp_h)
+        perp_high = np.add(perp_mean, perp_h)
+
+        p1.plot(range(1, 11), mse_mean, color=COLORS[color_index], alpha=1)
+        p1.fill_between(range(1, 11), mse_low, mse_high, color=COLORS[color_index], alpha=0.2)
+        p1.set_ylabel('MSE')
+        # p1.set_ylim([0, 0.1])
+
+        p2.plot(range(1, 11), perp_mean, color=COLORS[color_index], alpha=1)
+        p2.fill_between(range(1, 11), perp_low, perp_high, color=COLORS[color_index], alpha=0.2)
+        p2.set_ylabel('Perplexity')
+        # p2.set_ylim([1, 2])
+        color_index += 1
+
+    return perplexities, MSEs
+
+
+
 
 def plot_perplexity_MSE_for_each_rank(simulator, click_model, p1, p2):
-    avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
+
+    avg_perplexities, avg_MSEs = read_seen_result_file(simulator, click_model, 1)
 
     # for id in range(1, 2):
     #     perplexities, MSEs = read_set_result_file(simulator, click_model, id)
@@ -33,7 +91,6 @@ def plot_perplexity_MSE_for_each_rank(simulator, click_model, p1, p2):
 
     avg_perplexities = np.array(avg_perplexities)
     avg_MSEs = np.array(avg_MSEs)
-    print("test")
     for i in range(0, 1):
         mse_mean = np.mean(avg_MSEs[i].T, axis=1)
         mse_std_err = sem(avg_MSEs[i].T, axis=1)
@@ -66,16 +123,17 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
     color_index = 0
     print(simulator)
     for click_model in click_models:
-        avg_perplexities, avg_MSEs = read_set_result_file(simulator, click_model, 1)
+        avg_perplexities, avg_MSEs = read_seen_result_file(simulator, click_model, 1)
 
         # for id in range(2, 16):
-        #     perplexities, MSEs = read_set_result_file(simulator, click_model, id)
+        #     perplexities, MSEs = read_seen_result_file(simulator, click_model, id)
         #     for i in range(4):
         #         avg_perplexities[i].append(perplexities[i][0])
         #         avg_MSEs[i].append(MSEs[i][0])
 
         avg_perplexities = np.array(avg_perplexities)
         avg_MSEs = np.array(avg_MSEs)
+
 
         num_runs = avg_perplexities.shape[1]
         num_freq = avg_perplexities.shape[0]
@@ -122,8 +180,8 @@ if __name__ == "__main__":
     # simulators = ["SDBN", 'DCTR', 'UBM', "Mixed"]
     # click_models = ["SDBN", 'DCTR', 'UBM', "NCM", "FBNCM"]
 
-    simulators = ["SDBN"]
-    click_models = ["SDBN", 'DCTR', 'UBM', "SDBN_reverse", "FBNCM", "NCM", "DFBNCM"]
+    simulators = ["DCTR"]
+    click_models = ["FBNCM", "FBNCM_40epoch", "SDBN", 'DCTR', 'UBM']
 
     #
     # for s in simulators:
@@ -161,3 +219,25 @@ if __name__ == "__main__":
     f.subplots_adjust(wspace=0.3, hspace=0.3)
 
     plt.show()
+
+    #
+    # f = plt.figure(1)
+    # plot_index = 1
+    # for s in simulators:
+    #     p1 = plt.subplot(len(simulators), 2, plot_index)
+    #     p2 = plt.subplot(len(simulators), 2, plot_index + 1)
+    #     p1.set_title("simulator: " + s)
+    #     p2.set_title("simulator: " + s)
+    #
+    #     plot_perplexity_MSE_for_unseen_queries(s, click_models, p1, p2)
+    #     plot_index += 2
+    #
+    #     p1.legend(click_models, loc='upper right')
+    #     p2.legend(click_models, loc='upper right')
+    #
+    #
+    # p1.set_xlabel('rank')
+    # p2.set_xlabel('rank')
+    # f.subplots_adjust(wspace=0.3, hspace=0.3)
+    #
+    # plt.show()

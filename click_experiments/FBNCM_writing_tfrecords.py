@@ -28,10 +28,4 @@ if __name__ == "__main__":
         for simulator in simulators:
             click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator, r)
             output_path = "../click_logs/{}/train_set{}_FBNCM.tfrecord".format(simulator, r)
-
-            p = mp.Process(target=job, args=(click_log_path, output_path, simulator, dataset))
-            p.start()
-            pool.append(p)
-
-        for p in pool:
-                p.join()
+            job(click_log_path, output_path, simulator, dataset)

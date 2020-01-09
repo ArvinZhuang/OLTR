@@ -16,8 +16,11 @@ class AbstractClickModel:
 
     def get_click_probs(self, session):
         raise NotImplementedError("Derived class needs to implement "
-                                  "session.")
+                                  "get_click_probs.")
 
     def get_perplexity(self, test_click_log):
         raise NotImplementedError("Derived class needs to implement "
-                                  "test_click_log.")
+                                  "get_perplexity.")
+    def get_MSE(self, test_click_log, dataset, simulator):
+        raise NotImplementedError("Derived class needs to implement "
+                                  "get_MSE.")

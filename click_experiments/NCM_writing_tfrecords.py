@@ -17,7 +17,7 @@ def job(click_log_path, output_path, simulator):
 
 if __name__ == "__main__":
 
-    simulators = ["SDBN", "DCTR", "UBM"]
+    simulators = ["SDBN", "DCTR", "UBM", "SDBN_reverse"]
 
     for r in range(1, 16):
         pool = []

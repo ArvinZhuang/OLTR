@@ -1,5 +1,9 @@
 import sys
 sys.path.append('../')
+import tensorflow as tf
+from dataset import LetorDataset
+import numpy as np
+from utils import read_file as rf
 from clickModel.SDBN import SDBN
 from clickModel.SDBN_reverse import SDBN_reverse
 from clickModel.SDCM import SDCM
@@ -7,13 +11,9 @@ from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from clickModel.UBM import UBM
 from clickModel.Mixed import Mixed
-from utils import read_file as rf
-from utils import utility
-from dataset import LetorDataset
-# import matplotlib.pyplot as plt
-import numpy as np
-import multiprocessing as mp
-
+from clickModel.FBNCM import FBNCM
+from keras.models import load_model
+import pickle
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 
@@ -62,19 +62,20 @@ def run(click_log, test_click_log, query_frequency, click_model, train_set, simu
 # %%
 if __name__ == "__main__":
     # %%
-    train_path = "../datasets/ltrc_yahoo/set1.train.txt"
+    train_path = "../datasets/ltrc_yahoo/set1.LetorDataset.txt"
     print("loading training set.......")
-    train_set = LetorDataset(train_path, 700)
+    with open(train_path, "rb") as fp:
+        train_set = pickle.load(fp)
     # %%
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
     datasets_simulator = [
-                        ('SDBN', SDBN(pc, ps)),
+                        # ('SDBN', SDBN(pc, ps)),
                           # ('SDCM', SDCM(pc)),
                           # ('CM', CM(pc)),
                           ('DCTR', DCTR(pc)),
-                          ('UBM', UBM(pc))
+                          # ('UBM', UBM(pc))
                             ]
 
     # datasets_simulator = [('SDBN_reverse', SDBN_reverse(pc, ps))]
@@ -89,28 +90,39 @@ if __name__ == "__main__":
             test_click_log = rf.read_click_log(test_click_log_path)
             query_frequency = rf.read_query_frequency(query_frequency_path)
 
-            click_models = [SDBN_reverse(),
+            FB_model = FBNCM(256, 700, 700, train_set,
+                             model=load_model(
+                                 '../click_model_results/FBNCM_model/{}/train_set{}.h5'.format(dataset, id)))
+
+
+            click_models = [
+                            # SDBN(FB_model=FB_model),
                             # SDCM(),
                             # CM(),
-                            # DCTR(),
+                            DCTR(FB_model=FB_model),
                             # UBM(),
                             # SDBN()
                             ]
-
             processors = []
             for cm in click_models:
                 print(dataset, cm.name, "running!")
-                f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(dataset, id, cm.name)
+                if FB_model is not None:
+                    f = open("../click_model_results/{}/seen_set{}_{}+{}_result.txt".format(dataset, id, cm.name, FB_model.name)
                          , "w+")
-                p = mp.Process(target=run,
-                           args=(click_log, test_click_log, query_frequency, cm, train_set, simulator, f))
-                p.start()
-                processors.append(p)
+                else:
+                    f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(dataset, id, cm.name)
+                             , "w+")
 
-            for p in processors:
-                p.join()
-
-            progress += 1
+                run(click_log, test_click_log, query_frequency, cm, train_set, simulator, f)
+            #     p = mp.Process(target=run,
+            #                args=(click_log, test_click_log, query_frequency, cm, train_set, simulator, f))
+            #     p.start()
+            #     processors.append(p)
+            #
+            # for p in processors:
+            #     p.join()
+            #
+            # progress += 1
 
             # if not utility.send_progress("Basic click model experiments", progress, 15, "{} run {}".format(dataset, id)):
             #     print("internet disconnect")

@@ -13,13 +13,14 @@ from clickModel.UBM import UBM
 from clickModel.Mixed import Mixed
 from clickModel.FBNCM import FBNCM
 from keras.models import load_model
+import pickle
 
 
 
 def run(simulator, dataset, run):
 
     click_model = FBNCM(256, 700, 700, dataset)
-                        # model=load_model('../click_model_results/FBNCM_model/{}/train_set{}.h5'.format(simulator.name, run)))
+                        # model=load_model('../click_model_results/FBNCM_model/{}/train_set{}_40epoch.h5'.format(simulator.name, run)))
 
     click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator.name, run)
     click_log = rf.read_click_log(click_log_path)
@@ -27,10 +28,10 @@ def run(simulator, dataset, run):
 
     click_model.train_tfrecord('../click_logs/{}/train_set{}_FBNCM.tfrecord'.format(simulator.name, run),
                                batch_size=64,
-                               epoch=40,
+                               epoch=50,
                                steps_per_epoch=1)
 
-    click_model.model.save("../click_model_results/FBNCM_model/{}/train_set{}_40epoch.h5".format(simulator.name, run))
+    click_model.model.save("../click_model_results/FBNCM_model/{}/train_set{}.h5".format(simulator.name, run))
 
 
     test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(simulator.name, run)
@@ -73,33 +74,32 @@ def run(simulator, dataset, run):
 
     f.close()
 
-    # f = open("../click_model_results/{}/unseen_set{}_{}_result.txt".format(simulator.name, run, "FBNCM")
-    #                          , "w+")
-    # f.write("Click Model:" + "FBNCM" + "\n")
-    # perplexities = click_model.get_perplexity(np.array(unseen_test_click_log))
-    # MSEs = click_model.get_MSE(np.array(unseen_test_click_log), dataset, simulator)
-    #
-    # perplexity_line = "perplexities:"
-    # MSEs_line = "MSE:"
-    # for perp in perplexities:
-    #     perplexity_line += " " + str(perp)
-    # for MSE in MSEs:
-    #     MSEs_line += " " + str(MSE)
-    # f.write(perplexity_line + "\n")
-    # f.write(MSEs_line + "\n")
-    # f.close()
+    f = open("../click_model_results/{}/unseen_set{}_{}_result.txt".format(simulator.name, run, "FBNCM")
+                             , "w+")
+    f.write("Click Model:" + "FBNCM" + "\n")
+    perplexities = click_model.get_perplexity(np.array(unseen_test_click_log))
+    MSEs = click_model.get_MSE(np.array(unseen_test_click_log), dataset, simulator)
+
+    perplexity_line = "perplexities:"
+    MSEs_line = "MSE:"
+    for perp in perplexities:
+        perplexity_line += " " + str(perp)
+    for MSE in MSEs:
+        MSEs_line += " " + str(MSE)
+    f.write(perplexity_line + "\n")
+    f.write(MSEs_line + "\n")
+    f.close()
 
 if __name__ == "__main__":
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     # Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
-    # simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
-    simulators = [DCTR(pc)]
+    simulators = [SDBN(pc, ps), DCTR(pc), UBM(pc)]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")
     dataset = LetorDataset(dataset_path, 700)
 
-    for r in range(1, 2):
+    for r in range(1, 16):
         for simulator in simulators:
             run(simulator, dataset, r)

@@ -5,6 +5,7 @@ from dataset import LetorDataset
 import numpy as np
 from utils import read_file as rf
 from clickModel.SDBN import SDBN
+from clickModel.SDBN_reverse import SDBN_reverse
 from clickModel.SDCM import SDCM
 from clickModel.CM import CM
 from clickModel.DCTR import DCTR
@@ -17,20 +18,20 @@ from keras.models import load_model
 
 def run(simulator, dataset, run):
 
-    click_model = NCM(256, 1024, 10240,
-                      model=load_model('../click_model_results/NCM_model/{}/train_set{}.h5'.format(simulator.name, run)))
+    click_model = NCM(256, 1024, 10240)
+                      # model=load_model('../click_model_results/NCM_model/{}/train_set{}.h5'.format(simulator.name, run)))
 
     click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator.name, run)
     click_log = rf.read_click_log(click_log_path)
     click_model.initial_representation(click_log)
-    #
-    # click_model.train_tfrecord('../click_logs/{}/train_set{}_NCM.tfrecord'.format(simulator.name, run),
-    #                            batch_size=64,
-    #                            epoch=20,
-    #                            steps_per_epoch=1)
-    #
-    # click_model.model.save("../click_model_results/NCM_model/{}/train_set{}.h5".format(simulator.name, run))
-    #
+
+    click_model.train_tfrecord('../click_logs/{}/train_set{}_NCM.tfrecord'.format(simulator.name, run),
+                               batch_size=64,
+                               epoch=50,
+                               steps_per_epoch=1)
+
+    click_model.model.save("../click_model_results/NCM_model/{}/train_set{}.h5".format(simulator.name, run))
+
 
     test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(simulator.name, run)
     query_frequency_path = "../click_logs/{}/query_frequency{}.txt".format(simulator.name, run)
@@ -73,14 +74,14 @@ def run(simulator, dataset, run):
 if __name__ == "__main__":
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-    Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
-    simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
-    simulators = [SDBN(pc, ps)]
+    # Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
+    # simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
+    simulators = [SDBN(pc, ps), DCTR(pc), UBM(pc), SDBN_reverse(pc, ps)]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")
     dataset = LetorDataset(dataset_path, 700)
 
-    for r in range(1, 2):
+    for r in range(1, 16):
         for simulator in simulators:
             run(simulator, dataset, r)

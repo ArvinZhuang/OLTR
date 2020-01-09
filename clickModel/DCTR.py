@@ -70,9 +70,10 @@ class DCTR(CM):
         qid = session[0]
         docIds = session[1:11]
         a_probs = np.zeros(10)
-
+        unseen_docs_index = []
         for i in range(10):
             if docIds[i] not in self.parameter_dict[qid].keys():
+                unseen_docs_index.append(i)
                 a = self.alpha / (self.alpha + self.beta)
             else:
                 a = self.parameter_dict[qid][docIds[i]]
