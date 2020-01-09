@@ -187,7 +187,7 @@ class NCM(CM):
         unseen_docs = []
         for rank in range(10):
             if docids[rank] not in self.doc_rep[qid].keys():
-                D[0][rank] = np.zeros(self.d_dim, dtype=int)
+                D[0][rank] = np.zeros(self.d_dim)
                 unseen_docs.append(rank)
             else:
                 D[0][rank] = np.array(self.doc_rep[qid][docids[rank]])
@@ -208,7 +208,7 @@ class NCM(CM):
             clicks = click_log[line][11:21]
 
             if qid not in self.query_rep.keys():
-                self.query_rep[qid] = np.zeros(self.q_dim, dtype=int)
+                self.query_rep[qid] = np.zeros(self.q_dim)
                 self.doc_rep[qid] = {}
             clicks = clicks.astype(np.int)
             pattern_index = clicks.dot(1 << np.arange(clicks.shape[-1] - 1, -1, -1))  # binary to decimal
@@ -217,19 +217,18 @@ class NCM(CM):
             for rank in range(10):
                 docid = docIds[rank]
                 if docid not in self.doc_rep[qid].keys():
-                    self.doc_rep[qid][docid] = np.zeros(self.d_dim, dtype=int)
+                    self.doc_rep[qid][docid] = np.zeros(self.d_dim)
                 self.doc_rep[qid][docid][rank * self.q_dim + pattern_index] += 1
 
     def save_training_tfrecord(self, train_log, path, simulator):
-        # train_log = train_log.reshape(-1, self._batch_size, 21)
         print("writing {} for {}.......".format(path, simulator))
         writer = tf.io.TFRecordWriter(path, options='GZIP')
 
         num_session = 0
 
-        input = np.zeros((11, self.rep_dim), dtype=int)
-        i0 = np.zeros(1, dtype=int)
-        q0 = np.zeros(self.q_dim, dtype=int)
+        input = np.zeros((11, self.rep_dim))
+        i0 = np.zeros(1)
+        q0 = np.zeros(self.q_dim)
 
         for session in train_log:
             qid = session[0]
@@ -237,14 +236,14 @@ class NCM(CM):
             clicks = session[11:21]
             q_rep = self.query_rep[qid]
 
-            t0 = np.append(q_rep, np.append(i0, np.zeros(self.d_dim, dtype=int)))
+            t0 = np.append(q_rep, np.append(i0, np.zeros(self.d_dim)))
             t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
 
             input[0] = t0
             input[1] = t1
 
             for rank in range(2, 11):
-                t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
+                t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank - 1]]))
                 input[rank] = t
 
             output = np.array(clicks).reshape((-1, 1))
@@ -254,55 +253,10 @@ class NCM(CM):
             writer.write(serialized)
             num_session += 1
             if num_session % 1000 == 0:
-                if not utility.send_progress("@arvin {} generate {}".format(self.name, path), num_session, 400000,
-                                             "num_session {}".format(num_session)):
+                if not utility.send_progress("@arvin {} generate for {}".format(self.name, simulator), num_session, 400000,
+                                             path):
                     print("internet disconnect")
         writer.close()
-
-    def save_training_numpy(self, train_log, path, simulator):
-        # train_log = train_log.reshape(-1, self._batch_size, 21)
-        print("writing numpy file.......")
-
-        num_session = 0
-        input = np.zeros((train_log.shape[0], 11, self.rep_dim))
-        i0 = np.zeros(1)
-        q0 = np.zeros(self.q_dim)
-        d0 = np.zeros(self.d_dim)
-        label = np.zeros((10, len(train_log), 1))
-
-        for session in train_log:
-            qid = session[0]
-            docids = session[1:11]
-            clicks = session[11:21]
-            q_rep = self.query_rep[qid]
-
-            t0 = np.append(q_rep, np.append(i0, d0))
-            t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
-
-            input[num_session][0] = t0
-            input[num_session][1] = t1
-
-            for rank in range(2, 11):
-                t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
-                input[num_session][rank] = t
-
-            label[:, num_session, :] = clicks.reshape(10, 1)
-
-            num_session += 1
-
-            if num_session % 1000 == 0:
-                print("\r", end='')
-                print("num_of_writen:", num_session / 400000, end="", flush=True)
-                if not utility.send_progress("@arvin generate {} model numpy file".format(simulator), num_session, 400000,
-                                             "train_set1_NCM"):
-                    print("internet disconnect")
-
-        np.savez(path, input=input, label=label)
-        # with bz2.BZ2File(path+"input.txt", 'w') as fp:
-        #     pickle.dump(input, fp)
-        # with bz2.BZ2File(path+"label.txt", 'w') as fp:
-        #     pickle.dump(label, fp)
-
 
     def make_sequence_example(self, inputs, labels):
         """Returns a SequenceExample for the given inputs and labels.
@@ -315,7 +269,7 @@ class NCM(CM):
           A tf.train.SequenceExample containing inputs and labels.
         """
         input_features = [
-            tf.train.Feature(int64_list=tf.train.Int64List(value=input_))
+            tf.train.Feature(float_list=tf.train.FloatList(value=input_))
             for input_ in inputs]
         label_features = [
             tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
@@ -329,12 +283,54 @@ class NCM(CM):
 
     def _read_tfrecord(self, example):
         sequence_features = {
-            "inputs": tf.io.FixedLenSequenceFeature([self.rep_dim], dtype=tf.int64),
+            "inputs": tf.io.FixedLenSequenceFeature([self.rep_dim], dtype=tf.float32),
             "labels": tf.io.FixedLenSequenceFeature([1], dtype=tf.int64)
-            # "init_state": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
-            # "init_cell": tf.io.FixedLenSequenceFeature([], dtype=tf.int64)
         }
         # decode the TFRecord
         _, example = tf.io.parse_single_sequence_example(serialized=example, sequence_features=sequence_features)
 
         return example['inputs'], example['labels']
+
+    # def save_training_numpy(self, train_log, path, simulator):
+    #     # train_log = train_log.reshape(-1, self._batch_size, 21)
+    #     print("writing numpy file.......")
+    #
+    #     num_session = 0
+    #     input = np.zeros((train_log.shape[0], 11, self.rep_dim))
+    #     i0 = np.zeros(1)
+    #     q0 = np.zeros(self.q_dim)
+    #     d0 = np.zeros(self.d_dim)
+    #     label = np.zeros((10, len(train_log), 1))
+    #
+    #     for session in train_log:
+    #         qid = session[0]
+    #         docids = session[1:11]
+    #         clicks = session[11:21]
+    #         q_rep = self.query_rep[qid]
+    #
+    #         t0 = np.append(q_rep, np.append(i0, d0))
+    #         t1 = np.append(q0, np.append(i0, self.doc_rep[qid][docids[0]]))
+    #
+    #         input[num_session][0] = t0
+    #         input[num_session][1] = t1
+    #
+    #         for rank in range(2, 11):
+    #             t = np.append(q0, np.append(clicks[rank - 2], self.doc_rep[qid][docids[rank-1]]))
+    #             input[num_session][rank] = t
+    #
+    #         label[:, num_session, :] = clicks.reshape(10, 1)
+    #
+    #         num_session += 1
+    #
+    #         if num_session % 1000 == 0:
+    #             print("\r", end='')
+    #             print("num_of_writen:", num_session / 400000, end="", flush=True)
+    #             if not utility.send_progress("@arvin generate {} model numpy file".format(simulator), num_session, 400000,
+    #                                          "train_set1_NCM"):
+    #                 print("internet disconnect")
+    #
+    #     np.savez(path, input=input, label=label)
+    #     # with bz2.BZ2File(path+"input.txt", 'w') as fp:
+    #     #     pickle.dump(input, fp)
+    #     # with bz2.BZ2File(path+"label.txt", 'w') as fp:
+    #     #     pickle.dump(label, fp)

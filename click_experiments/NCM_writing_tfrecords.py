@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     simulators = ["SDBN", "DCTR", "UBM"]
 
-    for r in range(3, 16):
+    for r in range(1, 16):
         pool = []
         for simulator in simulators:
             click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator, r)
