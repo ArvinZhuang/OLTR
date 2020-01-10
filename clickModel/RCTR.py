@@ -1,25 +1,27 @@
 import numpy as np
-from clickModel.AbstractClickModel import AbstractClickModel
+from clickModel.RCM import RCM
 
-class RCM(AbstractClickModel):
+class RCTR(RCM):
     def __init__(self, prob=None):
-        self.name = "RCM"
-        self.prob = prob
+        super().__init__(prob)
+        self.name = "RCTR"
 
     def train(self, click_log):
         print("{} training.......".format(self.name))
-        num_clicks = 0
+        num_clicks = np.zeros(10)
         num_docs = 0
         for session in click_log:
             click_label = session[11:]
-            num_clicks += np.where(click_label == '1')[0].size
-            num_docs += 10
+            num_docs += 1
+            for rank in range(10):
+                if click_label[rank] == '1':
+                    num_clicks[rank] += 1
+
         self.prob = num_clicks/num_docs
-        print("{} training finished, prob={}".format(self.name, self.prob))
 
 
     def get_click_probs(self, session):
-        return np.ones(10) * self.prob
+        return np.array(self.prob)
 
     def get_perplexity(self, test_click_log):
         print(self.name, "computing perplexity")

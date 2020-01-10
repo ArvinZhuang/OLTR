@@ -42,11 +42,11 @@ def plot_perplexity_MSE_for_unseen_queries(simulator, click_models, p1, p2):
         perplexities.append(perplexity)
         MSEs.append(MSE)
 
-        # for id in range(2, 16):
-        #     perplexity, MSE = read_unseen_result_file(simulator, click_model, id)
-        #
-        #     perplexities.append(perplexity)
-        #     MSEs.append(MSE)
+        for id in range(2, 16):
+            perplexity, MSE = read_unseen_result_file(simulator, click_model, id)
+
+            perplexities.append(perplexity)
+            MSEs.append(MSE)
 
         perplexities = np.array(perplexities)
         MSEs = np.array(MSEs)
@@ -125,11 +125,11 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
     for click_model in click_models:
         avg_perplexities, avg_MSEs = read_seen_result_file(simulator, click_model, 1)
 
-        # for id in range(2, 16):
-        #     perplexities, MSEs = read_seen_result_file(simulator, click_model, id)
-        #     for i in range(4):
-        #         avg_perplexities[i].append(perplexities[i][0])
-        #         avg_MSEs[i].append(MSEs[i][0])
+        for id in range(2, 16):
+            perplexities, MSEs = read_seen_result_file(simulator, click_model, id)
+            for i in range(4):
+                avg_perplexities[i].append(perplexities[i][0])
+                avg_MSEs[i].append(MSEs[i][0])
 
         avg_perplexities = np.array(avg_perplexities)
         avg_MSEs = np.array(avg_MSEs)
@@ -174,14 +174,23 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
         color_index += 1
 
 
-
-
 if __name__ == "__main__":
-    # simulators = ["SDBN", 'DCTR', 'UBM', "Mixed"]
-    # click_models = ["SDBN", 'DCTR', 'UBM', "NCM", "FBNCM"]
 
-    simulators = ["DCTR"]
-    click_models = ["FBNCM", "FBNCM_40epoch", "SDBN", 'DCTR', 'UBM']
+    simulators = [
+        "DCTR",
+        "SDBN",
+        "UBM",
+        'SDBN_reverse'
+    ]
+    click_models = [
+        # "FBNCM",
+        "SDBN",
+        'DCTR',
+        'UBM',
+        'SDBN_reverse',
+        # 'RCM',
+        # 'RCTR'
+    ]
 
     #
     # for s in simulators:
@@ -220,7 +229,7 @@ if __name__ == "__main__":
 
     plt.show()
 
-    #
+
     # f = plt.figure(1)
     # plot_index = 1
     # for s in simulators:

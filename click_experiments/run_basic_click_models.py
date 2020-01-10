@@ -14,7 +14,7 @@ from clickModel.Mixed import Mixed
 from clickModel.FBNCM import FBNCM
 from keras.models import load_model
 import pickle
-COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+import multiprocessing as mp
 
 
 def run(click_log, test_click_log, query_frequency, click_model, train_set, simulator, f):
@@ -69,20 +69,19 @@ if __name__ == "__main__":
     # %%
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-    mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
-    datasets_simulator = [
-                        # ('SDBN', SDBN(pc, ps)),
-                          # ('SDCM', SDCM(pc)),
-                          # ('CM', CM(pc)),
-                          ('DCTR', DCTR(pc)),
-                          # ('UBM', UBM(pc))
-                            ]
 
-    # datasets_simulator = [('SDBN_reverse', SDBN_reverse(pc, ps))]
-    # datasets = ['CM']
+    datasets_simulator = [
+        ('SDBN', SDBN(pc, ps)),
+        # ('SDCM', SDCM(pc)),
+        # ('CM', CM(pc)),
+        ('DCTR', DCTR(pc)),
+        ('UBM', UBM(pc)),
+        # ('SDBN_reverse', SDBN_reverse(pc, ps))
+    ]
+
     progress = 0
     for dataset, simulator in datasets_simulator:
-        for id in range(1, 2):
+        for id in range(2, 16):
             click_log_path = "../click_logs/{}/train_set{}.txt".format(dataset, id)
             test_click_log_path = "../click_logs/{}/seen_set{}.txt".format(dataset, id)
             query_frequency_path = "../click_logs/{}/query_frequency{}.txt".format(dataset, id)
@@ -90,37 +89,29 @@ if __name__ == "__main__":
             test_click_log = rf.read_click_log(test_click_log_path)
             query_frequency = rf.read_query_frequency(query_frequency_path)
 
-            FB_model = FBNCM(256, 700, 700, train_set,
-                             model=load_model(
-                                 '../click_model_results/FBNCM_model/{}/train_set{}.h5'.format(dataset, id)))
-
-
             click_models = [
                             # SDBN(FB_model=FB_model),
                             # SDCM(),
                             # CM(),
-                            DCTR(FB_model=FB_model),
+                            # DCTR(),
                             # UBM(),
-                            # SDBN()
+                            # SDBN(),
+                            SDBN_reverse()
                             ]
             processors = []
             for cm in click_models:
                 print(dataset, cm.name, "running!")
-                if FB_model is not None:
-                    f = open("../click_model_results/{}/seen_set{}_{}+{}_result.txt".format(dataset, id, cm.name, FB_model.name)
-                         , "w+")
-                else:
-                    f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(dataset, id, cm.name)
+
+                f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(dataset, id, cm.name)
                              , "w+")
 
-                run(click_log, test_click_log, query_frequency, cm, train_set, simulator, f)
-            #     p = mp.Process(target=run,
-            #                args=(click_log, test_click_log, query_frequency, cm, train_set, simulator, f))
-            #     p.start()
-            #     processors.append(p)
-            #
-            # for p in processors:
-            #     p.join()
+                p = mp.Process(target=run,
+                           args=(click_log, test_click_log, query_frequency, cm, train_set, simulator, f))
+                p.start()
+                processors.append(p)
+
+            for p in processors:
+                p.join()
             #
             # progress += 1
 

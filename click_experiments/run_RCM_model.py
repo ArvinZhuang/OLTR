@@ -7,6 +7,7 @@ from clickModel.CM import CM
 from clickModel.DCTR import DCTR
 from clickModel.UBM import UBM
 from clickModel.RCM import RCM
+from clickModel.RCTR import RCTR
 from clickModel.Mixed import Mixed
 from utils import read_file as rf
 from utils import utility
@@ -28,16 +29,22 @@ datasets_simulator = [
                       # ('SDCM', SDCM(pc)),
                       # ('CM', CM(pc)),
                       ('DCTR', DCTR(pc)),
-                      ('UBM', UBM(pc))
+                      ('UBM', UBM(pc)),
+                    ('SDBN_reverse', SDBN_reverse(pc, ps))
                         ]
-click_model = RCM(0.5)
+click_model = RCTR()
 
 for dataset, simulator in datasets_simulator:
     for id in range(1, 16):
+        click_log_path = "../click_logs/{}/train_set{}.txt".format(dataset, id)
+        click_log = rf.read_click_log(click_log_path)
+        click_model.train(click_log)
+
         test_click_log_path = "../click_logs/{}/unseen_set{}.txt".format(dataset, id)
         query_frequency_path = "../click_logs/{}/query_frequency{}.txt".format(dataset, id)
         test_click_log = rf.read_click_log(test_click_log_path)
         query_frequency = rf.read_query_frequency(query_frequency_path)
+
 
 
         f = open("../click_model_results/{}/unseen_set{}_{}_result.txt".format(dataset, id, click_model.name)

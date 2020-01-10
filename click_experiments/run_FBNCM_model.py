@@ -41,7 +41,7 @@ def run(simulator, dataset, run):
     unseen_test_click_log = rf.read_click_log(unseen_test_click_log_path)
     query_frequency = rf.read_query_frequency(query_frequency_path)
 
-    f = open("../click_model_results/{}/seen_set{}_{}_40epoch_result.txt".format(simulator.name, run, "FBNCM")
+    f = open("../click_model_results/{}/seen_set{}_{}_result.txt".format(simulator.name, run, "FBNCM")
                              , "w+")
 
     test_logs = {'10': [],
@@ -94,12 +94,17 @@ if __name__ == "__main__":
     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     # Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
-    simulators = [SDBN(pc, ps), DCTR(pc), UBM(pc)]
+    simulators = [
+        # SDBN(pc, ps),
+        # DCTR(pc),
+        # UBM(pc),
+        SDBN_reverse(pc, ps)
+    ]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")
     dataset = LetorDataset(dataset_path, 700)
 
-    for r in range(1, 16):
+    for r in range(1, 2):
         for simulator in simulators:
             run(simulator, dataset, r)
