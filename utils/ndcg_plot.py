@@ -6,6 +6,7 @@ from scipy.stats import sem, t
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 def plot(path, parameters, folds, runs, click_model, num_interactions, color):
+    print(path)
     color_index = 0
     for p in parameters:
         result = np.zeros(num_interactions)
@@ -34,11 +35,11 @@ def plot(path, parameters, folds, runs, click_model, num_interactions, color):
 
 
 if __name__ == "__main__":
-    path1 = "../results/COLTR/MSLR-WEB10K"
+    path1 = "../results/COLTR/mq2007"
     # path2 = "../results/reduction/mq2007/PDGD"
-    folds = list(range(1, 2))
-    runs = list(range(1, 2))
-    click_models = ['perfect']
+    folds = list(range(1, 6))
+    runs = list(range(1, 26))
+    click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     parameters = [0.1]
     num_interactions = 10000

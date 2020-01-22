@@ -63,6 +63,7 @@ class LinearRanker(AbstractRanker):
     def get_scores(self, features):
         weights = np.array([self.weights])
         score = np.dot(features, weights.T)[:, 0]
+
         return score
 
     def set_learning_rate(self, learning_rate):

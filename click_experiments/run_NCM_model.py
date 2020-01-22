@@ -76,13 +76,13 @@ if __name__ == "__main__":
     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     # Mixed_models = [DCTR(pc), SDBN(pc, ps), UBM(pc)]
     # simulators = [SDBN(pc, ps), Mixed(Mixed_models), DCTR(pc), UBM(pc)]
-    # simulators = [SDBN(pc, ps), DCTR(pc)]
+    # simulators = [DCTR(pc)]
     simulators = [UBM(pc), SDBN_reverse(pc, ps)]
 
     dataset_path = "../datasets/ltrc_yahoo/set1.train.txt"
     print("loading training set.......")
     dataset = LetorDataset(dataset_path, 700)
 
-    for r in range(1, 2):
+    for r in range(10, 11):
         for simulator in simulators:
             run(simulator, dataset, r)

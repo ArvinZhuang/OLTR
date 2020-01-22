@@ -15,46 +15,46 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
     query_set = train_set.get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
 
-    batch_size = 1
     iterated = 0
-    record = []
-    for j in range(0, num_interation // batch_size):
+
+    for i in index:
         R = np.zeros((num_rankers + 1,))
         unit_vectors = ranker.sample_random_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)
-        for i in index[j * batch_size:j * batch_size + batch_size]:
-            iterated += 1
-            qid = query_set[i]
 
-            result_list = ranker.get_query_result_list(train_set, qid)
+        iterated += 1
+        qid = query_set[i]
 
-            clicked_doc, click_label, _ = click_model.simulate(qid, result_list, train_set)
+        result_list = ranker.get_query_result_list(train_set, qid)
 
-            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-            cndcg_scores.append(cndcg)
+        clicked_doc, click_label, _ = click_model.simulate(qid, result_list, train_set)
+
+        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+        cndcg_scores.append(cndcg)
 
             # if no clicks, skip.
-            if len(clicked_doc) == 0:
-                # all_result = ranker.get_all_query_result_list(test_set)
-                # ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-                # cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-                #
-                # ndcg_scores.append(ndcg)
-                # cndcg_scores.append(cndcg)
-                continue
+        if len(clicked_doc) == 0:
+            # all_result = ranker.get_all_query_result_list(test_set)
+            # ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+            # cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+            #
+            # ndcg_scores.append(ndcg)
+            # cndcg_scores.append(cndcg)
+            continue
 
-            # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
-            last_click = np.where(click_label == 1)[0][-1]
-            click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
+        # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
+        last_click = np.where(click_label == 1)[0][-1]
+        click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
 
-            # bandit record
-            record.append((qid, result_list, click_label, ranker.get_current_weights()))
-            snips = ranker.get_SNIPS(canditate_rankers, record, train_set)
+        # bandit record
+        record = (qid, result_list, click_label, ranker.get_current_weights())
+        snips = ranker.get_nomalized_SNIPS(canditate_rankers, record)
 
-            if snips is not None:
-                R += snips
+        if snips is None:
+            continue
 
-        R = R[1:] / batch_size
+        R = snips[1:]
+
         A = (R - np.mean(R)) / np.std(R)
         gradient = np.dot(unit_vectors.T, A) / (num_rankers * sigma)
         ranker.update(gradient)
@@ -62,9 +62,6 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         all_result = ranker.get_all_query_result_list(test_set)
         ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
 
-
-        ndcg = [ndcg] * batch_size
-        ndcg_scores.extend(ndcg)
         # print(len(ndcg_scores))
         final_weight = ranker.get_current_weights()
         print(iterated, ndcg, cndcg)
@@ -131,7 +128,7 @@ if __name__ == "__main__":
     num_rankers = 499
     tau = 1
     gamma = 1
-    learning_rate_decay = 0.99966
+    learning_rate_decay = 1
     sigma = 0.1
 
     # for 5 folds

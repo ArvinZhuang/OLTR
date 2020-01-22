@@ -51,9 +51,9 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         unit_vectors = ranker.sample_unit_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)  # canditate_rankers are ranker weights, not ranker class
 
-        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)  # winner_rankers are index of candidates rankers who win the evaluation
+        winner_rankers = ranker.infer_winners_renomalize(canditate_rankers[:num_rankers], record)  # winner_rankers are index of candidates rankers who win the evaluation
 
-        """ This part of code is used to test correctness of counterfactual evaluation
+        #### This part of code is used to test correctness of counterfactual evaluation ####
         # if winner_rankers is not None:
         #     all_result = utility.get_query_result_list(ranker.get_current_weights(), train_set, qid)
         #     current_ndcg = evl_tool.query_ndcg_at_k(train_set, all_result, qid, 10)
@@ -66,7 +66,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         #         else:
         #             wrong += 1
         #     print(correct, wrong, correct / (correct + wrong))
-        """
+        ######################################################################################
 
         if winner_rankers is not None:
             gradient = np.sum(unit_vectors[winner_rankers - 1], axis=0) / winner_rankers.shape[0]
@@ -79,31 +79,31 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         ndcg_scores.append(ndcg)
         cndcg_scores.append(cndcg)
         final_weight = ranker.get_current_weights()
-        print(num_interation, ndcg, cndcg)
+        # print(num_interation, ndcg, cndcg)
 
     return ndcg_scores, cndcg_scores, final_weight
 
 
 def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold):
-    # if model_type == "perfect":
-    #     pc = [0.0, 0.5, 1.0]
-    #     ps = [0.0, 0.0, 0.0]
-    # elif model_type == "navigational":
-    #     pc = [0.05, 0.5, 0.95]
-    #     ps = [0.2, 0.5, 0.9]
-    # elif model_type == "informational":
-    #     pc = [0.4, 0.7, 0.9]
-    #     ps = [0.1, 0.3, 0.5]
-
     if model_type == "perfect":
-        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
-        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+        pc = [0.0, 0.5, 1.0]
+        ps = [0.0, 0.0, 0.0]
     elif model_type == "navigational":
-        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+        pc = [0.05, 0.5, 0.95]
+        ps = [0.2, 0.5, 0.9]
     elif model_type == "informational":
-        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+        pc = [0.4, 0.7, 0.9]
+        ps = [0.1, 0.3, 0.5]
+
+    # if model_type == "perfect":
+    #     pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+    #     ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+    # elif model_type == "navigational":
+    #     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+    #     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+    # elif model_type == "informational":
+    #     pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+    #     ps = [0.1, 0.2, 0.3, 0.4, 0.5]
 
     cm = SDBN(pc, ps)
 
@@ -127,18 +127,18 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
             pickle.dump(final_weight, fp)
         print("COTLR {} tau{} fold{} {} run{} finished!".format(output_fold, tau, f, model_type, r))
 
-        utility.send_progress(model_type, r, 25, "final ndcg {}".format(ndcg_scores[-1]))
+        utility.send_progress("@arvin {}".format(model_type), r, 25, "final ndcg {}".format(ndcg_scores[-1]))
 
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 136
+    FEATURE_SIZE = 46
     NUM_INTERACTION = 10000
-    # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["perfect"]
+    click_models = ["informational", "navigational", "perfect"]
+    # click_models = ["informational"]
     Learning_rate = 0.1
-    dataset_fold = "../datasets/MSLR-WEB10K"
-    output_fold = "../results/COLTR/MSLR-WEB10K"
+    dataset_fold = "../datasets/2007_mq_dataset"
+    output_fold = "../results/COLTR/mq2007"
 
     num_rankers = 499
     tau = 0.1
@@ -148,6 +148,7 @@ if __name__ == "__main__":
 
     # for 5 folds
     for f in range(1, 6):
+
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         print("loading fold{} training set and test set....".format(f))
@@ -164,6 +165,6 @@ if __name__ == "__main__":
         for p in processors:
             p.join()
 
-        utility.send_progress("COLTR", f, 5, "MSLR-WEB10K")  # send experiment progress to ielab server.
+
 
 

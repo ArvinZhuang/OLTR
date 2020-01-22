@@ -20,7 +20,7 @@ import pickle
 def run(simulator, dataset, run):
 
     click_model = FBNCM(256, 700, 700, dataset)
-                        # model=load_model('../click_model_results/FBNCM_model/{}/train_set{}_40epoch.h5'.format(simulator.name, run)))
+                        # model=load_model('../click_model_results/FBNCM_model/{}/train_set{}.h5'.format(simulator.name, run)))
 
     click_log_path = "../click_logs/{}/train_set{}.txt".format(simulator.name, run)
     click_log = rf.read_click_log(click_log_path)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     simulators = [
         # SDBN(pc, ps),
         # DCTR(pc),
-        # UBM(pc),
+        UBM(pc),
         SDBN_reverse(pc, ps)
     ]
 
@@ -105,6 +105,6 @@ if __name__ == "__main__":
     print("loading training set.......")
     dataset = LetorDataset(dataset_path, 700)
 
-    for r in range(1, 2):
+    for r in range(10, 11):
         for simulator in simulators:
             run(simulator, dataset, r)

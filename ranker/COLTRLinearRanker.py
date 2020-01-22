@@ -16,20 +16,20 @@ class COLTRLinearRanker(LinearRanker):
         self.feature_matrix = dataset.get_all_features_by_query(query)
 
         scores = self.get_scores(self.feature_matrix)
-        props = self._softmax_with_tau(scores).reshape(-1)
+        probs = self._softmax_with_tau(scores).reshape(-1)
 
         sample_size = np.minimum(10, len(self.docid_list))
 
-        if np.sum(props > 0) < sample_size:
-            safe_size = np.sum(props > 0)
-            query_result_list = np.random.choice(self.docid_list, safe_size, replace=False, p=props)
+        if np.sum(probs > 0) < sample_size:
+            safe_size = np.sum(probs > 0)
+            query_result_list = np.random.choice(self.docid_list, safe_size, replace=False, p=probs)
             rest = np.setdiff1d(self.docid_list, query_result_list)
             np.random.shuffle(rest)
             self.query_result_list = np.append(query_result_list, rest)
             return query_result_list[:sample_size]
 
         self.query_result_list = np.random.choice(self.docid_list, sample_size,
-                                             replace=False, p=props)
+                                             replace=False, p=probs)
         return self.query_result_list
 
     def _softmax_with_tau(self, x):
@@ -49,6 +49,71 @@ class COLTRLinearRanker(LinearRanker):
         # sample new candidate weights
         new_weights = self.weights + self.step_size * unit_vectors
         return new_weights
+
+    def infer_winners_renomalize(self, canditate_rankers, record):
+        current_ranker = self.weights
+        all_ranker = np.vstack((current_ranker, canditate_rankers))  # all rankers weights
+        query = record[0]
+        result_list = record[1]
+        click_label = record[2]
+        log_weight = np.array(record[3])
+
+        doc_indexes = [np.where(self.docid_list==i)[0][0] for i in result_list]
+        scores = np.dot(self.feature_matrix, all_ranker.T)
+        log_score = np.dot(self.feature_matrix, log_weight.T)
+
+
+        probs = self.softmax(scores)
+        log_probs = self.softmax(log_score)
+        log_probs = log_probs.reshape(-1, 1)
+
+        propensities = probs[doc_indexes[0]]
+        log_propensity = log_probs[doc_indexes[0]]
+
+        #renormalize
+        scores[doc_indexes[0]] = np.amin(scores)
+        log_score[doc_indexes[0]] = np.amin(log_score)
+
+        scores -= np.amax(scores)
+        log_score -= np.amax(log_score)
+
+        exp_scores = np.exp(scores)
+        exp_log_score = np.exp(log_score)
+
+        exp_scores[doc_indexes[0]] = 0
+        exp_log_score[doc_indexes[0]] = 0
+
+        probs = exp_scores/np.sum(exp_scores)
+        log_probs = exp_log_score / np.sum(exp_log_score)
+        log_probs = log_probs.reshape(-1, 1)
+
+        for i in range(1, len(doc_indexes)):
+            propensities = np.vstack((propensities, probs[doc_indexes[i]]))
+            log_propensity = np.vstack((log_propensity, log_probs[doc_indexes[i]]))
+            scores[doc_indexes[:i+1]] = np.amin(scores)
+            log_score[doc_indexes[:i+1]] = np.amin(log_score)
+            scores -= np.amax(scores)
+            log_score -= np.amax(log_score)
+            exp_scores = np.exp(scores)
+            exp_log_score = np.exp(log_score)
+            exp_scores[doc_indexes[:i+1]] = 0
+            exp_log_score[doc_indexes[:i+1]] = 0
+            probs = exp_scores / np.sum(exp_scores+ 1e-8)
+            log_probs = exp_log_score / (np.sum(exp_log_score) + 1e-8)
+            log_probs = log_probs.reshape(-1, 1)
+
+
+
+        SNIPS = self.compute_SNIPS(log_propensity, propensities, click_label)
+        winners = np.where(SNIPS < SNIPS[0])[0]
+        #
+        # IPS = self.compute_IPS(log_propensity, propensities, click_label)
+        # winners = np.where(IPS < IPS[0])[0]
+
+        if len(winners) == 0:
+            return None
+        return winners
+
 
     def infer_winners(self, canditate_rankers, record):
         current_ranker = self.weights
