@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import sem, t, ttest_ind
 import matplotlib.gridspec as gridspec
-
+from matplotlib.lines import Line2D
 
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
@@ -64,11 +64,13 @@ def plot_perplexity_MSE_for_unseen_queries(simulator, click_models, p1, p2):
         perp_low = np.subtract(perp_mean, perp_h)
         perp_high = np.add(perp_mean, perp_h)
 
+
         p1.plot(range(1, 11), mse_mean, color=COLORS[color_index], alpha=1)
         p1.fill_between(range(1, 11), mse_low, mse_high, color=COLORS[color_index], alpha=0.2)
         p1.set_ylabel('RMSE')
         p1.set_ylim([0.02, 0.3])
         p1.set_xlim([1, 10])
+
 
         p2.plot(range(1, 11), perp_mean, color=COLORS[color_index], alpha=1)
         p2.fill_between(range(1, 11), perp_low, perp_high, color=COLORS[color_index], alpha=0.2)
@@ -125,14 +127,14 @@ def plot_perplexity_MSE_for_each_rank(simulator, click_model, p1, p2):
         if click_model == "NCM":
             click_model = "DR-NCM"
 
-        p1.set_title(click_model)
+        p1.set_title("click model: {}".format(click_model))
         p1.set_ylabel('RMSE')
         p1.set_ylim([0, 0.3])
         p1.set_xlim([1, 10])
 
         p2.plot(range(1, 11), perp_mean, color=COLORS[i], alpha=1)
         p2.fill_between(range(1, 11), perp_low, perp_high, color=COLORS[i], alpha=0.2)
-        p2.set_title(click_model)
+        p2.set_title("click model: {}".format(click_model))
         p2.set_ylabel('Perplexity')
         p2.set_ylim([1, 2])
         p1.set_xlim([1, 10])
@@ -203,14 +205,20 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
         perp_high = np.add(perp_mean, perp_h)
 
         print( click_model, np.sum(mse_mean) / 10, np.sum(perp_mean) / 10)
-
-        p1.plot(range(1, 11), mse_mean, color=COLORS[color_index], alpha=1)
+        if simulator == click_model:
+            p1.plot(range(1, 11), mse_mean, color=COLORS[color_index], alpha=1, linestyle='dashed', marker='x')
+        else:
+            p1.plot(range(1, 11), mse_mean, color=COLORS[color_index], alpha=1,)
         p1.fill_between(range(1, 11), mse_low, mse_high, color=COLORS[color_index], alpha=0.2)
         p1.set_ylabel('RMSE')
         p1.set_ylim([0.02, 0.3])
         p1.set_xlim([1, 10])
 
-        p2.plot(range(1, 11), perp_mean, color=COLORS[color_index], alpha=1)
+        if simulator == click_model:
+            p2.plot(range(1, 11), perp_mean, color=COLORS[color_index], alpha=1, linestyle='dashed', marker='x')
+        else:
+            p2.plot(range(1, 11), perp_mean, color=COLORS[color_index], alpha=1,)
+
         p2.fill_between(range(1, 11), perp_low, perp_high, color=COLORS[color_index], alpha=0.2)
         p2.set_ylabel('Perplexity')
         p2.set_ylim([1, 2.2])
@@ -234,41 +242,41 @@ def plot_for_each_simulator(simulator, click_models, p1, p2):
 if __name__ == "__main__":
 
     simulators = [
-        # "DCTR",
+        "DCTR",
         "SDBN",
-        # "UBM",
-        # 'SDBN_reverse'
+        "UBM",
+        'SDBN_reverse'
     ]
     click_models = [
         "FBNCM",
-        'NCM',
-        "SDBN",
-        'DCTR',
-        'UBM',
-        'SDBN_reverse',
-        # 'RCM',
-        # 'RCTR'
+        # 'NCM',
+        # "SDBN",
+        # 'DCTR',
+        # 'UBM',
+        # 'SDBN_reverse',
+        'RCM',
+        'RCTR'
     ]
 
     #
-    for s in simulators:
-        f = plt.figure(1, figsize=(13, 12))
-        # f.suptitle("simulator: {}.".format(s))
-        plot_index = 1
-        for cm in click_models:
-            p1 = plt.subplot(len(click_models), 2, plot_index)
-            p2 = plt.subplot(len(click_models), 2, plot_index + 1)
-            if plot_index != len(click_models) * 2 - 1:
-                plt.setp(p1.get_xticklabels(), visible=False)
-                plt.setp(p2.get_xticklabels(), visible=False)
-            avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
-            plot_index += 2
-        # p1.legend(['10', '100', '1000', '10000'], loc='upper right')
-        p2.legend(['10', '100', '1000', '10000'], loc='upper right')
-        p1.set_xlabel('rank')
-        p2.set_xlabel('rank')
-        plt.savefig('different_freq.png', bbox_inches='tight')
-        plt.show()
+    # for s in simulators:
+    #     f = plt.figure(1, figsize=(13, 12))
+    #     # f.suptitle("simulator: {}.".format(s))
+    #     plot_index = 1
+    #     for cm in click_models:
+    #         p1 = plt.subplot(len(click_models), 2, plot_index)
+    #         p2 = plt.subplot(len(click_models), 2, plot_index + 1)
+    #         if plot_index != len(click_models) * 2 - 1:
+    #             plt.setp(p1.get_xticklabels(), visible=False)
+    #             plt.setp(p2.get_xticklabels(), visible=False)
+    #         avg_perplexities, avg_MSEs = plot_perplexity_MSE_for_each_rank(s, cm, p1, p2)
+    #         plot_index += 2
+    #     # p1.legend(['10', '100', '1000', '10000'], loc='upper right')
+    #     p2.legend(['10', '100', '1000', '10000'], loc='upper right')
+    #     p1.set_xlabel('rank')
+    #     p2.set_xlabel('rank')
+    #     plt.savefig('different_freq.png', bbox_inches='tight')
+    #     plt.show()
 
 
     # f = plt.figure(1, figsize=(13, 8))
@@ -294,7 +302,14 @@ if __name__ == "__main__":
     #         cm = "DR-NCM"
     #     labels.append(cm)
     #
-    # p1.legend(labels, loc='upper left', ncol=3, fontsize='small')
+    # custom_lines = []
+    # for i in range(len(click_models)):
+    #     custom_lines.append(Line2D([0], [0], color=COLORS[i]))
+    # # custom_lines = [Line2D([0], [0], color=cmap(0.), lw=4),
+    # #                 Line2D([0], [0], color=cmap(.5), lw=4),
+    # #                 Line2D([0], [0], color=cmap(1.), lw=4)]
+    #
+    # p1.legend(custom_lines, labels, loc='upper left', ncol=3, fontsize='small')
     # # p2.legend(click_models, loc='upper right')
     #
     #
@@ -305,36 +320,44 @@ if __name__ == "__main__":
     # plt.savefig('model_generators.png', bbox_inches='tight')
     # plt.show()
 
-    #
-    # f = plt.figure(1, figsize=(13, 8))
-    # plot_index = 1
-    # for s in simulators:
-    #     p1 = plt.subplot(len(simulators), 2, plot_index)
-    #     p2 = plt.subplot(len(simulators), 2, plot_index + 1)
-    #     if plot_index != len(simulators) * 2 - 1:
-    #         plt.setp(p1.get_xticklabels(), visible=False)
-    #         plt.setp(p2.get_xticklabels(), visible=False)
-    #     p1.set_title("generator: " + s)
-    #     p2.set_title("generator: " + s)
-    #
-    #     plot_perplexity_MSE_for_unseen_queries(s, click_models, p1, p2)
-    #     plot_index += 2
-    #
-    # labels = []
-    # for cm in click_models:
-    #     if cm == "FBNCM":
-    #         cm = "F-NCM"
-    #     if cm == "NCM":
-    #         cm = "DR-NCM"
-    #     labels.append(cm)
-    #
-    # p1.legend(labels, loc='upper left')
-    # # p2.legend(click_models, loc='upper right')
-    #
-    #
-    # p1.set_xlabel('rank')
-    # p2.set_xlabel('rank')
-    # f.subplots_adjust(wspace=0.3, hspace=0.3)
-    #
-    # plt.savefig('unseen_queries.png', bbox_inches='tight')
-    # plt.show()
+
+    f = plt.figure(1, figsize=(13, 8))
+    plot_index = 1
+    for s in simulators:
+        p1 = plt.subplot(len(simulators), 2, plot_index)
+        p2 = plt.subplot(len(simulators), 2, plot_index + 1)
+        if plot_index != len(simulators) * 2 - 1:
+            plt.setp(p1.get_xticklabels(), visible=False)
+            plt.setp(p2.get_xticklabels(), visible=False)
+        p1.set_title("generator: " + s)
+        p2.set_title("generator: " + s)
+
+        plot_perplexity_MSE_for_unseen_queries(s, click_models, p1, p2)
+        plot_index += 2
+
+    labels = []
+    for cm in click_models:
+        if cm == "FBNCM":
+            cm = "F-NCM"
+        if cm == "NCM":
+            cm = "DR-NCM"
+        labels.append(cm)
+
+    custom_lines = []
+    for i in range(len(click_models)):
+        custom_lines.append(Line2D([0], [0], color=COLORS[i]))
+    # custom_lines = [Line2D([0], [0], color=cmap(0.), lw=4),
+    #                 Line2D([0], [0], color=cmap(.5), lw=4),
+    #                 Line2D([0], [0], color=cmap(1.), lw=4)]
+
+
+    p1.legend(custom_lines, labels, loc='upper left')
+    # p2.legend(click_models, loc='upper right')
+
+
+    p1.set_xlabel('rank')
+    p2.set_xlabel('rank')
+    f.subplots_adjust(wspace=0.3, hspace=0.3)
+
+    plt.savefig('unseen_queries.png', bbox_inches='tight')
+    plt.show()
