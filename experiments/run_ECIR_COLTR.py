@@ -7,7 +7,6 @@ from utils import evl_tool
 import numpy as np
 import multiprocessing as mp
 import pickle
-import copy
 from utils import utility
 
 
@@ -20,9 +19,8 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
 
     num_interation = 0
 
-
-    correct = 0
-    wrong = 0
+    # correct = 0
+    # wrong = 0
     for i in index:
         num_interation += 1
         qid = query_set[i]
@@ -51,7 +49,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         unit_vectors = ranker.sample_unit_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)  # canditate_rankers are ranker weights, not ranker class
 
-        winner_rankers = ranker.infer_winners_renomalize(canditate_rankers[:num_rankers], record)  # winner_rankers are index of candidates rankers who win the evaluation
+        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)  # winner_rankers are index of candidates rankers who win the evaluation
 
         #### This part of code is used to test correctness of counterfactual evaluation ####
         # if winner_rankers is not None:
@@ -79,7 +77,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         ndcg_scores.append(ndcg)
         cndcg_scores.append(cndcg)
         final_weight = ranker.get_current_weights()
-        # print(num_interation, ndcg, cndcg)
+        print(num_interation, ndcg)
 
     return ndcg_scores, cndcg_scores, final_weight
 
@@ -95,6 +93,7 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
         pc = [0.4, 0.7, 0.9]
         ps = [0.1, 0.3, 0.5]
 
+    # click setting for 4-grade relevance label datasets.
     # if model_type == "perfect":
     #     pc = [0.0, 0.2, 0.4, 0.8, 1.0]
     #     ps = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -105,14 +104,17 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
     #     pc = [0.4, 0.6, 0.7, 0.8, 0.9]
     #     ps = [0.1, 0.2, 0.3, 0.4, 0.5]
 
+    # using SDBN click model to simulate clicks.
     cm = SDBN(pc, ps)
 
     for r in range(1, 26):
         # np.random.seed(r)
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
-
         print("COTLR {} tau{} fold{} {} run{} start!".format(output_fold, tau, f, model_type, r))
+
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm, num_rankers)
+
+        # store the results.
         with open(
                 "{}/fold{}/{}_tau{}_run{}_ndcg.txt".format(output_fold, f, model_type, tau, r),
                 "wb") as fp:
@@ -135,7 +137,6 @@ if __name__ == "__main__":
     FEATURE_SIZE = 46
     NUM_INTERACTION = 10000
     click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["informational"]
     Learning_rate = 0.1
     dataset_fold = "../datasets/2007_mq_dataset"
     output_fold = "../results/COLTR/mq2007"
