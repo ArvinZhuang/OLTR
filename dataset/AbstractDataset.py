@@ -11,6 +11,7 @@ class AbstractDataset:
         self._query_get_all_features = {}
         self._query_docid_get_rel = {}
         self._query_pos_docids = {}
+        self._query_relevant_labels = {}
         self._query_level_norm = query_level_norm
 
     def _load_data(self):

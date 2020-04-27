@@ -62,11 +62,13 @@ class LetorDataset(AbstractDataset):
                     self._query_get_docids[query].append(docid)
                     self._query_get_all_features[query] = np.vstack((self._query_get_all_features[query], features))
                     self._query_docid_get_rel[query][docid] = relevence
+                    self._query_relevant_labels[query] .append(relevence)
                 else:
                     self._query_docid_get_features[query] = {docid: np.array(features)}
                     self._query_get_docids[query] = [docid]
                     self._query_get_all_features[query] = np.array([features])
                     self._query_docid_get_rel[query] = {docid: relevence}
+                    self._query_relevant_labels[query] = [relevence]
 
         if self._query_level_norm:
             self._normalise(current_query)
@@ -94,6 +96,9 @@ class LetorDataset(AbstractDataset):
 
     def get_relevance_label_by_query_and_docid(self, query, docid):
         return self._query_docid_get_rel[query][docid]
+
+    def get_all_relevance_label_by_query(self, query):
+        return self._query_relevant_labels[query]
 
     def get_relevance_docids_by_query(self, query):
         return self._query_pos_docids[query]
