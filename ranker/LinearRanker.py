@@ -61,7 +61,12 @@ class LinearRanker(AbstractRanker):
         return query_result_list
 
     def get_scores(self, features):
+        # num = 0
+        # for i in features:
+        #     print(num, i)
+        #     num+=1
         weights = np.array([self.weights])
+
         score = np.dot(features, weights.T)[:, 0]
 
         return score

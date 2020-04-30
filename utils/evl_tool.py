@@ -2,10 +2,15 @@ import numpy as np
 
 
 def query_ndcg_at_k(dataset, result_list, query, k):
-    try:
-        pos_docid_set = set(dataset.get_relevance_docids_by_query(query))
-    except:
+    # try:
+    #     pos_docid_set = set(dataset.get_relevance_docids_by_query(query))
+    # except:
+    #     return 0.0
+    if len(dataset.get_relevance_docids_by_query(query)) == 0:
         return 0.0
+    else:
+        pos_docid_set = set(dataset.get_relevance_docids_by_query(query))
+
     dcg = 0.0
     for i in range(0, min(k, len(result_list))):
         docid = result_list[i]
@@ -28,11 +33,15 @@ def average_ndcg_at_k(dataset, query_result_list, k):
     ndcg = 0.0
     num_query = 0
     for query in dataset.get_all_querys():
-        try:
-            pos_docid_set = set(dataset.get_relevance_docids_by_query(query))
-        except:
-            # print("Query:", query, "has no relevant document!")
+        # try:
+        #     pos_docid_set = set(dataset.get_relevance_docids_by_query(query))
+        # except:
+        #     print("Query:", query, "has no relevant document!")
+        #     continue
+        if len(dataset.get_relevance_docids_by_query(query)) == 0:
             continue
+        else:
+            pos_docid_set = set(dataset.get_relevance_docids_by_query(query))
         dcg = 0.0
         for i in range(0, min(k, len(query_result_list[query]))):
             docid = query_result_list[query][i]

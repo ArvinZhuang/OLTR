@@ -78,8 +78,8 @@ def read_diversity(path, data):
     return data
 
 if __name__ == "__main__":
-    qrel_years = [9,10,11,12]
-    num_subtopics = 4
+    qrel_years = [9, 10, 11, 12]
+    num_subtopics = 6
     data = {}
     for year in qrel_years:
         adhoc_path = "./accessments/qrels.adhoc-w{:02d}".format(year)

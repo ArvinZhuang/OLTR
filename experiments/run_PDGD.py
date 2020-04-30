@@ -73,7 +73,7 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 136
+    FEATURE_SIZE = 46
     NUM_INTERACTION = 10000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational"]
