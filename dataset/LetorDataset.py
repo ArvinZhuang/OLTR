@@ -1,6 +1,7 @@
 from dataset.AbstractDataset import AbstractDataset
 import numpy as np
 import math
+import os
 
 
 class LetorDataset(AbstractDataset):
@@ -148,3 +149,20 @@ class LetorDataset(AbstractDataset):
                 s += "{} qid:{} {}# {}\n".format(label, query, features_str, comment)
         with open(output_file, "w") as f:
             f.write(s)
+
+    def write_cross_validation_datasets(self, path: str, fold_num: int):
+        """
+        :param fold_num: number of fold to do cross validation.
+        :param path: folder address to store the cross sets.
+        :return:
+        """
+
+        for fold in range(fold_num):
+            fold_path = f"{path}/Fold{fold+1}"
+            # Create target Directory if don't exist
+            if not os.path.exists(fold_path):
+                os.mkdir(fold_path)
+                print("Directory ", fold_path, " Created ")
+            else:
+                print("Directory ", fold_path, " already exists")
+
