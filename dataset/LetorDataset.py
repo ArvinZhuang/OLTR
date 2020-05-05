@@ -166,3 +166,13 @@ class LetorDataset(AbstractDataset):
             else:
                 print("Directory ", fold_path, " already exists")
 
+    # bad implementation only for PMGD:
+    def get_query_docid_get_feature(self):
+        return self._query_docid_get_features
+
+    def get_query_get_all_features(self):
+        return self._query_get_all_features
+
+    def get_query_get_docids(self):
+        return self._query_get_docids
+

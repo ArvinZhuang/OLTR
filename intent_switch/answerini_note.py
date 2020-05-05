@@ -28,9 +28,9 @@ doc = searcher.doc_by_field("id", "clueweb09-enwp00-00-00000")
 print(doc.lucene_document().get("id"))
 
 # this is how you search query by field, using lucene query syntax.
-# hits = searcher.object.searchLuceneSyntax('test parser', 10)
-# for i in range(0, 2):
-#     print([field.name() for field in hits[i].lucene_document.getFields()])
+hits = searcher.object.searchLuceneSyntax('id|test parser', 10)
+for i in range(0, 2):
+    print([field.name() for field in hits[i].lucene_document.getFields()])
 
 
 
