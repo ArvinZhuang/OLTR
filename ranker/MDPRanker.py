@@ -10,7 +10,7 @@ class MDPRanker(AbstractRanker):
                  Learningrate,
                  Lenepisode=10,
                  memory_size=100,
-                 batch_size=10):
+                 batch_size=1):
         super().__init__(Nfeature)
         self.Nfeature = Nfeature
         self.Lenepisode = Lenepisode
@@ -71,7 +71,7 @@ class MDPRanker(AbstractRanker):
         sess = tf.Session()
         sess.run(init)
 
-    def TFupdate(self, dataset):
+    def TF_batch_update(self, dataset):
 
         batch = np.random.randint(len(self.memory), size=self.batch_size)
         for i in batch:
@@ -86,6 +86,18 @@ class MDPRanker(AbstractRanker):
                                    feed_dict={input_docs: feature_matrix[ranklist], position: [0],
                                               learning_rate: self.lr * rewards[pos]})
                 ranklist = np.delete(ranklist, 0)
+
+    def TFupdate(self, query, ranklist, rewards, dataset):
+        feature_matrix = dataset.get_all_features_by_query(query)
+        ndoc = len(ranklist)
+        lenghth = min(self.Lenepisode, ndoc)
+
+        for pos in range(lenghth):
+
+            loss, _ = sess.run([cross_entropy, train_step],
+                               feed_dict={input_docs: feature_matrix[ranklist], position: [0],
+                                          learning_rate: self.lr * rewards[pos]})
+            ranklist = np.delete(ranklist, 0)
 
     def record_episode(self, query, ranklist, rewards):
         if not hasattr(self, 'memory_counter'):

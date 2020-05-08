@@ -45,6 +45,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
             # print("Change intent to", int(num_inter/10000))
             train_set.update_relevance_label(intents[int(num_inter/10000)])
 
+
         qid = query_set[i]
         result_list = ranker.get_query_result_list(train_set, qid)
 
@@ -52,12 +53,14 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
 
         # if no clicks, skip.
         if len(clicked_doc) == 0:
-            all_result = ranker.get_all_query_result_list(test_set)
-            ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+            all_result = ranker.get_all_query_result_list(train_set)
+            ndcg = evl_tool.average_ndcg_at_k(train_set, all_result, 10)
             cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
 
             ndcg_scores.append(ndcg)
             cndcg_scores.append(cndcg)
+            # print(num_inter, ndcg, "continue")
+            num_inter += 1
             continue
 
         # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
@@ -79,8 +82,8 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
             gradient = np.sum(unit_vectors[winner_rankers - 1], axis=0) / winner_rankers.shape[0]
             ranker.update(gradient)
 
-        all_result = ranker.get_all_query_result_list(test_set)
-        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+        all_result = ranker.get_all_query_result_list(train_set)
+        ndcg = evl_tool.average_ndcg_at_k(train_set, all_result, 10)
         cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
 
         ndcg_scores.append(ndcg)
@@ -128,7 +131,7 @@ if __name__ == "__main__":
     NUM_INTERACTION = 50000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "perfect"]
-    # click_models = ["informational"]
+    # click_models = ["perfect"]
     Learning_rate = 0.05
     # dataset_fold = "../datasets/MSLR-WEB10K"
     # dataset_fold = "../datasets/2007_mq_dataset"
@@ -136,7 +139,7 @@ if __name__ == "__main__":
     output_fold = "results/COLTR"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     num_rankers = 499
-    tau = 1
+    tau = 0.1
     gamma = 1
     learning_rate_decay = 1
     step_size = 1

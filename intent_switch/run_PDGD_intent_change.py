@@ -42,7 +42,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
     num_inter = 0
     for i in index:
         if num_inter % 10000 == 0:
-            # print("Change intent to", int(num_inter/10000))
+            print("Change intent to", int(num_inter/10000))
             train_set.update_relevance_label(intents[int(num_inter/10000)])
 
         qid = query_set[i]
