@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from dataset import LetorDataset
 import numpy as np
 from clickModel.PBM import PBM
