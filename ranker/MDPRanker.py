@@ -112,12 +112,12 @@ class MDPRanker(AbstractRanker):
         self.memory_counter += 1
 
 
-    def get_query_result_list(self, dataset, query):
+    def get_query_result_list(self, dataset, query, k=10):
         feature_matrix = dataset.get_all_features_by_query(query)
         docid_list = np.array(dataset.get_candidate_docids_by_query(query))
         ndoc = docid_list.shape[0]
 
-        # k = np.minimum(10, n_docs)
+        k = np.minimum(k, ndoc)
 
 
         doc_scores = self.get_scores(feature_matrix)
@@ -125,10 +125,13 @@ class MDPRanker(AbstractRanker):
         scoretmp = doc_scores.tolist()
 
         positions = list(range(ndoc))
-        ranklist = np.zeros(ndoc, dtype=np.int32)
-
-        for position in range(ndoc):
+        ranklist = np.zeros(k, dtype=np.int32)
+        for position in range(k):
             policy = np.exp(scoretmp) / np.sum(np.exp(scoretmp))
+            if np.isnan(np.sum(policy)):
+                print(query)
+                print(scoretmp)
+                print(policy)
             choice = np.random.choice(len(policy), 1, p=policy)[0]
             ranklist[position] = positions[choice]
 

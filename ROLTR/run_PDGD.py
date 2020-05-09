@@ -39,24 +39,24 @@ def run(train_set, test_set, ranker, num_interation, click_model):
 
 
 def job(model_type, f, train_set, test_set, tau, output_fold):
-    # if model_type == "perfect":
-    #     pc = [0.0, 0.2, 0.4, 0.8, 1.0]
-    #     ps = [0.0, 0.0, 0.0, 0.0, 0.0]
-    # elif model_type == "navigational":
-    #     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-    #     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-    # elif model_type == "informational":
-    #     pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-    #     ps = [0.1, 0.2, 0.3, 0.4, 0.5]
     if model_type == "perfect":
-        pc = [0.0, 0.5, 1.0]
-        ps = [0.0, 0.0, 0.0]
+        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
     elif model_type == "navigational":
-        pc = [0.05, 0.5, 0.95]
-        ps = [0.2, 0.5, 0.9]
+        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     elif model_type == "informational":
-        pc = [0.4, 0.7, 0.9]
-        ps = [0.1, 0.3, 0.5]
+        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+    # if model_type == "perfect":
+    #     pc = [0.0, 0.5, 1.0]
+    #     ps = [0.0, 0.0, 0.0]
+    # elif model_type == "navigational":
+    #     pc = [0.05, 0.5, 0.95]
+    #     ps = [0.2, 0.5, 0.9]
+    # elif model_type == "informational":
+    #     pc = [0.4, 0.7, 0.9]
+    #     ps = [0.1, 0.3, 0.5]
     cm = PBM(pc, 1)
 
     for r in range(1, 26):
@@ -81,21 +81,21 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 46
+    FEATURE_SIZE = 136
     NUM_INTERACTION = 10000
     click_models = ["informational", "navigational", "perfect"]
     # click_models = ["informational"]
     Learning_rate = 0.1
-    dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "results/PDGD"
+    dataset_fold = "../datasets/MSLR-WEB10K"
+    output_fold = "results/mslr10k/PDGD"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
     for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        train_set = LetorDataset(training_path, FEATURE_SIZE)
-        test_set = LetorDataset(test_path, FEATURE_SIZE)
+        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
+        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
 
         processors = []
         # for 3 click_models
