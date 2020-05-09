@@ -158,7 +158,7 @@ class LetorDataset(AbstractDataset):
         """
 
         for fold in range(fold_num):
-            fold_path = f"{path}/Fold{fold+1}"
+            fold_path = "{}/Fold{}".format(path, fold+1)
             # Create target Directory if don't exist
             if not os.path.exists(fold_path):
                 os.mkdir(fold_path)

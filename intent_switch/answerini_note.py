@@ -1,6 +1,6 @@
 import os
 os.environ["JAVA_HOME"] = "/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home"
-os.environ['ANSERINI_CLASSPATH'] = "/Users/s4416495/experiment_code/anserini/target/"
+os.environ['ANSERINI_CLASSPATH'] = "/Volumes/ext3/arvin/anserini/target/"
 
 from pyserini.collection import pycollection
 from pyserini.index import pygenerator, pyutils
@@ -10,7 +10,7 @@ from pyserini.analysis.pyanalysis import get_lucene_analyzer, Analyzer
 
 
 
-index_path = '/Users/s4416495/experiment_code/anserini/lucene-index.cw09b/'
+index_path = '/Volumes/ext3/arvin/anserini/lucene-index.cw09b/'
 
 
 JString = autoclass('java.lang.String')
@@ -24,13 +24,13 @@ JIndexReaderUtils = autoclass('io.anserini.index.IndexReaderUtils')
 #
 # # this is another way to get lucene document
 searcher = pysearch.SimpleSearcher(index_path)
-doc = searcher.doc_by_field("id", "clueweb09-enwp00-00-00000")
+doc = searcher.doc_by_field("id", "clueweb09-en0025-18-33016")
 print(doc.lucene_document().get("id"))
 
 # this is how you search query by field, using lucene query syntax.
-hits = searcher.object.searchLuceneSyntax('id|test parser', 10)
-for i in range(0, 2):
-    print([field.name() for field in hits[i].lucene_document.getFields()])
+# hits = searcher.object.searchLuceneSyntax('id|test parser', 10)
+# for i in range(0, 2):
+#     print([field.name() for field in hits[i].lucene_document.getFields()])
 
 
 
@@ -43,7 +43,7 @@ for i in range(0, 2):
 
 # this is how you get tf dictionary by docid and field.
 index_utils = pyutils.IndexReaderUtils(index_path)
-doc_vector = index_utils.get_document_vector_by_field('clueweb09-enwp00-00-00000', "title")
+doc_vector = index_utils.get_document_vector_by_field('clueweb09-en0025-18-33016', "title")
 print(doc_vector)
 
 # this is how you compute field length for a document.
