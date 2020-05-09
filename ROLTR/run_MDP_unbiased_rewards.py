@@ -18,7 +18,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
     num_iter = 0
     for i in index:
         qid = query_set[i]
-        result_list = ranker.get_query_result_list(train_set, qid)
+        result_list = ranker.get_query_result_list(train_set, qid, k=10)
         clicked_doces, click_labels, propensities = click_model.simulate(qid, result_list, train_set)
 
 
@@ -71,7 +71,7 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
 
     for r in range(1, 26):
         # np.random.seed(r)
-        ranker = MDPRanker(256, num_features, 0.1)
+        ranker = MDPRanker(256, num_features, 0.01)
         print("MDP unbiased rewards, mslr10k fold{} {} run{} start!".format(f, model_type, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
@@ -91,9 +91,9 @@ if __name__ == "__main__":
     FEATURE_SIZE = 136
     NUM_INTERACTION = 10000
     # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["perfect"]
+    click_models = ["informational"]
 
-    # dataset_fold = "../datasets/MSLR-WEB10K"
+    # dataset_fold = "../datasets/2007_mq_dataset"
     dataset_fold = "../datasets/MSLR-WEB10K"
     output_fold = "results/mslr10k/MDP_unbiased"
 

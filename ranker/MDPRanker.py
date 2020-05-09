@@ -114,10 +114,11 @@ class MDPRanker(AbstractRanker):
 
     def get_query_result_list(self, dataset, query, k=10):
         feature_matrix = dataset.get_all_features_by_query(query)
-        docid_list = np.array(dataset.get_candidate_docids_by_query(query))
-        ndoc = docid_list.shape[0]
+        docid_list = dataset.get_candidate_docids_by_query(query)
+        ndoc = len(docid_list)
 
         k = np.minimum(k, ndoc)
+
 
 
         doc_scores = self.get_scores(feature_matrix)
@@ -126,12 +127,15 @@ class MDPRanker(AbstractRanker):
 
         positions = list(range(ndoc))
         ranklist = np.zeros(k, dtype=np.int32)
+
+        if k == 1:
+            ranklist[0] = positions[0]
+            return ranklist
+
         for position in range(k):
+            # policy = np.exp((scoretmp - np.max(scoretmp)) / 10)
+            # policy = policy / np.sum(policy)
             policy = np.exp(scoretmp) / np.sum(np.exp(scoretmp))
-            if np.isnan(np.sum(policy)):
-                print(query)
-                print(scoretmp)
-                print(policy)
             choice = np.random.choice(len(policy), 1, p=policy)[0]
             ranklist[position] = positions[choice]
 
