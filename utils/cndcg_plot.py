@@ -28,7 +28,7 @@ def plot(path, parameters, folds, runs, click_model, num_interactions, color):
         color_index += 1
         cndcg = 0
         for i in range(0, len(result_mean) + 1):
-            cndcg += 0.9995 ** i * data[i - 1]
+            cndcg += 0.9995 ** i * result_mean[i - 1]
         print(p, cndcg)
 
     plt.figure(1)
