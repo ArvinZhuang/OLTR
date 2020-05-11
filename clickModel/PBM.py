@@ -9,6 +9,7 @@ class PBM(AbstractClickModel):
         self.pc = np.array(pc)
 
     def simulate(self, query, result_list, dataset):
+        result_list = result_list[:10]
         propensities = np.power(np.divide(1, np.arange(1.0, len(result_list) + 1)), self.eta)
         rels = np.array(dataset.get_all_relevance_label_by_query(query))
         click_probs = self.pc[rels[result_list]]

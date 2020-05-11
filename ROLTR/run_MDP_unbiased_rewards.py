@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('../')
 from dataset import LetorDataset
 import numpy as np
@@ -10,6 +11,7 @@ import multiprocessing as mp
 import pickle
 
 
+# %%
 def run(train_set, test_set, ranker, num_interation, click_model):
     ndcg_scores = []
     cndcg_scores = []
@@ -18,9 +20,8 @@ def run(train_set, test_set, ranker, num_interation, click_model):
     num_iter = 0
     for i in index:
         qid = query_set[i]
-        result_list = ranker.get_query_result_list(train_set, qid, k=10)
+        result_list = ranker.get_query_result_list(train_set, qid)
         clicked_doces, click_labels, propensities = click_model.simulate(qid, result_list, train_set)
-
 
         if len(clicked_doces) == 0 or len(result_list) == 1:
             all_result = ranker.get_all_query_result_list(test_set)
@@ -41,14 +42,14 @@ def run(train_set, test_set, ranker, num_interation, click_model):
         all_result = ranker.get_all_query_result_list(test_set)
         ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
         cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-        print(num_iter, ndcg)
+        # print(num_iter, ndcg)
         ndcg_scores.append(ndcg)
         cndcg_scores.append(cndcg)
         num_iter += 1
     return ndcg_scores, cndcg_scores
 
-def job(model_type, f, train_set, test_set, num_features, output_fold):
 
+def job(model_type, f, train_set, test_set, num_features, output_fold):
     # if model_type == "perfect":
     #     pc = [0.0, 0.5, 1.0]
     #     ps = [0.0, 0.0, 0.0]
@@ -71,7 +72,7 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
 
     for r in range(1, 26):
         # np.random.seed(r)
-        ranker = MDPRanker(256, num_features, 0.01)
+        ranker = MDPRanker(256, num_features, 0.1)
         print("MDP unbiased rewards, mslr10k fold{} {} run{} start!".format(f, model_type, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
@@ -85,13 +86,12 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
 
         print("MDP unbiased rewards, mslr10k fold{} {} run{} finished!".format(f, model_type, r))
 
-
 if __name__ == "__main__":
 
     FEATURE_SIZE = 136
     NUM_INTERACTION = 10000
-    # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["informational"]
+    click_models = ["informational", "navigational", "perfect"]
+    # click_models = ["perfect"]
 
     # dataset_fold = "../datasets/2007_mq_dataset"
     dataset_fold = "../datasets/MSLR-WEB10K"
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
-
+        # %%
         processors = []
         # for 3 click_models
         for click_model in click_models:
@@ -112,3 +112,4 @@ if __name__ == "__main__":
             processors.append(p)
         for p in processors:
             p.join()
+        # %%

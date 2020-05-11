@@ -52,19 +52,21 @@ def send_progress(name, current, total, comment):
 def GetReward_DCG(click_labels, propensities):
 
     reward = np.zeros(len(click_labels))
-    for iPos in range(len(click_labels)):
-        if iPos == 0:
-            reward[iPos] = (2**1-1)
-        else:
-            reward[iPos] = (2**1-1) / np.log(iPos + 1.0)
+    last_click = np.where(click_labels == 1)[0][-1]
+    for iPos in range(last_click + 1):
+        reward[iPos] = (2**1-1) / np.log2(iPos + 2.0)
 
         if click_labels[iPos] == 1:
+            # reward[iPos] = 0
             reward[iPos] = reward[iPos] / propensities[iPos]
+            # reward[iPos] = reward[iPos] / np.max([propensities[iPos], 0.5])  # propensity clipping
         else:
             # unbiased negative rewards
+            # reward[iPos] = 0
             reward[iPos] = -(reward[iPos] / (0.5 * propensities[iPos] + (1 - propensities[iPos])))
         # reward[iPos] = reward[iPos] / np.max([propensities[iPos], 0.5])  # propensity clipping
-
+    # print(click_labels)
+    # print(reward)
     # assign negative rewards to none clicked documents, leave for future investigation.
     # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
     # last_click = np.where(click_labels == 1)[0][-1]
@@ -78,10 +80,6 @@ def GetReward_DCG(click_labels, propensities):
     #         neg_reward[iPos] += (2 ** click_labels[iPos] - 1) / np.log(iPos + 1.0)
     #     reward[iPos] -= neg_reward[iPos] / np.max([propensities[iPos], 0.5])  # propensity clipping
 
-    # assign negative rewards to none clicked documents, leave for future investigation.
-    # propensities = -propensities
-    # ind = [np.where(reward==0)[0]]
-    # reward[ind] = propensities[ind]
 
     return reward
 

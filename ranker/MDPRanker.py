@@ -59,13 +59,7 @@ class MDPRanker(AbstractRanker):
         grads_vars = opt.compute_gradients(cross_entropy)
         train_step = opt.apply_gradients(grads_vars)
 
-        # neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=scores, labels=position)
-        # # train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
-        # # opt = tf.train.GradientDescentOptimizer(learning_rate)
-        # # grads_vars = opt.compute_gradients(cross_entropy)
-        # # train_step = opt.apply_gradients(grads_vars)
-        # loss = tf.reduce_mean(neg_log_prob * position)
-        # self.train_op = tf.train.AdamOptimizer(self.lr).minimize(loss)
+
 
         # Start TF session
         sess = tf.Session()
@@ -97,6 +91,7 @@ class MDPRanker(AbstractRanker):
             loss, _ = sess.run([cross_entropy, train_step],
                                feed_dict={input_docs: feature_matrix[ranklist], position: [0],
                                           learning_rate: self.lr * rewards[pos]})
+
             ranklist = np.delete(ranklist, 0)
 
     def record_episode(self, query, ranklist, rewards):
@@ -112,12 +107,12 @@ class MDPRanker(AbstractRanker):
         self.memory_counter += 1
 
 
-    def get_query_result_list(self, dataset, query, k=10):
+    def get_query_result_list(self, dataset, query):
         feature_matrix = dataset.get_all_features_by_query(query)
         docid_list = dataset.get_candidate_docids_by_query(query)
         ndoc = len(docid_list)
 
-        k = np.minimum(k, ndoc)
+        # k = np.minimum(k, ndoc)
 
 
 
@@ -126,13 +121,13 @@ class MDPRanker(AbstractRanker):
         scoretmp = doc_scores.tolist()
 
         positions = list(range(ndoc))
-        ranklist = np.zeros(k, dtype=np.int32)
+        ranklist = np.zeros(ndoc, dtype=np.int32)
 
-        if k == 1:
+        if ndoc == 1:
             ranklist[0] = positions[0]
             return ranklist
 
-        for position in range(k):
+        for position in range(ndoc):
             # policy = np.exp((scoretmp - np.max(scoretmp)) / 10)
             # policy = policy / np.sum(policy)
             policy = np.exp(scoretmp) / np.sum(np.exp(scoretmp))
