@@ -38,8 +38,8 @@ if __name__ == "__main__":
     # path1 = "results/mq2007/PDGD"
     # path2 = "results/mq2007/MDP_unbiased"
     folds = list(range(1, 2))
-    runs = list(range(1, 2))
-    click_model = 'informational'
+    runs = list(range(1, 4))
+    click_model = 'navigational'
 
     parameters = ["PDGD", "MDP"]
     num_interactions = 10000
