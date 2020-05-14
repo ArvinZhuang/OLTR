@@ -55,7 +55,7 @@ class LetorDataset(AbstractDataset):
 
                     if not feature_id.isdigit():
                         if feature_id[0] == "#":
-                            self._docid_map[query][docid] = feature_id[1:]
+                            self._docid_map[query][docid] = cols[i + 2]
                         break
 
                     feature_id = int(feature_id) - 1
@@ -64,6 +64,7 @@ class LetorDataset(AbstractDataset):
                         feature_value = 0
 
                     features[feature_id] = feature_value
+
 
                 if relevence > 0:
                     self._query_pos_docids[query].append(docid)
@@ -102,13 +103,29 @@ class LetorDataset(AbstractDataset):
             self._query_pos_docids[qid] = []
             ind = 0
             for docid in self._query_docid_get_rel[qid].keys():
-                rel = qrel_dic[qid][self._docid_map[qid][docid]]
+                if self._docid_map[qid][docid] in qrel_dic[qid].keys():
+                    rel = qrel_dic[qid][self._docid_map[qid][docid]]
+                else:
+                    rel = 0
                 self._query_docid_get_rel[qid][docid] = rel
                 self._query_relevant_labels[qid][ind] = rel
                 if rel > 0:
                     self._query_pos_docids[qid].append(docid)
                 ind += 1
 
+    def update_relevance_by_qrel(self, path: str):
+
+        # q-d pair dictionary
+        qrel_dic = {}
+
+        with open(path, 'r') as f:
+            for line in f:
+                qid, _, docid, rel = line.strip().split()
+                if qid in qrel_dic.keys():
+                    qrel_dic[qid][docid] = int(rel)
+                else:
+                    qrel_dic[qid] = {docid: int(rel)}
+        self.update_relevance_label(qrel_dic)
 
     def get_features_by_query_and_docid(self, query, docid):
         return self._query_docid_get_features[query][docid]
@@ -146,7 +163,7 @@ class LetorDataset(AbstractDataset):
                     # if feature == 0:
                     #     continue
                     features_str += "{}:{} ".format(i + 1, feature)
-                s += "{} qid:{} {}# {}\n".format(label, query, features_str, comment)
+                s += "{} qid:{} {}#{}\n".format(label, query, features_str, comment)
         with open(output_file, "w") as f:
             f.write(s)
 
@@ -165,6 +182,50 @@ class LetorDataset(AbstractDataset):
                 print("Directory ", fold_path, " Created ")
             else:
                 print("Directory ", fold_path, " already exists")
+
+    @staticmethod
+    def runs_to_letor(input_folder: str, output_folder: str):
+        """
+        Convert run files into LTR dataset.
+        :param input_folder: folder path that contains all run files.
+        :param output_folder:
+        :return:
+        """
+        files = os.listdir(input_folder)
+        num_feature = len(files)
+
+        # q-d pair dictionary
+        query_dic = {}
+        for feature_id in range(num_feature):
+            # feature id in standard letor datasets start from 1.
+            with open(os.path.join(input_folder, files[feature_id]), 'r') as f:
+                for line in f:
+                    qid, _, docid, rank, score, rname = line.strip().split()
+                    if qid in query_dic.keys():
+                        if docid in query_dic[qid].keys():
+                            query_dic[qid][docid].append((feature_id + 1, score))
+                        else:
+                            query_dic[qid][docid] = [(feature_id + 1, score)]
+                    else:
+                        query_dic[qid] = {docid: [(feature_id + 1, score)]}
+        s = ""
+        for qid in query_dic.keys():
+            for docid in query_dic[qid].keys():
+                # the first column is relevance label, dont know for now.
+                s += "0 "
+                s += "qid:{} ".format(qid)
+
+                for feature_id, socre in query_dic[qid][docid]:
+                    s += "{}:{} ".format(feature_id, socre)
+                s += "#docid = {}\n".format(docid)
+        with open(output_folder+"letor.txt", "w") as f:
+            f.write(s)
+
+        s = ""
+        for fid in range(len(files)):
+            s += "{}:{}\n".format(fid+1, files[fid])
+        with open(output_folder+"feature_description.txt", "w") as f:
+            f.write(s)
 
     # bad implementation only for PMGD:
     def get_query_docid_get_feature(self):
