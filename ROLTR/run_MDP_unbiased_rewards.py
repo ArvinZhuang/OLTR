@@ -23,12 +23,13 @@ def run(train_set, test_set, ranker, num_interation, click_model):
         result_list = ranker.get_query_result_list(train_set, qid)
         clicked_doces, click_labels, propensities = click_model.simulate(qid, result_list, train_set)
 
-        if len(clicked_doces) == 0 or len(result_list) == 1:
+        if len(clicked_doces) == 0:
+
             all_result = ranker.get_all_query_result_list(test_set)
             ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-
             ndcg_scores.append(ndcg)
+
+            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
             cndcg_scores.append(cndcg)
             num_iter += 1
             continue
@@ -41,10 +42,10 @@ def run(train_set, test_set, ranker, num_interation, click_model):
 
         all_result = ranker.get_all_query_result_list(test_set)
         ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-        # print(num_iter, ndcg)
         ndcg_scores.append(ndcg)
+        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
+        # print(num_iter, ndcg)
         num_iter += 1
     return ndcg_scores, cndcg_scores
 
@@ -70,9 +71,9 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
         ps = [0.1, 0.2, 0.3, 0.4, 0.5]
     cm = PBM(pc, 1)
 
-    for r in range(1, 26):
+    for r in range(1, 16):
         # np.random.seed(r)
-        ranker = MDPRanker(256, num_features, 0.1)
+        ranker = MDPRanker(256, num_features, 0.01)
         print("MDP unbiased rewards, mslr10k fold{} {} run{} start!".format(f, model_type, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
@@ -89,12 +90,12 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
 if __name__ == "__main__":
 
     FEATURE_SIZE = 136
-    NUM_INTERACTION = 10000
+    NUM_INTERACTION = 100000
     click_models = ["informational", "navigational", "perfect"]
     # click_models = ["perfect"]
 
     # dataset_fold = "../datasets/2007_mq_dataset"
-    dataset_fold = "../datasets/MSLR-WEB10K"
+    dataset_fold = "../datasets/MSLR10K"
     output_fold = "results/mslr10k/MDP_unbiased"
 
     # for 5 folds

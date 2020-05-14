@@ -52,8 +52,9 @@ def send_progress(name, current, total, comment):
 def GetReward_DCG(click_labels, propensities):
 
     reward = np.zeros(len(click_labels))
-    last_click = np.where(click_labels == 1)[0][-1]
-    for iPos in range(last_click + 1):
+    # last_click = np.where(click_labels == 1)[0][-1]
+    # for iPos in range(last_click + 1):
+    for iPos in range(len(click_labels)):
         reward[iPos] = (2**1-1) / np.log2(iPos + 2.0)
 
         if click_labels[iPos] == 1:
