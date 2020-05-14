@@ -90,7 +90,7 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
 if __name__ == "__main__":
 
     FEATURE_SIZE = 136
-    NUM_INTERACTION = 100000
+    NUM_INTERACTION = 10000
     click_models = ["informational", "navigational", "perfect"]
     # click_models = ["perfect"]
 
