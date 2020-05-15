@@ -73,7 +73,7 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
 
     for r in range(1, 16):
         # np.random.seed(r)
-        ranker = MDPRanker(256, num_features, 0.01)
+        ranker = MDPRanker(256, num_features, 0.03)
         print("MDP unbiased rewards, mslr10k fold{} {} run{} start!".format(f, model_type, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
@@ -111,6 +111,6 @@ if __name__ == "__main__":
             p = mp.Process(target=job, args=(click_model, f, train_set, test_set, FEATURE_SIZE, output_fold))
             p.start()
             processors.append(p)
-        for p in processors:
-            p.join()
-        # %%
+    for p in processors:
+        p.join()
+        # %% d

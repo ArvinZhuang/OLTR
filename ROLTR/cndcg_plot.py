@@ -36,11 +36,12 @@ def plot(path, parameter, folds, runs, click_model, num_interactions, color):
 
 if __name__ == "__main__":
     path1 = "results/mslr10k/PDGD"
-    path2 = "results/mslr10k/MDP_unbiased"
+    # path2 = "results/mslr10k/MDP_unbiased"
+    path2 = "results/mslr10k/MDP_server"
     # path1 = "results/mq2007/PDGD"
     # path2 = "results/mq2007/MDP_unbiased"
     folds = list(range(1, 2))
-    runs = list(range(1, 19))
+    runs = list(range(1, 6))
     click_model = 'navigational'
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     parameters = ["PDGD", "MDP"]
