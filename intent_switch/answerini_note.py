@@ -24,7 +24,7 @@ JIndexReaderUtils = autoclass('io.anserini.index.IndexReaderUtils')
 #
 # # this is another way to get lucene document
 searcher = pysearch.SimpleSearcher(index_path)
-doc = searcher.doc_by_field("id", "clueweb09-en0025-18-33016")
+doc = searcher.doc_by_field("id", "clueweb09-en0003-90-15493")
 print("lucene document id", doc.lucene_document().get("id"))
 
 # this is how you search query by field, using lucene query syntax.
@@ -43,7 +43,7 @@ print("lucene document id", doc.lucene_document().get("id"))
 
 # this is how you get tf dictionary by docid and field.
 index_utils = pyutils.IndexReaderUtils(index_path)
-doc_vector = index_utils.get_document_vector_by_field('clueweb09-en0025-18-33016', "anchor")
+doc_vector = index_utils.get_document_vector_by_field('clueweb09-en0003-90-15493', "title")
 print("tf given field:", doc_vector)
 
 # this is how you compute field length for a document.
