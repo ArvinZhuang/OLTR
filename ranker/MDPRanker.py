@@ -33,11 +33,12 @@ class MDPRanker(AbstractRanker):
         position = tf.placeholder(tf.int64)
         learning_rate = tf.placeholder(tf.float32, shape=[])
 
-        # Liner ranker
+        ########## Liner ranker ########
         W1 = tf.Variable(tf.truncated_normal([self.Nfeature, 1], stddev=0.1 / np.sqrt(float(Nfeature))))
         # b1 = tf.Variable(tf.zeros([1, hidden_units]))
         h1 = tf.matmul(input_docs, W1)
         scores = tf.transpose(h1)
+        ##################################
 
         ########## neural ranker ########
         # Generate hidden layer

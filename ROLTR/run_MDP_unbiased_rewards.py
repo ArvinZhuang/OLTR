@@ -34,7 +34,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
             num_iter += 1
             continue
 
-        rewards = GetReturn_DCG(click_labels, propensities)
+        rewards = GetReturn_DCG(click_labels, propensities, method="positive")
 
         # ranker.record_episode(qid, result_list, rewards)
 
@@ -50,7 +50,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
     return ndcg_scores, cndcg_scores
 
 
-def job(model_type, f, train_set, test_set, num_features, output_fold):
+def job(model_type, learning_rate, f, train_set, test_set, num_features, output_fold):
     # if model_type == "perfect":
     #     pc = [0.0, 0.5, 1.0]
     #     ps = [0.0, 0.0, 0.0]
@@ -73,8 +73,8 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
 
     for r in range(1, 16):
         # np.random.seed(r)
-        ranker = MDPRanker(256, num_features, 0.03)
-        print("MDP unbiased rewards, mslr10k fold{} {} run{} start!".format(f, model_type, r))
+        ranker = MDPRanker(256, num_features, learning_rate)
+        print("MDP unbiased rewards, MSLR10K fold{} {} run{} start!".format(f, model_type, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
                 "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
@@ -85,21 +85,24 @@ def job(model_type, f, train_set, test_set, num_features, output_fold):
                 "wb") as fp:
             pickle.dump(cndcg_scores, fp)
 
-        print("MDP unbiased rewards, mslr10k fold{} {} run{} finished!".format(f, model_type, r))
+        print("MDP unbiased rewards, MSLR10K fold{} {} run{} finished!".format(f, model_type, r))
 
 if __name__ == "__main__":
 
     FEATURE_SIZE = 136
     NUM_INTERACTION = 10000
+    learning_rate = 0.03
+
+
     click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["perfect"]
+    # click_models = ["informational"]
 
     # dataset_fold = "../datasets/2007_mq_dataset"
     dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/MDP_unbiased"
-
+    output_fold = "results/mslr10k/MDP_003_unbiased_negativeDCG"
+    # output_fold = "results/mq2007/MDP_003_unbiased_negativeDCG"
     # for 5 folds
-    for f in range(1, 6):
+    for f in range(1, 16):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
@@ -108,7 +111,7 @@ if __name__ == "__main__":
         processors = []
         # for 3 click_models
         for click_model in click_models:
-            p = mp.Process(target=job, args=(click_model, f, train_set, test_set, FEATURE_SIZE, output_fold))
+            p = mp.Process(target=job, args=(click_model, learning_rate, f, train_set, test_set, FEATURE_SIZE, output_fold))
             p.start()
             processors.append(p)
     for p in processors:

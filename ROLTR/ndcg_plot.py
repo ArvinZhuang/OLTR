@@ -28,26 +28,30 @@ def plot(path, parameters, folds, runs, click_model, num_interactions, color):
     plt.fill_between(range(num_interactions), result_low, result_high, color=COLORS[color], alpha=0.2)
     color_index += 1
     plt.figure(1)
-    plt.legend(parameters, loc='lower right')
+    # plt.legend(parameters, loc='lower right')
+    print(result_mean[-1])
 
 
 
 if __name__ == "__main__":
-    path1 = "results/mslr10k/PDGD"
+    # path1 = "results/mslr10k/PDGD"
     # path2 = "results/mslr10k/MDP_01_lastclick"
-    path2 = "results/mslr10k/MDP_001"
-    # path1 = "results/mq2007/PDGD"
-    # path2 = "results/mq2007/MDP_unbiased"
-    folds = list(range(1, 2))
-    runs = list(range(1, 6))
+    # path2 = "results/mslr10k/MDP_003"
+    path1 = "results/mq2007/PDGD"
+    path2 = "results/mq2007/MDP_003_unbiased_negativeDCG"
+    path3 = "results/mq2007/MDP_003_positive_reward_only"
+    # path1 = "results/mq2007/MDP_003_unbiased_negative_reward"
+    folds = list(range(1, 6))
+    runs = list(range(1, 8))
     click_model = 'informational'
 
-    parameters = ["PDGD", "MDP"]
+    parameters = ["PDGD", "MDP_neg_only", "MDP_pos_only"]
     num_interactions = 10000
 
     plot(path1, "PDGD", folds, runs, click_model, num_interactions, 1)
-    plot(path2, "MDP", folds, runs, click_model, num_interactions, 2)
-    plt.ylabel('NDCG')
+    plot(path2, "MDP_neg_only", folds, runs, click_model, num_interactions, 2)
+    plot(path3, "MDP_pos_only", folds, runs, click_model, num_interactions, 3)
+    plt.ylabel('NDwCG')
     plt.xlabel('EPOCH')
     plt.legend(parameters, loc='lower right')
     plt.show()
