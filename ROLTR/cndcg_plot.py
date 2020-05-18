@@ -42,7 +42,7 @@ if __name__ == "__main__":
     path2 = "results/mq2007/MDP_003_unbiased_negativeDCG"
     path3 = "results/mq2007/MDP_003_positive_reward_only"
     folds = list(range(1, 6))
-    runs = list(range(1, 8))
+    runs = list(range(1, 16))
     click_model = 'informational'
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     parameters = ["PDGD", "MDP_neg_only", "MDP_pos_only"]

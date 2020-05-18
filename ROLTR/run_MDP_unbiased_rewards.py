@@ -34,7 +34,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
             num_iter += 1
             continue
 
-        rewards = GetReturn_DCG(click_labels, propensities, method="positive")
+        rewards = GetReturn_DCG(click_labels, propensities, method="negative")
 
         # ranker.record_episode(qid, result_list, rewards)
 

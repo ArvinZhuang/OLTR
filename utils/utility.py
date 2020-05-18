@@ -63,12 +63,16 @@ def GetReward_DCG(click_labels, propensities, method="positive"):
                 reward[iPos] = reward[iPos] / propensities[iPos]
             if method == "negative":
                 reward[iPos] = (reward[iPos] / propensities[iPos]) - reward[iPos]
+            if method == "both":
+                reward[iPos] = 2*(reward[iPos] / propensities[iPos]) - reward[iPos]
             # reward[iPos] = reward[iPos] / np.max([propensities[iPos], 0.5])  # propensity clipping
         else:
             # unbiased negative rewards
             if method == "positive":
                 reward[iPos] = 0
             if method == "negative":
+                reward[iPos] = -reward[iPos]
+            if method == "both":
                 reward[iPos] = -reward[iPos]
             # reward[iPos] = -(reward[iPos] / (0.5 * propensities[iPos] + (1 - propensities[iPos])))
             # reward[iPos] = -(reward[iPos]/(1 + prior - propensities[iPos] * prior))  # hopefully unbiased
