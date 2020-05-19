@@ -34,23 +34,26 @@ def plot(path, parameters, folds, runs, click_model, num_interactions, color):
 
 
 if __name__ == "__main__":
-    # path1 = "results/mslr10k/PDGD"
+    path1 = "results/mslr10k/PDGD"
     # path2 = "results/mslr10k/MDP_01_lastclick"
-    # path2 = "results/mslr10k/MDP_003"
-    path1 = "results/mq2007/PDGD"
-    path2 = "results/mq2007/MDP_003_unbiased_negativeDCG"
-    path3 = "results/mq2007/MDP_003_positive_reward_only"
-    # path1 = "results/mq2007/MDP_003_unbiased_negative_reward"
-    folds = list(range(1, 6))
-    runs = list(range(1, 16))
-    click_model = 'informational'
+    path2 = "results/mslr10k/MDP_003"
+    path3 = "results/mslr10k/MDP_003_unbiased_negativeDCG"
 
-    parameters = ["PDGD", "MDP_neg_only", "MDP_pos_only"]
+    # path1 = "results/mq2007/PDGD"
+    # path2 = "results/mq2007/MDP_003_unbiased_negativeDCG"
+    # path3 = "results/mq2007/MDP_003_positive_reward_only"
+    # path4 = "results/mq2007/MDP_003_both_pos_neg"
+    folds = list(range(1, 6))
+    runs = list(range(1, 2))
+    click_model = 'navigational'
+
+    parameters = ["PDGD", "MDP_pos_only", "MDP_neg_only"]
     num_interactions = 10000
 
     plot(path1, "PDGD", folds, runs, click_model, num_interactions, 1)
-    plot(path2, "MDP_neg_only", folds, runs, click_model, num_interactions, 2)
-    plot(path3, "MDP_pos_only", folds, runs, click_model, num_interactions, 3)
+    plot(path2, "MDP_pos_only", folds, runs, click_model, num_interactions, 2)
+    plot(path3, "MDP_neg_only", folds, runs, click_model, num_interactions, 3)
+    # plot(path4, "both_pos_neg", folds, runs, click_model, num_interactions, 4)
     plt.ylabel('NDwCG')
     plt.xlabel('EPOCH')
     plt.legend(parameters, loc='lower right')

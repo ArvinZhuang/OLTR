@@ -24,27 +24,27 @@ def run(train_set, test_set, ranker, num_interation, click_model):
         clicked_doces, click_labels, propensities = click_model.simulate(qid, result_list, train_set)
 
         if len(clicked_doces) == 0:
+            if num_iter % 1000 == 0:
+                all_result = ranker.get_all_query_result_list(test_set)
+                ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+                ndcg_scores.append(ndcg)
 
-            all_result = ranker.get_all_query_result_list(test_set)
-            ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-            ndcg_scores.append(ndcg)
-
-            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-            cndcg_scores.append(cndcg)
+                cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+                cndcg_scores.append(cndcg)
             num_iter += 1
             continue
 
-        rewards = GetReturn_DCG(click_labels, propensities, method="negative")
+        rewards = GetReturn_DCG(click_labels, propensities, method="both")
 
         # ranker.record_episode(qid, result_list, rewards)
 
         ranker.TFupdate(qid, result_list, rewards, train_set)
-
-        all_result = ranker.get_all_query_result_list(test_set)
-        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-        ndcg_scores.append(ndcg)
-        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-        cndcg_scores.append(cndcg)
+        if num_iter % 1000 == 0:
+            all_result = ranker.get_all_query_result_list(test_set)
+            ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+            ndcg_scores.append(ndcg)
+            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+            cndcg_scores.append(cndcg)
         # print(num_iter, ndcg)
         num_iter += 1
     return ndcg_scores, cndcg_scores
@@ -94,12 +94,12 @@ if __name__ == "__main__":
     learning_rate = 0.03
 
 
-    click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["informational"]
+    # click_models = ["informational", "navigational", "perfect"]
+    click_models = ["informational", "navigational"]
 
     # dataset_fold = "../datasets/2007_mq_dataset"
     dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/MDP_003_unbiased_negativeDCG"
+    output_fold = "results/mslr10k/MDP_003_both"
     # output_fold = "results/mq2007/MDP_003_unbiased_negativeDCG"
     # for 5 folds
     for f in range(1, 16):
