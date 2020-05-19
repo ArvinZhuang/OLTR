@@ -8,7 +8,7 @@ COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 def plot(path, parameters, folds, runs, click_model, num_interactions, color):
     print("result path:", path)
     color_index = 0
-    result = np.zeros(num_interactions)
+    result = np.zeros(int(num_interactions/1000))
     for f in folds:
         for r in runs:
             with open("{}/fold{}/{}_run{}_ndcg.txt".format(path, f, click_model, r),
@@ -23,9 +23,9 @@ def plot(path, parameters, folds, runs, click_model, num_interactions, color):
     result_low = np.subtract(result_mean, result_h)
     result_high = np.add(result_mean, result_h)
 
-    plt.plot(range(num_interactions), result_mean, color=COLORS[color], alpha=1)
+    plt.plot(range(int(num_interactions/1000)), result_mean, color=COLORS[color], alpha=1)
 
-    plt.fill_between(range(num_interactions), result_low, result_high, color=COLORS[color], alpha=0.2)
+    plt.fill_between(range(int(num_interactions/1000)), result_low, result_high, color=COLORS[color], alpha=0.2)
     color_index += 1
     plt.figure(1)
     # plt.legend(parameters, loc='lower right')
@@ -36,23 +36,23 @@ def plot(path, parameters, folds, runs, click_model, num_interactions, color):
 if __name__ == "__main__":
     path1 = "results/mslr10k/PDGD"
     # path2 = "results/mslr10k/MDP_01_lastclick"
-    path2 = "results/mslr10k/MDP_003"
-    path3 = "results/mslr10k/MDP_003_unbiased_negativeDCG"
+    # path2 = "results/mslr10k/MDP_003"
+    # path3 = "results/mslr10k/MDP_003_unbiased_negativeDCG"
 
     # path1 = "results/mq2007/PDGD"
     # path2 = "results/mq2007/MDP_003_unbiased_negativeDCG"
     # path3 = "results/mq2007/MDP_003_positive_reward_only"
     # path4 = "results/mq2007/MDP_003_both_pos_neg"
-    folds = list(range(1, 6))
-    runs = list(range(1, 2))
-    click_model = 'navigational'
+    folds = list(range(1, 2))
+    runs = list(range(1, 3))
+    click_model = 'informational'
 
     parameters = ["PDGD", "MDP_pos_only", "MDP_neg_only"]
-    num_interactions = 10000
+    num_interactions = 100000
 
     plot(path1, "PDGD", folds, runs, click_model, num_interactions, 1)
-    plot(path2, "MDP_pos_only", folds, runs, click_model, num_interactions, 2)
-    plot(path3, "MDP_neg_only", folds, runs, click_model, num_interactions, 3)
+    # plot(path2, "MDP_pos_only", folds, runs, click_model, num_interactions, 2)
+    # plot(path3, "MDP_neg_only", folds, runs, click_model, num_interactions, 3)
     # plot(path4, "both_pos_neg", folds, runs, click_model, num_interactions, 4)
     plt.ylabel('NDwCG')
     plt.xlabel('EPOCH')

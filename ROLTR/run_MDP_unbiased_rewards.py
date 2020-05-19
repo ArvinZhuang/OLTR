@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
 
     # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["informational", "navigational"]
+    click_models = ["informational", "perfect"]
 
     # dataset_fold = "../datasets/2007_mq_dataset"
     dataset_fold = "../datasets/MSLR10K"
