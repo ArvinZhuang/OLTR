@@ -52,10 +52,9 @@ def GetReward_DCG(click_labels, propensities, method="positive"):
     reward = np.zeros(len(click_labels))
     # last_click = np.where(click_labels == 1)[0][-1]
     # for iPos in range(last_click + 1):
-    prior = 0.5
+
     for iPos in range(len(click_labels)):
         reward[iPos] = (2**1-1) / np.log2(iPos + 2.0)
-
 
         if click_labels[iPos] == 1:
             # reward[iPos] = 0
@@ -105,8 +104,10 @@ def GetReward_ARP(rates, propensities):
 
     return reward
 
-def GetReturn_DCG(click_labels, propensities, method="positive"):
+def GetReturn_DCG(click_labels, propensities, method="positive", naive=False):
     # ndoc = len(rates)
+    if naive:
+        propensities = propensities / propensities
     returns = GetReward_DCG(click_labels, propensities, method)
     # print(returns)
     # for iPos in range(len(rates)-1):

@@ -32,13 +32,13 @@ def plot(path, folds, runs, click_model, num_interactions, color):
 
 
 if __name__ == "__main__":
-    path1 = "results/COLTR"
-    # path2 = "../results/reduction/mq2007/PDGD"
+    path1 = "results/PDGD"
+
     folds = list(range(1, 2))
-    runs = list(range(1, 7))
+    runs = list(range(1, 9))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
-    num_interactions = 50000
+    num_interactions = 100000
 
     plot(path1, folds, runs, 'informational', num_interactions, 1)
     plot(path1, folds, runs, 'perfect', num_interactions, 2)

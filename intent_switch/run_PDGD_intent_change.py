@@ -39,11 +39,11 @@ def run(train_set, test_set, ranker, num_interation, click_model):
 
     query_set = train_set.get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
-    num_inter = 0
+    num_iter = 0
     for i in index:
-        if num_inter % 10000 == 0:
-            print("Change intent to", int(num_inter/10000))
-            train_set.update_relevance_label(intents[int(num_inter/10000)])
+        if num_iter % 20000 == 0:
+            # print("Change intent to", int(num_iter/20000))
+            train_set.update_relevance_label(intents[int(num_iter/20000)])
 
         qid = query_set[i]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
@@ -52,20 +52,20 @@ def run(train_set, test_set, ranker, num_interation, click_model):
 
         ranker.update_to_clicks(click_label, result_list, scores, train_set.get_all_features_by_query(qid))
 
+
         all_result = ranker.get_all_query_result_list(train_set)
         ndcg = evl_tool.average_ndcg_at_k(train_set, all_result, 10)
-        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-
-        # print(num_inter, ndcg)
-
         ndcg_scores.append(ndcg)
+        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
-        num_inter += 1
+        # print(num_iter, ndcg)
+        num_iter += 1
+
 
     return ndcg_scores, cndcg_scores
 
 
-def job(model_type, f, train_set, test_set, tau, output_fold):
+def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, test_set, tau, output_fold):
     if model_type == "perfect":
         pc = [0.0, 1.0]
         cm = PBM(pc, 0)
@@ -77,10 +77,11 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
         cm = PBM(pc, 1)
 
 
-    for r in tqdm(range(1, 21), desc='PDGD intent change finised run'):
+    for r in range(1, 21):
         # np.random.seed(r)
         ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate, tau)
 
+        print("PDGD intent change {} run{} start!".format(model_type, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
                 "{}/{}_run{}_ndcg.txt".format(output_fold, model_type, r),
@@ -90,6 +91,8 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
                 "{}/{}_run{}_cndcg.txt".format(output_fold, model_type, r),
                 "wb") as fp:
             pickle.dump(cndcg_scores, fp)
+
+        print("PDGD intent change {} run{} finish!".format(model_type, r))
         # with open(
         #         "../results/exploration/mq2007/PDGD/fold{}/{}_tau{}_run{}_final_weight.txt".format(f, model_type, tau, r),
         #         "wb") as fp:
@@ -98,8 +101,8 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 91
-    NUM_INTERACTION = 50000
+    FEATURE_SIZE = 104
+    NUM_INTERACTION = 100000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "perfect"]
     # click_models = ["informational"]
@@ -114,12 +117,12 @@ if __name__ == "__main__":
     for f in range(1, 2):
         # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        training_path = "{}/ClueWeb09-TREC-LTR.txt".format(dataset_fold)
-        test_path = "{}/ClueWeb09-TREC-LTR.txt".format(dataset_fold)
+        training_path = "{}/clueweb09_intent_change.txt".format(dataset_fold)
+        test_path = "{}/clueweb09_intent_change.txt".format(dataset_fold)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
         # for 3 click_models
-        for click_model in tqdm(click_models, desc='PDGD Click Model'):
+        for click_model in click_models:
             for tau in taus:
-                mp.Process(target=job, args=(click_model, f, train_set, test_set, tau, output_fold)).start()
+                mp.Process(target=job, args=(click_model, Learning_rate, NUM_INTERACTION, f, train_set, test_set, tau, output_fold)).start()

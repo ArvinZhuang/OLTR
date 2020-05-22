@@ -29,12 +29,12 @@ def run(train_set, test_set, ranker, num_interation, click_model):
                 ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
                 ndcg_scores.append(ndcg)
 
-                cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-                cndcg_scores.append(cndcg)
+            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+            cndcg_scores.append(cndcg)
             num_iter += 1
             continue
 
-        rewards = GetReturn_DCG(click_labels, propensities, method="both")
+        rewards = GetReturn_DCG(click_labels, propensities, method="positive", naive=True)
 
         # ranker.record_episode(qid, result_list, rewards)
 
@@ -43,8 +43,8 @@ def run(train_set, test_set, ranker, num_interation, click_model):
             all_result = ranker.get_all_query_result_list(test_set)
             ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
             ndcg_scores.append(ndcg)
-            cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
-            cndcg_scores.append(cndcg)
+        cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
+        cndcg_scores.append(cndcg)
         # print(num_iter, ndcg)
         num_iter += 1
     return ndcg_scores, cndcg_scores
@@ -90,19 +90,15 @@ def job(model_type, learning_rate, f, train_set, test_set, num_features, output_
 if __name__ == "__main__":
 
     FEATURE_SIZE = 136
-    NUM_INTERACTION = 10000
-    learning_rate = 0.03
+    NUM_INTERACTION = 100000
+    learning_rate = 0.01
 
-
-    # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "perfect"]
-
-    # dataset_fold = "../datasets/2007_mq_dataset"
     dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/MDP_003_both"
-    # output_fold = "results/mq2007/MDP_003_unbiased_negativeDCG"
+    output_fold = "results/mslr10k/MDP_001_positive_naive"
+
     # for 5 folds
-    for f in range(1, 16):
+    for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
@@ -116,4 +112,3 @@ if __name__ == "__main__":
             processors.append(p)
     for p in processors:
         p.join()
-        # %% d

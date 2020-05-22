@@ -55,7 +55,7 @@ class LetorDataset(AbstractDataset):
 
                     if not feature_id.isdigit():
                         if feature_id[0] == "#":
-                            self._docid_map[query][docid] = cols[i + 2]
+                            self._docid_map[query][docid] = cols[i][1:]
                         break
 
                     feature_id = int(feature_id) - 1

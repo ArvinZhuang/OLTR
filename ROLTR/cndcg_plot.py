@@ -5,7 +5,7 @@ from scipy.stats import sem, t
 
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-def plot(path, parameter, folds, runs, click_model, num_interactions, color):
+def plot(path, parameter, folds, runs, click_model, num_interactions, color, intervals):
     color_index = 0
     result = np.zeros(num_interactions)
     for f in folds:
@@ -25,10 +25,13 @@ def plot(path, parameter, folds, runs, click_model, num_interactions, color):
     plt.plot(range(num_interactions), result_mean, color=COLORS[color], alpha=1)
     # plt.fill_between(range(num_interactions), result_low, result_high, color='black', alpha=0.2)
     color_index += 1
-    cndcg = 0
-    for i in range(0, len(result_mean) + 1):
-        cndcg += 0.9995 ** i * result_mean[i - 1]
-    print(parameter, cndcg)
+    cndcgs = []
+    for start, end in intervals:
+        cndcg = 0
+        for i in range(start, end):
+            cndcg += 1 ** i * result_mean[i - 1]
+        cndcgs.append(cndcg / (end - start))
+    print(parameter, cndcgs)
 
     plt.figure(1)
 
@@ -36,26 +39,30 @@ def plot(path, parameter, folds, runs, click_model, num_interactions, color):
 
 if __name__ == "__main__":
     path1 = "results/mslr10k/PDGD"
-    # path2 = "results/mslr10k/MDP_01_lastclick"
-    path2 = "results/mslr10k/MDP_003"
-    path3 = "results/mslr10k/MDP_003_unbiased_negativeDCG"
+    path2 = "results/mslr10k/MDP_001_positive"
+    path3 = "results/mslr10k/MDP_001_negative"
+    path4 = "results/mslr10k/MDP_001_both"
+    path5 = "results/mslr10k/MDP_001_both_naive"
 
     # path1 = "results/mq2007/PDGD"
-    # path2 = "results/mq2007/MDP_003_unbiased_negativeDCG"
-    # path3 = "results/mq2007/MDP_003_positive_reward_only"
-    # path4 = "results/mq2007/MDP_003_both_pos_neg"
+    # path2 = "results/mq2007/MDP_001_positive"
+    # path3 = "results/mq2007/MDP_001_negative"
+    # path4 = "results/mq2007/MDP_001_both"
+
     folds = list(range(1, 6))
-    runs = list(range(1, 16))
-    click_model = 'navigational'
+    runs = list(range(1, 5))
+    intervals = [(0, 40000), (40000, 70000), (70000, 100000)]
+    click_model = 'informational'
 
-    parameters = ["PDGD", "MDP_neg_only", "MDP_pos_only", "both_pos_neg"]
-    num_interactions = 10000
+    parameters = ["PDGD", "MDP_positiveDCG", "MDP_negativeDCG", "MDP_pos+neg"]
+    num_interactions = 100000
 
-    plot(path1, "PDGD", folds, runs, click_model, num_interactions, 1)
-    plot(path2, "MDP_neg_only", folds, runs, click_model, num_interactions, 2)
-    plot(path3, "MDP_pos_only", folds, runs, click_model, num_interactions, 3)
-    # plot(path4, "both_pos_neg", folds, runs, click_model, num_interactions, 4)
-    plt.ylabel('NDCG')
-    plt.xlabel('EPOCH')
-    plt.legend(parameters, loc='lower right')
+    plot(path1, "PDGD", folds, runs, click_model, num_interactions, 1, intervals)
+    plot(path2, "MDP_positiveDCG", folds, runs, click_model, num_interactions, 2, intervals)
+    plot(path3, "MDP_negativeDCG", folds, runs, click_model, num_interactions, 3, intervals)
+    plot(path4, "MDP_pos+neg", folds, runs, click_model, num_interactions, 4, intervals)
+    plot(path5, "MDP_pos+neg_naive", folds, runs, click_model, num_interactions, 4, intervals)
+    # plt.ylabel('NDCG')
+    # plt.xlabel('EPOCH')
+    # plt.legend(parameters, loc='lower right')
     # plt.show()
