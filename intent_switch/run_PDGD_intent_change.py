@@ -42,8 +42,9 @@ def run(train_set, test_set, ranker, num_interation, click_model):
     num_iter = 0
     for i in index:
         if num_iter % 20000 == 0:
-            # print("Change intent to", int(num_iter/20000))
+            print("Change intent to", int(num_iter/20000))
             train_set.update_relevance_label(intents[int(num_iter/20000)])
+            test_set.update_relevance_label(intents[int(num_iter / 20000)])
 
         qid = query_set[i]
         result_list, scores = ranker.get_query_result_list(train_set, qid)
@@ -53,8 +54,8 @@ def run(train_set, test_set, ranker, num_interation, click_model):
         ranker.update_to_clicks(click_label, result_list, scores, train_set.get_all_features_by_query(qid))
 
 
-        all_result = ranker.get_all_query_result_list(train_set)
-        ndcg = evl_tool.average_ndcg_at_k(train_set, all_result, 10)
+        all_result = ranker.get_all_query_result_list(test_set)
+        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
         ndcg_scores.append(ndcg)
         cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
@@ -77,22 +78,22 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, test_set, tau,
         cm = PBM(pc, 1)
 
 
-    for r in range(1, 21):
+    for r in range(1, 16):
         # np.random.seed(r)
         ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate, tau)
 
-        print("PDGD intent change {} run{} start!".format(model_type, r))
+        print("PDGD intent change {} fold{} run{} start!".format(model_type, f, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         with open(
-                "{}/{}_run{}_ndcg.txt".format(output_fold, model_type, r),
+                "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
                 "wb") as fp:
             pickle.dump(ndcg_scores, fp)
         with open(
-                "{}/{}_run{}_cndcg.txt".format(output_fold, model_type, r),
+                "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
                 "wb") as fp:
             pickle.dump(cndcg_scores, fp)
 
-        print("PDGD intent change {} run{} finish!".format(model_type, r))
+        # print("PDGD intent change {} run{} finish!".format(model_type, r))
         # with open(
         #         "../results/exploration/mq2007/PDGD/fold{}/{}_tau{}_run{}_final_weight.txt".format(f, model_type, tau, r),
         #         "wb") as fp:
@@ -101,24 +102,22 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, test_set, tau,
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 104
+    FEATURE_SIZE = 105
     NUM_INTERACTION = 100000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "perfect"]
     # click_models = ["informational"]
     Learning_rate = 0.1
-    # dataset_fold = "../datasets/MSLR-WEB10K"
-    # dataset_fold = "../datasets/2007_mq_dataset"
-    dataset_fold = "../datasets/clueweb09"
-    output_fold = "results/PDGD"
+
+    dataset_fold = "datasets"
+    output_fold = "results/PDGD/intent_change_five_folds"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
-    for f in range(1, 2):
-        # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        training_path = "{}/clueweb09_intent_change.txt".format(dataset_fold)
-        test_path = "{}/clueweb09_intent_change.txt".format(dataset_fold)
+    for f in range(1, 6):
+        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+        # test_path = "{}/Fold{}/clueweb09_intent_change.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

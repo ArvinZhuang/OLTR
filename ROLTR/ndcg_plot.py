@@ -8,8 +8,9 @@ COLORS = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'k']
 
 def plot(path, folds, runs, click_model, num_interactions, color, plot_ind):
     print("click model:", click_model)
-    plt.subplot(1, 2, plot_ind+1)
-    plt.title(click_model)
+    subplot = plt.subplot(2, 2, plot_ind+1)
+    plt.title(click_model, loc='left', position=(0.03, 0.9))
+
 
     result = np.zeros(int(num_interactions/1000))
     for f in folds:
@@ -28,10 +29,13 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind):
 
     plt.plot(range(0, num_interactions, 1000), result_mean, color=COLORS[color], alpha=1)
 
-    # plt.fill_between(range(0, num_interactions, 1000), result_low, result_high, color=COLORS[color], alpha=0.2)
-    plt.ylabel('NDCG')
-    plt.xlabel('impressions')
-    # plt.ylim([0.2, 0.45])
+    plt.fill_between(range(0, num_interactions, 1000), result_low, result_high, color=COLORS[color], alpha=0.2)
+
+    if plot_ind % 2 == 0 :
+        plt.ylabel('NDCG')
+    if plot_ind // 2 == 1 :
+        plt.xlabel('impressions')
+    plt.ylim([0.2, 0.45])
     # plt.legend(parameters, loc='lower right')
     print("result path:", path, result_mean[-1])
 
@@ -40,40 +44,78 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind):
 
 if __name__ == "__main__":
     path1 = "results/mslr10k/PDGD"
+
     path2 = "results/mslr10k/MDP_001_positive"
     path3 = "results/mslr10k/MDP_001_negative"
     path4 = "results/mslr10k/MDP_001_both"
     path5 = "results/mslr10k/MDP_001_both_naive"
     path6 = "results/mslr10k/MDP_001_negative_naive"
     path7 = "results/mslr10k/MDP_001_positive_naive"
-    path8 = "results/mslr10k/MDP_001_both_propensity1.5"
+    path8 = "results/mslr10k/MDP_001_both_propensity0.5"
+    path9 = "results/mslr10k/MDP_001_both_propensity1.5"
+    path10 = "results/mslr10k//MDP_001_both_propensity2.0"
+    path11 = "results/mslr10k/MDP_listwise_reward/MDP_001_both_gamma0.2"
+    path12 = "results/mslr10k/MDP_listwise_reward/MDP_001_positive_gamma0.5"
+    path13 = "results/mslr10k/MDP_001_both_correct"
+    path14 = "results/mslr10k/COLTR"
+    path15 = "results/mslr10k/MDP_listwise_reward/MDP_001_positive_gamma1"
 
 
     # path1 = "results/mq2007/PDGD"
     # path2 = "results/mq2007/MDP_001_positive"
     # path3 = "results/mq2007/MDP_001_negative"
     # path4 = "results/mq2007/MDP_001_both"
+    # path13 = "results/mq2007/MDP_01_both_correct"
+    # path14 = "results/mq2007/MDP_0001_both_correct"
 
     folds = list(range(1, 6))
     runs = list(range(1, 3))
     click_models = ['informational', "perfect"]
 
-    parameters = ["PDGD", "MDP_positiveDCG", "MDP_negativeDCG", "MDP_pos+neg", "MDP_pos+neg_naive",
-                  "MDP_negativeDCG_naive", "MDP_positiveDCG_naive", "MDP_pos+neg_prop1.5"]
-    # parameters = ["PDGD", "MDP_negativeDCG", "MDP_pos+neg_naive", "MDP_negativeDCG_naive", ]
-    num_interactions = 100000
+    # parameters1 = ["PDGD", "MDP_DCG_unbiased", "MDP_negativeDCG", "MDP_DCG+negativeDCG_unbiased", "MDP_pos+neg_naive",
+    #               "MDP_negativeDCG_naive",  "MDP_DCG_naive"]
+    parameters1 = ["PDGD", "MDP_DCG_naive", "MDP_DCG_unbiased"]
 
-    plt.figure(1)
-    for plot_ind, click_model in enumerate(click_models):
-        plot(path1, folds, runs, click_model, num_interactions, 7, plot_ind)
-        plot(path2, folds, runs, click_model, num_interactions, 3, plot_ind)
-        plot(path3, folds, runs, click_model, num_interactions, 1, plot_ind)
-        plot(path4, folds, runs, click_model, num_interactions, 0, plot_ind)
-        plot(path5, folds, runs, click_model, num_interactions, 2, plot_ind)
-        plot(path6, folds, runs, click_model, num_interactions, 5, plot_ind)
-        plot(path7, folds, runs, click_model, num_interactions, 6, plot_ind)
-        plot(path8, folds, runs, click_model, num_interactions, 4, plot_ind)
-        print()
+    parameters2 = ["propensity0.0(naive)", "propensity0.5", "propensity1(true)", "propensity1.5", "propensity2.0" ]
+    num_interactions = [10000, 100000]
 
-    plt.legend(parameters, loc='lower right')
+
+    # plot different rewards
+    f = plt.figure(1, figsize=(12,8))
+
+    plot_index = 0
+    for click_model in click_models:
+        for num_interaction in num_interactions:
+            plot(path1, folds, runs, click_model, num_interaction, 7, plot_index)
+            # plot(path7, folds, runs, click_model, num_interaction, 6, plot_index)
+            # plot(path4, folds, runs, click_model, num_interaction, 0, plot_index)
+            plot(path2, folds, runs, click_model, num_interaction, 3, plot_index)
+            # plot(path3, folds, runs, click_model, num_interaction, 1, plot_index)
+            # plot(path5, folds, runs, click_model, num_interaction, 2, plot_index)
+            # plot(path6, folds, runs, click_model, num_interaction, 5, plot_index)
+
+            # plot(path8, folds, runs, click_model, num_interaction, 8, plot_index)
+            plot(path15, folds, runs, click_model, num_interaction, 2, plot_index)
+
+            plot_index += 1
+            print()
+    plt.legend(parameters1, loc='lower right')
+
+    # f.subplots_adjust(wspace=0.3, hspace=0.3)
+    # plt.savefig('DCG_unbiased.png', bbox_inches='tight')
+    #
+    plt.figure(2)
+    # plot different propensities
+    plot_index = 0
+    for click_model in click_models:
+        for num_interaction in num_interactions:
+            plot(path5, folds, runs, click_model, num_interaction, 2, plot_index)
+            plot(path8, folds, runs, click_model, num_interaction, 1, plot_index)
+            plot(path4, folds, runs, click_model, num_interaction, 0, plot_index)
+            plot(path9, folds, runs, click_model, num_interaction, 3, plot_index)
+            plot(path10, folds, runs, click_model, num_interaction, 4, plot_index)
+
+            plot_index += 1
+            print()
+    plt.legend(parameters2, loc='lower right')
     plt.show()

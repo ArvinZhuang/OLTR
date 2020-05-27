@@ -10,14 +10,13 @@ def plot(path, folds, runs, click_model, num_interactions, color):
     result = np.zeros(num_interactions)
     for f in folds:
         for r in runs:
-            with open("{}/{}_run{}_ndcg.txt".format(path, click_model, r),
+            with open("{}/fold{}/{}_run{}_ndcg.txt".format(path, f, click_model, r),
                       "rb") as fp:
                 data = pickle.load(fp)
                 data = np.array(data[:num_interactions])
                 result = np.vstack((result, data))
     result = result[1:].T
     result_mean = np.mean(result, axis=1)
-    print(result_mean.shape)
     result_std_err = sem(result, axis=1)
     result_h = result_std_err * t.ppf((1 + 0.95) / 2, 25 - 1)
     result_low = np.subtract(result_mean, result_h)
@@ -32,7 +31,8 @@ def plot(path, folds, runs, click_model, num_interactions, color):
 
 
 if __name__ == "__main__":
-    path1 = "results/PDGD"
+    # path1 = "results/PDGD_intent1_scores_druing_change_5fold"
+    path1 = "results/PDGD_trainset_only"
 
     folds = list(range(1, 2))
     runs = list(range(1, 9))

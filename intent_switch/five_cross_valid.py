@@ -52,12 +52,10 @@ dic5 = read_intent_qrel("5.txt")
 print(get_qrel_avg_num_of_rel(dic5))
 
 
-dataset_fold = "../datasets/clueweb09/ClueWeb09-TREC-LTR.txt"
-# dataset_fold = "../datasets/clueweb09/clueweb09_intent_change.txt"
-train_set = LetorDataset(dataset_fold, 91, query_level_norm=True, binary_label=True)
+# dataset_fold = "../datasets/clueweb09/ClueWeb09-TREC-LTR.txt"
+dataset_fold = "../datasets/clueweb09/clueweb09_intent_change.txt"
+train_set = LetorDataset(dataset_fold, 105, query_level_norm=True, binary_label=True)
 
-# train_set.write_cross_validation_datasets("../datasets/clueweb09", 5)
-# print(train_set.get_relevance_docids_by_query("3"))
 train_set.update_relevance_label(dic0)
 print(get_dataset_avg_num_of_rel(train_set))
 train_set.update_relevance_label(dic1)
@@ -69,6 +67,8 @@ print(get_dataset_avg_num_of_rel(train_set))
 train_set.update_relevance_label(dic4)
 print(get_dataset_avg_num_of_rel(train_set))
 
+
+train_set.write_cross_validation_datasets("datasets", 5)
 
 # for qid in dic.keys():
 #     print(qid, len(dic[qid].keys()), len(train_set.get_candidate_docids_by_query(qid)))

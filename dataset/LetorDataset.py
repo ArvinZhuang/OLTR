@@ -167,6 +167,22 @@ class LetorDataset(AbstractDataset):
         with open(output_file, "w") as f:
             f.write(s)
 
+    def write_by_queries(self, output_file, queries):
+        s = ""
+        for query in queries:
+            comments = self.get_all_comments_by_query(query)
+            for i, features in enumerate(self.get_all_features_by_query(query)):
+                comment = comments[i]
+                label = self.get_relevance_label_by_query_and_docid(query, i)
+                features_str = ""
+                for i, feature in enumerate(features):
+                    # if feature == 0:
+                    #     continue
+                    features_str += "{}:{} ".format(i + 1, feature)
+                s += "{} qid:{} {}#{}\n".format(label, query, features_str, comment)
+        with open(output_file, "w") as f:
+            f.write(s)
+
     def write_cross_validation_datasets(self, path: str, fold_num: int):
         """
         :param fold_num: number of fold to do cross validation.
@@ -175,13 +191,31 @@ class LetorDataset(AbstractDataset):
         """
 
         for fold in range(fold_num):
-            fold_path = "{}/Fold{}".format(path, fold+1)
+            fold_path = "{}/fold{}".format(path, fold+1)
             # Create target Directory if don't exist
             if not os.path.exists(fold_path):
                 os.mkdir(fold_path)
                 print("Directory ", fold_path, " Created ")
             else:
                 print("Directory ", fold_path, " already exists")
+
+        all_queries = self.get_all_querys()
+
+        np.random.shuffle(all_queries)
+
+        query_chunks = np.array_split(all_queries, fold_num)
+
+        for i in range(fold_num):
+            test_path = "{}/fold{}/test.txt".format(path, i+1)
+            train_path = "{}/fold{}/train.txt".format(path, i + 1)
+            test_queries = query_chunks[i]
+            train_chunks = query_chunks[:i]
+            train_chunks.extend(query_chunks[i+1:])
+            train_queries = np.concatenate(train_chunks)
+
+            self.write_by_queries(test_path, test_queries)
+            self.write_by_queries(train_path, train_queries)
+
 
     @staticmethod
     def runs_to_letor(input_folder: str, output_folder: str):

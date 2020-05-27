@@ -7,10 +7,11 @@ import copy
 
 class LinearRanker(AbstractRanker):
 
-    def __init__(self, num_features, learning_rate, learning_rate_decay=1, random_initial=True):
+    def __init__(self, num_features, learning_rate, learning_rate_decay=1, learning_rate_clip=0.01, random_initial=True):
         super().__init__(num_features)
         self.learning_rate = learning_rate
         self.learning_rate_decay = learning_rate_decay
+        self.learning_rate_clip = learning_rate_clip
 
         if random_initial:
             unit_vector = np.random.randn(self.num_features)
@@ -21,7 +22,8 @@ class LinearRanker(AbstractRanker):
 
     def update(self, gradient):
         self.weights += self.learning_rate * gradient
-        self.learning_rate *= self.learning_rate_decay
+        if self.learning_rate >  self.learning_rate_clip:
+            self.learning_rate *= self.learning_rate_decay
 
     def assign_weights(self, weights):
         self.weights = weights
