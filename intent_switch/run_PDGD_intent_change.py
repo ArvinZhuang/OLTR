@@ -109,8 +109,8 @@ if __name__ == "__main__":
     # click_models = ["informational"]
     Learning_rate = 0.1
 
-    dataset_fold = "datasets"
-    output_fold = "results/PDGD/intent_change_five_folds"
+    dataset_fold = "datasets/intent_change_Lin"
+    output_fold = "results/PDGD/intent_change_five_folds_Lin"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds

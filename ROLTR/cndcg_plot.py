@@ -51,17 +51,20 @@ if __name__ == "__main__":
     # path11 = "results/mslr10k/MDP_listwise_reward/MDP_001_both_gamma0.5"
     # path12 = "results/mslr10k/MDP_listwise_reward/MDP_001_positive_gamma0.5"
     # path13 = "results/mslr10k/MDP_001_both_correct"
+    path17 = "results/mslr10k/AC_001_both"
+    path19 = "results/mslr10k/MDP_001_both_Adam"
 
-    path1 = "results/mq2007/PDGD"
+
+    # path1 = "results/mq2007/PDGD"
     # path2 = "results/mq2007/MDP_001_positive"
     # path3 = "results/mq2007/MDP_001_negative"
-    path4 = "results/mq2007/MDP_001_both"
+    # path4 = "results/mq2007/MDP_001_both"
     # path13 = "results/mq2007/MDP_01_both_correct"
     # path14 = "results/mq2007/MDP_0001_both_correct"
     folds = list(range(1, 6))
-    runs = list(range(1, 16))
+    runs = list(range(1, 7))
     intervals = [(0, 10000), (10000, 100000)]
-    click_model = 'perfect'
+    click_model = 'informational'
 
     parameters = ["PDGD", "MDP_positiveDCG", "MDP_negativeDCG", "MDP_pos+neg"]
     num_interactions = 100000
@@ -71,7 +74,7 @@ if __name__ == "__main__":
     # plot(path3, "MDP_negativeDCG", folds, runs, click_model, num_interactions, 3, intervals)
     plot(path4, "MDP_pos+neg", folds, runs, click_model, num_interactions, 4, intervals)
     # plot(path5, "MDP_pos+neg_naive", folds, runs, click_model, num_interactions, 4, intervals)
-    # plot(path13, "MDP_pos+neg_naive", folds, runs, click_model, num_interactions, 4, intervals)
+    plot(path19, "MDP_pos+neg_naive", folds, runs, click_model, num_interactions, 4, intervals)
     # plt.ylabel('NDCG')
     # plt.xlabel('EPOCH')
     # plt.legend(parameters, loc='lower right')

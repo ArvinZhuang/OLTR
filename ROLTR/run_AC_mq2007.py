@@ -4,7 +4,8 @@ sys.path.append('../')
 from dataset import LetorDataset
 import numpy as np
 from clickModel.PBM import PBM
-from ranker.MDPRanker import MDPRanker
+from ranker.ActorCriticLinearRanker import ActorCriticLinearRanker
+from ranker.ActorNoiseCriticLinearRanker import ActorNoiseCriticLinearRanker
 from utils import evl_tool
 from utils.utility import get_DCG_rewards, get_DCG_MDPrewards
 import multiprocessing as mp
@@ -32,77 +33,73 @@ def run(train_set, test_set, ranker, eta, reward_method, num_interation, click_m
             cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
             cndcg_scores.append(cndcg)
             num_iter += 1
+            # print(num_iter, ndcg)
             continue
 
-        propensities = np.power(np.divide(1, np.arange(1.0, len(click_labels) + 1)), eta)
-
-        # point_wise_rewards
-        rewards = click_labels/propensities
+        propensities = np.power(np.divide(1, np.arange(1.0, len(result_list) + 1)), eta)
 
         # directly using pointwise rewards
-        # rewards = get_DCG_rewards(click_labels, propensities, reward_method)
-
+        rewards = get_DCG_rewards(click_labels, propensities, reward_method)
         # using listwise rewards
-        # rewards = get_DCG_MDPrewards(click_labels, propensities, reward_method, gamma=1)
+
+        # rewards = get_DCG_MDPrewards(click_labels, propensities, reward_method, gamma=0.99)
 
         # ranker.record_episode(qid, result_list, rewards)
 
-        ranker.TFupdate_policy_trust(qid, result_list, rewards, train_set)
+        ranker.update_actor_critic(qid, result_list, rewards, train_set)
 
-        if num_iter % 1000 == 0:
-            all_result = ranker.get_all_query_result_list(test_set)
-            ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-            ndcg_scores.append(ndcg)
+        # if num_iter % 1000 == 0:
+        all_result = ranker.get_all_query_result_list(test_set)
+        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+        ndcg_scores.append(ndcg)
+        print(num_iter, ndcg)
         cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
 
-        # print(num_iter)
         num_iter += 1
     return ndcg_scores, cndcg_scores
 
 
 def job(model_type, learning_rate, eta, reward_method, f, train_set, test_set, num_features, output_fold):
-
     if model_type == "perfect":
-        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
-        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+        pc = [0.0, 0.5, 1.0]
+        ps = [0.0, 0.0, 0.0]
     elif model_type == "navigational":
-        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+        pc = [0.05, 0.5, 0.95]
+        ps = [0.2, 0.5, 0.9]
     elif model_type == "informational":
-        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+        pc = [0.4, 0.7, 0.9]
+        ps = [0.1, 0.3, 0.5]
+
     cm = PBM(pc, 1)
 
     for r in range(1, 16):
         # np.random.seed(r)
-        ranker = MDPRanker(256, num_features, learning_rate)
-        print("MDP MSLR10K fold{} {} eta{} reward {} run{} start!".format(f, model_type, eta, reward_method, r))
+        ranker = ActorNoiseCriticLinearRanker(num_features, learning_rate, 256)
+        print("ActorCritic mq2007 fold{} {} eta{} reward{} run{} start!".format(f, model_type, eta, reward_method, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, eta, reward_method, NUM_INTERACTION, cm)
-        with open(
-                "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(ndcg_scores, fp)
-        with open(
-                "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(cndcg_scores, fp)
-        #
-        # print("MDP MSLR10K fold{} {} eta{} reward{} run{} done!".format(f, model_type, eta, reward_method, r))
+        # with open(
+        #         "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
+        #         "wb") as fp:
+        #     pickle.dump(ndcg_scores, fp)
+        # with open(
+        #         "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
+        #         "wb") as fp:
+        #     pickle.dump(cndcg_scores, fp)
 
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 136
+    FEATURE_SIZE = 46
     NUM_INTERACTION = 100000
     learning_rate = 0.01
     eta = 1
     reward_method = "both"
 
-    click_models = ["informational", "perfect"]
-    # click_models = ["perfect"]
-    dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/MDP_001_pointwise"
+    # click_models = ["informational", "perfect"]
+    click_models = ["informational"]
+    dataset_fold = "../datasets/2007_mq_dataset"
+    output_fold = "results/mq2007/AC_003_both"
 
     # for 5 folds
     for f in range(1, 2):

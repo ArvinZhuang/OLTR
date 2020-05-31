@@ -89,13 +89,12 @@ def get_DCG_rewards(click_labels, propensities, method="both"):
 #
 #     return MDP_rewards
 
-def get_DCG_MDPrewards(click_labels, propensities, method="both", gamma=0.5):
+def get_DCG_MDPrewards(click_labels, propensities, method="both", gamma=0.99):
     M = len(click_labels)
     MDP_rewards = np.zeros(M)
     DCG_rewards = get_DCG_rewards(click_labels, propensities, method)
 
     discounts = np.logspace(0, M - 1, M, base=gamma)
-
     for t in range(M):
         MDP_rewards[t] = np.sum(discounts[:M-t] * DCG_rewards[t:])
 

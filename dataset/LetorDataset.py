@@ -206,8 +206,8 @@ class LetorDataset(AbstractDataset):
         query_chunks = np.array_split(all_queries, fold_num)
 
         for i in range(fold_num):
-            test_path = "{}/fold{}/test.txt".format(path, i+1)
-            train_path = "{}/fold{}/train.txt".format(path, i + 1)
+            test_path = "{}/Fold{}/test.txt".format(path, i+1)
+            train_path = "{}/Fold{}/train.txt".format(path, i + 1)
             test_queries = query_chunks[i]
             train_chunks = query_chunks[:i]
             train_chunks.extend(query_chunks[i+1:])

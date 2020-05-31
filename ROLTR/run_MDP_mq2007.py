@@ -38,20 +38,20 @@ def run(train_set, test_set, ranker, eta, reward_method, num_interation, click_m
         propensities = np.power(np.divide(1, np.arange(1.0, len(result_list) + 1)), eta)
 
         # directly using pointwise rewards
-        # rewards = get_DCG_rewards(click_labels, propensities, reward_method)
+        rewards = get_DCG_rewards(click_labels, propensities, reward_method)
         # using listwise rewards
-        print(click_labels)
-        rewards = get_DCG_MDPrewards(click_labels, propensities, reward_method, gamma=0.2)
+
+        # rewards = get_DCG_MDPrewards(click_labels, propensities, reward_method, gamma=0.2)
 
 
         # ranker.record_episode(qid, result_list, rewards)
 
-        ranker.TFupdate(qid, result_list, rewards, train_set)
-        if num_iter % 1000 == 0:
-            all_result = ranker.get_all_query_result_list(test_set)
-            ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-            ndcg_scores.append(ndcg)
-            # print(num_iter, ndcg)
+        ranker.TFupdate_policy_trust(qid, result_list, rewards, train_set)
+        # if num_iter % 1000 == 0:
+        all_result = ranker.get_all_query_result_list(test_set)
+        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+        ndcg_scores.append(ndcg)
+        print(num_iter, ndcg)
         cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
 
@@ -77,14 +77,14 @@ def job(model_type, learning_rate, eta, reward_method, f, train_set, test_set, n
         ranker = MDPRanker(256, num_features, learning_rate)
         print("MDP mq2007 fold{} {} eta{} reward{} run{} start!".format(f, model_type, eta, reward_method, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, eta, reward_method, NUM_INTERACTION, cm)
-        with open(
-                "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(ndcg_scores, fp)
-        with open(
-                "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(cndcg_scores, fp)
+        # with open(
+        #         "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
+        #         "wb") as fp:
+        #     pickle.dump(ndcg_scores, fp)
+        # with open(
+        #         "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
+        #         "wb") as fp:
+        #     pickle.dump(cndcg_scores, fp)
         #
         # print("MDP MSLR10K fold{} {} eta{} reward{} run{} done!".format(f, model_type, eta, reward_method, r))
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     FEATURE_SIZE = 46
     NUM_INTERACTION = 100000
-    learning_rate = 0.001
+    learning_rate = 0.03
     eta = 1
     reward_method = "both"
 

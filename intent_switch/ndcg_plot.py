@@ -32,10 +32,10 @@ def plot(path, folds, runs, click_model, num_interactions, color):
 
 if __name__ == "__main__":
     # path1 = "results/PDGD_intent1_scores_druing_change_5fold"
-    path1 = "results/PDGD_trainset_only"
+    path1 = "results/PDGD/intent_change_five_folds_Lin"
 
-    folds = list(range(1, 2))
-    runs = list(range(1, 9))
+    folds = list(range(1, 6))
+    runs = list(range(1, 16))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     num_interactions = 100000
