@@ -12,7 +12,8 @@ class MDPRankerV2(AbstractRanker):
                  Learningrate,
                  Lenepisode=10,
                  memory_size=100,
-                 batch_size=1):
+                 batch_size=1,
+                 lr_decay=False):
         super().__init__(Nfeature)
         tf.reset_default_graph()  # used for multiprocessor training, otherwise has errors
 
@@ -47,7 +48,14 @@ class MDPRankerV2(AbstractRanker):
             axis=1)
         loss = tf.reduce_mean(neg_log_prob * self.advantage)
 
-        self.train_op = tf.train.AdamOptimizer(self.lr)
+        step = tf.Variable(0, trainable=False)
+
+        if lr_decay:
+            rate = tf.train.exponential_decay(self.lr, step, 1, 0.99997)
+        else:
+            rate = self.lr
+
+        self.train_op = tf.train.AdamOptimizer(rate)
 
         # train with gradients accumulative style
         tvs = tf.trainable_variables()

@@ -43,11 +43,11 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind):
 
 
 if __name__ == "__main__":
-    path1 = "results/mslr10k/PDGD"
+    # path1 = "results/mslr10k/PDGD"
     #
     # path2 = "results/mslr10k/MDP_001_positive"
     # path3 = "results/mslr10k/MDP_001_negative"
-    path4 = "results/mslr10k/MDP_001_both"
+    # path4 = "results/mslr10k/MDP_001_both"
     # path5 = "results/mslr10k/MDP_001_both_naive"
     # path6 = "results/mslr10k/MDP_001_negative_naive"
     # path7 = "results/mslr10k/MDP_001_positive_naive"
@@ -57,36 +57,53 @@ if __name__ == "__main__":
     # path11 = "results/mslr10k/MDP_listwise_reward/MDP_001_both_gamma0.2"
     # path12 = "results/mslr10k/MDP_listwise_reward/MDP_001_positive_gamma0.5"
     # path13 = "results/mslr10k/MDP_001_both_correct"
-    # path14 = "results/mslr10k/COLTR"
+    path14 = "results/mslr10k/COLTR"
     # path15 = "results/mslr10k/MDP_listwise_reward/MDP_001_positive_gamma1"
     # path16 = "results/mslr10k/test/MDP_001_both_policy_trust"
-    path17 = "results/mslr10k/AC_0001_both"
+    # path17 = "results/mslr10k/AC_0001_both"
     path18 = "results/mslr10k/long_term_200k/PDGD"
-    path19 = "results/mslr10k/long_term_200k/AC_0001_both"
-    path20 = "results/mslr10k/MDP_001_both_Adam"
+    path19 = "results/mslr10k/MDP_001_both_Adam"
+    path20 = "results/mslr10k/long_term_200k/MDP_001decay_both_Adam"
+    # path21 = "results/mslr10k/long_term_200k/MDP_0001_both_Adam"
+    # path21 = "results/mslr10k/AC_001_both_noise_critic"
+    path22 = "results/mslr10k/unbiased_COLTR"
+
+    path1 = "results/mslr10k/long_term_200k/PDGD"
+    path2 = "results/mslr10k/long_term_200k/MDP_001decay_both_Adam"
+    path3 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_naive_gamma0"
+    path4 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_naive_gamma1"
+    path5 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma0"
+    path6 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma1"
     #
-    # path1 = "results/mq2007/PDGD"
+    path1 = "results/mq2007/PDGD"
     # path2 = "results/mq2007/MDP_001_positive"
     # path3 = "results/mq2007/MDP_001_negative"
-    # path4 = "results/mq2007/MDP_001_both"
+    path4 = "results/mq2007/MDP_001_both"
     # path13 = "results/mq2007/MDP_01_both_correct"
     # path14 = "results/mq2007/MDP_0001_both_correct"
 
+    # path1 = "results/yahoo/PDGD"
+    # path2 = "results/yahoo/MDP_0001_Adam_both_gamma0"
+    # path3 = "results/yahoo/MDP_0001_Adam_positive_naive_gamma0"
+    # path4 = "results/yahoo/MDP_0001_Adam_positive_naive_gamma1"
+    # path5 = "results/yahoo/MDP_0001_Adam_positive_gamma0"
+    # path6 = "results/yahoo/MDP_0001_Adam_positive_gamma1"
     folds = list(range(1, 6))
-    runs = list(range(1, 2))
+    runs = list(range(1, 16))
     click_models = ['informational', "perfect"]
     # click_models = ["perfect"]
 
     # parameters1 = ["PDGD", "MDP_DCG_unbiased", "MDP_negativeDCG", "MDP_DCG+negativeDCG_unbiased", "MDP_pos+neg_naive",
     #               "MDP_negativeDCG_naive",  "MDP_DCG_naive"]
-    parameters1 = ["PDGD", "MDP_DCG_naive", "MDP_DCG_unbiased"]
+    parameters1 = ["PDGD", "MDP_DCG+negativeDCG_unbiased_gamma0", "MDP_DCG_naive_gamma0", "MDP_DCG_naive_gamma1",
+                   "MDP_DCG_unbiased_gamma0", "MDP_DCG_unbiased_gamma1"]
 
     parameters2 = ["propensity0.0(naive)", "propensity0.5", "propensity1(true)", "propensity1.5", "propensity2.0" ]
-    num_interactions = [10000, 200000]
+    num_interactions = [10000, 100000]
 
 
     # plot different rewards
-    f = plt.figure(1, figsize=(12,8))
+    f = plt.figure(1, figsize=(12, 8))
 
     plot_index = 0
     for click_model in click_models:
@@ -96,12 +113,18 @@ if __name__ == "__main__":
             # plot(path4, folds, runs, click_model, num_interaction, 0, plot_index)
             # plot(path2, folds, runs, click_model, num_interaction, 3, plot_index)
             # plot(path3, folds, runs, click_model, num_interaction, 1, plot_index)
-            # plot(path5, folds, runs, click_model, num_interaction, 2, plot_index)
-            # plot(path6, folds, runs, click_model, num_interaction, 5, plot_index)
+            # plot(path4, folds, runs, click_model, num_interaction, 2, plot_index)
+            # plot(path5, folds, runs, click_model, num_interaction, 5, plot_index)
+            # plot(path6, folds, runs, click_model, num_interaction, 0, plot_index)
+            # plot(path7, folds, runs, click_model, num_interaction, 6, plot_index)
 
-            # plot(path15, folds, runs, click_model, num_interaction, 8, plot_index)
-            plot(path18, folds, runs, click_model, num_interaction, 2, plot_index)
-            plot(path19, folds, runs, click_model, num_interaction, 4, plot_index)
+            # plot(path14, folds, runs, click_model, num_interaction, 1, plot_index)
+            plot(path1, folds, runs, click_model, num_interaction, 7, plot_index)
+            # plot(path2, folds, runs, click_model, num_interaction, 3, plot_index)
+            # plot(path3, folds, runs, click_model, num_interaction, 4, plot_index)
+            plot(path4, folds, runs, click_model, num_interaction, 2, plot_index)
+            # plot(path5, folds, runs, click_model, num_interaction, 5, plot_index)
+            # plot(path6, folds, runs, click_model, num_interaction, 0, plot_index)
 
             plot_index += 1
             print()

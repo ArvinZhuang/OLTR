@@ -5,10 +5,11 @@ from ranker.COLTRLinearRanker import COLTRLinearRanker
 from clickModel.SDBN import SDBN
 from clickModel.PBM import PBM
 from utils import evl_tool
+
 import numpy as np
 import multiprocessing as mp
 import pickle
-from utils import utility
+from utils.utility import get_DCG_rewards, get_DCG_MDPrewards
 
 
 def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
@@ -43,16 +44,21 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
             continue
 
         # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
-        last_click = np.where(click_label == 1)[0][-1]
-        click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
+        # last_click = np.where(click_label == 1)[0][-1]
+        # click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
+
+        propensities = np.power(np.divide(1, np.arange(1.0, len(click_label) + 1)), 1)
+
+        # directly using pointwise rewards
+        rewards = get_DCG_rewards(click_label, propensities, "both")
 
         # bandit record
-        record = (qid, result_list, click_label, ranker.get_current_weights())
+        record = (qid, result_list, rewards, ranker.get_current_weights())
 
         unit_vectors = ranker.sample_unit_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)  # canditate_rankers are ranker weights, not ranker class
 
-        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)  # winner_rankers are index of candidates rankers who win the evaluation
+        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record, minimiz=False)  # winner_rankers are index of candidates rankers who win the evaluation
 
         #### This part of code is used to test correctness of counterfactual evaluation ####
         # if winner_rankers is not None:
@@ -138,11 +144,11 @@ if __name__ == "__main__":
     click_models = ["informational", "perfect"]
     Learning_rate = 0.1
     dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/COLTR"
+    output_fold = "results/mslr10k/unbiased_COLTR"
 
     num_rankers = 499
-    tau = 0.1
-    gamma = 1
+    tau = 1
+    gamma = 0
     learning_rate_decay = 0.99966
     step_size = 1
 

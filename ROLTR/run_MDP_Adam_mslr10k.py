@@ -38,10 +38,10 @@ def run(train_set, test_set, ranker, eta, reward_method, num_interation, click_m
 
 
         # directly using pointwise rewards
-        rewards = get_DCG_rewards(click_labels, propensities, reward_method)
+        # rewards = get_DCG_rewards(click_labels, propensities, reward_method)
 
         # using listwise rewards
-        # rewards = get_DCG_MDPrewards(click_labels, propensities, reward_method, gamma=1)
+        rewards = get_DCG_MDPrewards(click_labels, propensities, reward_method, gamma=0)
 
         # ranker.record_episode(qid, result_list, rewards)
 
@@ -92,16 +92,15 @@ def job(model_type, learning_rate, eta, reward_method, f, train_set, test_set, n
 if __name__ == "__main__":
 
     FEATURE_SIZE = 136
-    NUM_INTERACTION = 100000
+    NUM_INTERACTION = 200000
     learning_rate = 0.01
-    eta = 1
-    reward_method = "both"
-
+    eta = 0
+    reward_method = "positive"
     click_models = ["informational", "perfect"]
     # click_models = ["perfect"]
     dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/MDP_001_both_Adam"
-
+    output_fold = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_naive_gamma0"
+    print("reward:", reward_method, "lr:",learning_rate, "eta:", eta, output_fold)
     # for 5 folds
     for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)

@@ -38,21 +38,12 @@ def plot(path, parameter, folds, runs, click_model, num_interactions, color, int
 
 
 if __name__ == "__main__":
-    path1 = "results/mslr10k/PDGD"
-    # path2 = "results/mslr10k/MDP_001_positive"
-    # path3 = "results/mslr10k/MDP_001_negative"
-    path4 = "results/mslr10k/MDP_001_both"
-    # path5 = "results/mslr10k/MDP_001_both_naive"
-    # path6 = "results/mslr10k/MDP_001_negative_naive"
-    # path7 = "results/mslr10k/MDP_001_positive_naive"
-    # path8 = "results/mslr10k/MDP_001_both_propensity0.5"
-    # path9 = "results/mslr10k/MDP_001_both_propensity1.5"
-    # path10 = "results/mslr10k//MDP_001_both_propensity2.0"
-    # path11 = "results/mslr10k/MDP_listwise_reward/MDP_001_both_gamma0.5"
-    # path12 = "results/mslr10k/MDP_listwise_reward/MDP_001_positive_gamma0.5"
-    # path13 = "results/mslr10k/MDP_001_both_correct"
-    path17 = "results/mslr10k/AC_001_both"
-    path19 = "results/mslr10k/MDP_001_both_Adam"
+    path1 = "results/mslr10k/long_term_200k/PDGD"
+    path2 = "results/mslr10k/long_term_200k/MDP_001decay_both_Adam"
+    path3 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_naive_gamma0"
+    path4 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_naive_gamma1"
+    path5 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma0"
+    path6 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma1"
 
 
     # path1 = "results/mq2007/PDGD"
@@ -61,8 +52,12 @@ if __name__ == "__main__":
     # path4 = "results/mq2007/MDP_001_both"
     # path13 = "results/mq2007/MDP_01_both_correct"
     # path14 = "results/mq2007/MDP_0001_both_correct"
+
+    # path1 = "results/yahoo/PDGD"
+    # path2 = "results/yahoo/MDP_0001_Adam"
+
     folds = list(range(1, 6))
-    runs = list(range(1, 7))
+    runs = list(range(1, 8))
     intervals = [(0, 10000), (10000, 100000)]
     click_model = 'informational'
 
@@ -70,11 +65,12 @@ if __name__ == "__main__":
     num_interactions = 100000
 
     plot(path1, "PDGD", folds, runs, click_model, num_interactions, 1, intervals)
-    # plot(path2, "MDP_positiveDCG", folds, runs, click_model, num_interactions, 2, intervals)
-    # plot(path3, "MDP_negativeDCG", folds, runs, click_model, num_interactions, 3, intervals)
-    plot(path4, "MDP_pos+neg", folds, runs, click_model, num_interactions, 4, intervals)
-    # plot(path5, "MDP_pos+neg_naive", folds, runs, click_model, num_interactions, 4, intervals)
-    plot(path19, "MDP_pos+neg_naive", folds, runs, click_model, num_interactions, 4, intervals)
+    plot(path2, "MDP_pos+neg_gamma0", folds, runs, click_model, num_interactions, 2, intervals)
+    plot(path3, "MDP_pos_naive_gamma0", folds, runs, click_model, num_interactions, 3, intervals)
+    plot(path4, "MDP_pos_naive_gamma1", folds, runs, click_model, num_interactions, 4, intervals)
+    plot(path5, "MDP_pos_unbiased_gamma0", folds, runs, click_model, num_interactions, 4, intervals)
+    plot(path6, "MDP_pos_unbiased_gamma1", folds, runs, click_model, num_interactions, 4, intervals)
+    # plot(path19, "MDP_pos+neg_naive", folds, runs, click_model, num_interactions, 4, intervals)
     # plt.ylabel('NDCG')
     # plt.xlabel('EPOCH')
     # plt.legend(parameters, loc='lower right')

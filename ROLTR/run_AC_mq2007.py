@@ -5,7 +5,7 @@ from dataset import LetorDataset
 import numpy as np
 from clickModel.PBM import PBM
 from ranker.ActorCriticLinearRanker import ActorCriticLinearRanker
-from ranker.ActorNoiseCriticLinearRanker import ActorNoiseCriticLinearRanker
+from ranker.ActorCriticLinearRankerV2 import ActorCriticLinearRankerV2
 from utils import evl_tool
 from utils.utility import get_DCG_rewards, get_DCG_MDPrewards
 import multiprocessing as mp
@@ -75,7 +75,7 @@ def job(model_type, learning_rate, eta, reward_method, f, train_set, test_set, n
 
     for r in range(1, 16):
         # np.random.seed(r)
-        ranker = ActorNoiseCriticLinearRanker(num_features, learning_rate, 256)
+        ranker = ActorCriticLinearRankerV2(num_features, learning_rate, 256)
         print("ActorCritic mq2007 fold{} {} eta{} reward{} run{} start!".format(f, model_type, eta, reward_method, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, eta, reward_method, NUM_INTERACTION, cm)
         # with open(
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     FEATURE_SIZE = 46
     NUM_INTERACTION = 100000
-    learning_rate = 0.01
+    learning_rate = 0.001
     eta = 1
     reward_method = "both"
 

@@ -115,7 +115,7 @@ class COLTRLinearRanker(LinearRanker):
         return winners
 
 
-    def infer_winners(self, canditate_rankers, record):
+    def infer_winners(self, canditate_rankers, record, minimiz=True):
         current_ranker = self.weights
         all_ranker = np.vstack((current_ranker, canditate_rankers))  # all rankers weights
         query = record[0]
@@ -134,7 +134,10 @@ class COLTRLinearRanker(LinearRanker):
         log_propensity = log_propensity.reshape(len(result_list), 1)
 
         SNIPS = self.compute_SNIPS(log_propensity, propensities, click_label)
-        winners = np.where(SNIPS < SNIPS[0])[0]
+        if minimiz:
+            winners = np.where(SNIPS < SNIPS[0])[0]
+        else:
+            winners = np.where(SNIPS > SNIPS[0])[0]
         #
         # IPS = self.compute_IPS(log_propensity, propensities, click_label)
         # winners = np.where(IPS < IPS[0])[0]
