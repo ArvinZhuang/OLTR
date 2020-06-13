@@ -32,7 +32,10 @@ def plot(path, folds, runs, click_model, num_interactions, color):
 
 if __name__ == "__main__":
     # path1 = "results/PDGD_intent1_scores_druing_change_5fold"
-    path1 = "results/PDGD/intent_change_five_folds_Lin"
+    path1 = "results/PDGD/intent_change_five_folds"
+    path2 = "results/PDGD/intent1_scores_during_change_5fold"
+    path3 = "results/PDGD/intent1_scores_during_change_train_only"
+    path4 = "results/PDGD/intent3_50k"
 
     folds = list(range(1, 6))
     runs = list(range(1, 16))
@@ -40,8 +43,8 @@ if __name__ == "__main__":
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     num_interactions = 100000
 
-    plot(path1, folds, runs, 'informational', num_interactions, 1)
-    plot(path1, folds, runs, 'perfect', num_interactions, 2)
+    plot(path2, folds, runs, 'informational', num_interactions, 1)
+    plot(path2, folds, runs, 'perfect', num_interactions, 2)
     plt.ylabel('NDCG')
     plt.xlabel('EPOCH')
     plt.legend(['informational', 'perfect'], loc='lower right')

@@ -75,10 +75,10 @@ if __name__ == "__main__":
     path5 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma0"
     path6 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma1"
     #
-    path1 = "results/mq2007/PDGD"
+    # path1 = "results/mq2007/PDGD"
     # path2 = "results/mq2007/MDP_001_positive"
     # path3 = "results/mq2007/MDP_001_negative"
-    path4 = "results/mq2007/MDP_001_both"
+    # path4 = "results/mq2007/MDP_001_both"
     # path13 = "results/mq2007/MDP_01_both_correct"
     # path14 = "results/mq2007/MDP_0001_both_correct"
 
@@ -120,11 +120,11 @@ if __name__ == "__main__":
 
             # plot(path14, folds, runs, click_model, num_interaction, 1, plot_index)
             plot(path1, folds, runs, click_model, num_interaction, 7, plot_index)
-            # plot(path2, folds, runs, click_model, num_interaction, 3, plot_index)
-            # plot(path3, folds, runs, click_model, num_interaction, 4, plot_index)
+            plot(path2, folds, runs, click_model, num_interaction, 3, plot_index)
+            plot(path3, folds, runs, click_model, num_interaction, 4, plot_index)
             plot(path4, folds, runs, click_model, num_interaction, 2, plot_index)
-            # plot(path5, folds, runs, click_model, num_interaction, 5, plot_index)
-            # plot(path6, folds, runs, click_model, num_interaction, 0, plot_index)
+            plot(path5, folds, runs, click_model, num_interaction, 5, plot_index)
+            plot(path6, folds, runs, click_model, num_interaction, 0, plot_index)
 
             plot_index += 1
             print()
