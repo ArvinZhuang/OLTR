@@ -51,11 +51,12 @@ class MDPRankerV2(AbstractRanker):
         step = tf.Variable(0, trainable=False)
 
         if lr_decay:
-            rate = tf.train.exponential_decay(self.lr, step, 1, 0.99997)
+            rate = tf.train.exponential_decay(self.lr, step, 1000, 0.95)
         else:
             rate = self.lr
 
-        self.train_op = tf.train.AdamOptimizer(rate)
+        # self.train_op = tf.train.AdamOptimizer(rate)
+        self.train_op = tf.train.GradientDescentOptimizer(rate)
 
         # train with gradients accumulative style
         tvs = tf.trainable_variables()

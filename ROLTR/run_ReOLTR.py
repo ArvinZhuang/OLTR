@@ -19,26 +19,23 @@ def run(train_set, test_set, ranker, eta, gamma, reward_method, num_interation, 
     query_set = train_set.get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
     num_iter = 0
-
-    propensities = np.power(np.divide(1, np.arange(1.0, 10 + 1)), eta)
-    propensities[np.where(propensities < 0.05)[0]] = 0.1  # propensity clipping
-
     for i in index:
         qid = query_set[i]
         result_list = ranker.get_query_result_list(train_set, qid)
         clicked_doces, click_labels, _ = click_model.simulate(qid, result_list, train_set)
 
+        # if no click data, skip this session
         if len(clicked_doces) == 0:
             if num_iter % 1000 == 0:
                 all_result = ranker.get_all_query_result_list(test_set)
                 ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
                 ndcg_scores.append(ndcg)
-
             cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
             cndcg_scores.append(cndcg)
             num_iter += 1
             continue
 
+        propensities = np.power(np.divide(1, np.arange(1.0, len(click_labels) + 1)), eta)
 
 
         # directly using pointwise rewards
@@ -74,7 +71,7 @@ def job(model_type, learning_rate, eta, gamma, reward_method, f, train_set, test
     elif model_type == "informational":
         pc = [0.4, 0.6, 0.7, 0.8, 0.9]
         ps = [0.1, 0.2, 0.3, 0.4, 0.5]
-    cm = PBM(pc, 2)
+    cm = PBM(pc, 1)
 
     for r in range(1, 16):
         # np.random.seed(r)
@@ -97,21 +94,21 @@ def job(model_type, learning_rate, eta, gamma, reward_method, f, train_set, test
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 136
-    NUM_INTERACTION = 200000
-    learning_rate = 0.01
-    eta = 2
+    FEATURE_SIZE = 700
+    NUM_INTERACTION = 100000
+    learning_rate = 0.001
+    eta = 1
     gamma = 0
     reward_method = "both"
     click_models = ["informational", "perfect"]
     # click_models = ["perfect"]
-    dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/long_term_200k/MDP_001_Adam_both_unbiased_gamma0_eta2_clipped"
+    # dataset_fold = "../datasets/MSLR10K"
+    output_fold = "results/yahoo/MDP_with_SGD_optimiser/MDP_0001_both_unbiased"
     print("reward:", reward_method, "lr:",learning_rate, "eta:", eta, output_fold, "gamma", gamma)
     # for 5 folds
-    for f in range(1, 6):
-        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+    for f in range(1, 2):
+        training_path = "../datasets/ltrc_yahoo/set1.train.txt"
+        test_path = "../datasets/ltrc_yahoo/set1.test.txt"
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
         # %%

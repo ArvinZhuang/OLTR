@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import stats
 
 
 def query_ndcg_at_k(dataset, result_list, query, k):
@@ -90,3 +91,7 @@ def get_all_query_ndcg(dataset, query_result_list, k):
         ndcg = (dcg / idcg)
         query_ndcg[query] = ndcg
     return query_ndcg
+
+def ttest(l1, l2):
+    _, p = stats.ttest_ind(l1, l2, equal_var=False)
+    return p

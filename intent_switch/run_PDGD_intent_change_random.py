@@ -10,6 +10,7 @@ import multiprocessing as mp
 import pickle
 import copy
 import os
+import random
 from tqdm import tqdm
 
 def read_intent_qrel(path: str):
@@ -31,7 +32,7 @@ def run(train_intents, test_intents, ranker, num_interation, click_model):
 
 
 
-    ndcg_scores = []
+    ndcg_scores = [[], [], [], []]
     cndcg_scores = []
 
 
@@ -47,6 +48,9 @@ def run(train_intents, test_intents, ranker, num_interation, click_model):
         #     print("Change intent to", int(num_iter/10000))
         #     current_train_set = train_intents[int(num_iter/10000)]
         #     current_test_set = test_intents[int(num_iter / 10000)]
+        ind = random.randint(0, 2)
+        current_train_set = train_intents[ind]
+        current_test_set = test_intents[ind]
 
         qid = query_set[i]
         result_list, scores = ranker.get_query_result_list(current_train_set, qid)
@@ -55,12 +59,18 @@ def run(train_intents, test_intents, ranker, num_interation, click_model):
 
         ranker.update_to_clicks(click_label, result_list, scores, current_train_set.get_all_features_by_query(qid))
 
+        cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
+        cndcg_scores.append(cndcg)
 
         all_result = ranker.get_all_query_result_list(current_test_set)
         ndcg = evl_tool.average_ndcg_at_k(current_test_set, all_result, 10)
-        ndcg_scores.append(ndcg)
-        cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
-        cndcg_scores.append(cndcg)
+        ndcg_scores[0].append(ndcg)  # the first one is the immediate ndcg.
+
+        for intent in range(len(test_intents)):
+            all_result = ranker.get_all_query_result_list(test_intents[intent])
+            ndcg = evl_tool.average_ndcg_at_k(test_intents[intent], all_result, 10)
+            ndcg_scores[intent+1].append(ndcg)  # intent ndcg
+
         # print(num_iter, ndcg)
         num_iter += 1
 
@@ -86,16 +96,26 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_intents, test_inten
 
         print("PDGD intent change {} fold{} run{} start!".format(model_type, f, r))
         ndcg_scores, cndcg_scores = run(train_intents, test_intents, ranker, NUM_INTERACTION, cm)
+        os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)), exist_ok=True)
 
-        os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)), exist_ok=True)  # create directory if not exist
-        with open(
-                "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(ndcg_scores, fp)
         with open(
                 "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
                 "wb") as fp:
             pickle.dump(cndcg_scores, fp)
+
+        with open(
+                "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
+                "wb") as fp:
+            pickle.dump(ndcg_scores[0], fp)
+
+        for i in range(len(ndcg_scores)-1):  # the intent ndcg start from 1.
+            os.makedirs(os.path.dirname("{}/intent{}/fold{}/".format(output_fold, i+1, f)), exist_ok=True)  # create directory if not exist\
+
+            with open(
+                    "{}/intent{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, i+1, f, model_type, r),
+                    "wb") as fp:
+                pickle.dump(ndcg_scores[i+1], fp)
+
 
         # print("PDGD intent change {} run{} finish!".format(model_type, r))
         # with open(
@@ -114,7 +134,7 @@ if __name__ == "__main__":
     Learning_rate = 0.1
 
     dataset_fold = "datasets/intent_change_mine"
-    output_fold = "results/PDGD/intent3_50k"
+    output_fold = "results/PDGD/intent_random_50k"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
@@ -143,8 +163,8 @@ if __name__ == "__main__":
         train_set3.update_relevance_label(qrel_dic3)
         test_set3.update_relevance_label(qrel_dic3)
 
-        train_intents = [train_set1, train_set1, train_set1, train_set1, train_set1]
-        test_intents = [test_set1, test_set1, test_set1, test_set1, test_set1]
+        train_intents = [train_set1, train_set2, train_set3]
+        test_intents = [test_set1, test_set2, test_set3]
         # for 3 click_models
         for click_model in click_models:
             for tau in taus:

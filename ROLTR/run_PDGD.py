@@ -8,6 +8,7 @@ from utils import evl_tool
 import numpy as np
 import multiprocessing as mp
 import pickle
+import os
 
 
 def run(train_set, test_set, ranker, num_interation, click_model):
@@ -58,13 +59,15 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
     # elif model_type == "informational":
     #     pc = [0.4, 0.7, 0.9]
     #     ps = [0.1, 0.3, 0.5]
-    cm = PBM(pc, 1)
+    cm = PBM(pc, 2)
 
-    for r in range(1, 26):
+    for r in range(1, 16):
         # np.random.seed(r)
         ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate, tau)
         print("PDGD tau{} fold{} {} run{} start!".format(tau, f, model_type, r))
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
+        os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
+                    exist_ok=True)  # create directory if not exist
         with open(
                 "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
                 "wb") as fp:
@@ -82,25 +85,26 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 700
-    NUM_INTERACTION = 100000
+    FEATURE_SIZE = 136
+    NUM_INTERACTION = 200000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "perfect"]
     Learning_rate = 0.1
     dataset_fold = "../datasets/MSLR10K"
     # dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "results/yahoo/PDGD"
+    # output_fold = "results/yahoo/PDGD"
+    output_fold = "results/mslr10k/long_term_200k/PDGD_eta2"
     # output_fold = "results/mq2007/PDGD"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
-    for f in range(1, 2):
-        # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        training_path = "../datasets/ltrc_yahoo/set1.train.txt"
-        test_path = "../datasets/ltrc_yahoo/set1.test.txt"
-        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=False)
-        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=False)
+    for f in range(1, 6):
+        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+        # training_path = "../datasets/ltrc_yahoo/set1.train.txt"
+        # test_path = "../datasets/ltrc_yahoo/set1.test.txt"
+        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
+        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
 
         processors = []
         # for 3 click_models
