@@ -55,60 +55,72 @@ def run(train_set, test_set, ranker, eta, gamma, reward_method, num_interation, 
         cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
 
-        # print(num_iter)
+        all_result = ranker.get_all_query_result_list(test_set)
+        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+        print(num_iter, ndcg)
         num_iter += 1
     return ndcg_scores, cndcg_scores
 
 
 def job(model_type, learning_rate, eta, gamma, reward_method, f, train_set, test_set, num_features, output_fold):
 
+    # if model_type == "perfect":
+    #     pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+    #     ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+    # elif model_type == "navigational":
+    #     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+    #     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+    # elif model_type == "informational":
+    #     pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+    #     ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+
     if model_type == "perfect":
-        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
-        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+        pc = [0.0, 0.5, 1.0]
+        ps = [0.0, 0.0, 0.0]
     elif model_type == "navigational":
-        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+        pc = [0.05, 0.5, 0.95]
+        ps = [0.2, 0.5, 0.9]
     elif model_type == "informational":
-        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+        pc = [0.4, 0.7, 0.9]
+        ps = [0.1, 0.3, 0.5]
     cm = PBM(pc, 1)
 
     for r in range(1, 16):
         # np.random.seed(r)
-        ranker = MDPRankerV2(256, num_features, learning_rate)
+        ranker = MDPRankerV2(256, num_features, learning_rate, loss_type="pairwise")
         print("MDP Adam MSLR10K fold{} {} eta{} reward {} run{} start!".format(f, model_type, eta, reward_method, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, eta, gamma, reward_method, NUM_INTERACTION, cm)
-        os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
-                    exist_ok=True)  # create directory if not exist
-        with open(
-                "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(ndcg_scores, fp)
-        with open(
-                "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(cndcg_scores, fp)
+        # os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
+        #             exist_ok=True)  # create directory if not exist
+        # with open(
+        #         "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
+        #         "wb") as fp:
+        #     pickle.dump(ndcg_scores, fp)
+        # with open(
+        #         "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
+        #         "wb") as fp:
+        #     pickle.dump(cndcg_scores, fp)
         #
         # print("MDP MSLR10K fold{} {} eta{} reward{} run{} done!".format(f, model_type, eta, reward_method, r))
 
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 700
+    FEATURE_SIZE = 46
     NUM_INTERACTION = 100000
     learning_rate = 0.001
     eta = 1
     gamma = 0
     reward_method = "both"
-    click_models = ["informational", "perfect"]
-    # click_models = ["perfect"]
-    # dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/yahoo/MDP_with_SGD_optimiser/MDP_0001_both_unbiased"
+    # click_models = ["informational", "perfect"]
+    click_models = ["informational"]
+    dataset_fold = "../datasets/2007_mq_dataset"
+    output_fold = "results/mq2007/MDP_0001_Adam_both_gamma0"
     print("reward:", reward_method, "lr:",learning_rate, "eta:", eta, output_fold, "gamma", gamma)
     # for 5 folds
     for f in range(1, 2):
-        training_path = "../datasets/ltrc_yahoo/set1.train.txt"
-        test_path = "../datasets/ltrc_yahoo/set1.test.txt"
+        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
         # %%

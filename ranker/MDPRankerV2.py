@@ -13,7 +13,9 @@ class MDPRankerV2(AbstractRanker):
                  Lenepisode=10,
                  memory_size=100,
                  batch_size=1,
-                 lr_decay=False):
+                 lr_decay=False,
+                 loss_type='pointwise'):
+
         super().__init__(Nfeature)
         tf.reset_default_graph()  # used for multiprocessor training, otherwise has errors
 
@@ -25,7 +27,7 @@ class MDPRankerV2(AbstractRanker):
         self.W = np.random.rand(Nfeature)
         # self.W = np.zeros(Nfeature)
         self.lr = Learningrate
-
+        self.loss_type = loss_type
         self.Ntop = 10
         self.memory = []
         self.ite = 0
@@ -41,12 +43,24 @@ class MDPRankerV2(AbstractRanker):
         # b1 = tf.Variable(tf.zeros([1, hidden_units]))
         ah1 = tf.matmul(self.input_docs, aW1)
         self.doc_scores = tf.transpose(ah1)
-        self.prob = tf.nn.softmax(self.doc_scores)
 
-        neg_log_prob = tf.reduce_sum(
-            -tf.log(tf.clip_by_value(self.prob, 1e-10, 1.0)) * tf.one_hot(self.position, self.doc_length),
-            axis=1)
-        loss = tf.reduce_mean(neg_log_prob * self.advantage)
+        if loss_type == 'pointwise':
+            self.prob = tf.nn.softmax(self.doc_scores)
+
+            neg_log_prob = tf.reduce_sum(
+                -tf.log(tf.clip_by_value(self.prob, 1e-10, 1.0)) * tf.one_hot(self.position, self.doc_length),
+                axis=1)
+            loss = tf.reduce_mean(neg_log_prob * self.advantage)
+
+        if loss_type == 'pairwise':
+            self.exps = tf.math.exp(self.doc_scores)
+            self.position2 = tf.placeholder(tf.int64)
+
+            neg_log_prob = tf.reduce_sum(
+                -tf.log(tf.clip_by_value(self.exps[0][self.position]/(self.exps[0][self.position]+self.exps[0][self.position2]),
+                                         1e-10, 1.0)) * tf.one_hot([0], self.doc_length), axis=1)
+
+            loss = tf.reduce_mean(neg_log_prob * self.advantage)
 
         step = tf.Variable(0, trainable=False)
 
@@ -55,8 +69,8 @@ class MDPRankerV2(AbstractRanker):
         else:
             rate = self.lr
 
-        # self.train_op = tf.train.AdamOptimizer(rate)
-        self.train_op = tf.train.GradientDescentOptimizer(rate)
+        self.train_op = tf.train.AdamOptimizer(rate)
+        # self.train_op = tf.train.GradientDescentOptimizer(rate)
 
         # train with gradients accumulative style
         tvs = tf.trainable_variables()
@@ -95,12 +109,25 @@ class MDPRankerV2(AbstractRanker):
 
         self.sess.run(self.zero_ops)
 
-        for pos in range(lenghth):
-            self.sess.run([self.accum_ops], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
-                                                       self.position: [0],
-                                                       self.doc_length: len(ranklist[pos:]),
-                                                       self.advantage: rewards[pos]})
-        self.sess.run([self.actor_train_step])
+        if self.loss_type == "pointwise":
+            for pos in range(lenghth):
+                self.sess.run([self.accum_ops], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
+                                                           self.position: [0],
+                                                           self.doc_length: len(ranklist[pos:]),
+                                                           self.advantage: rewards[pos]})
+            self.sess.run([self.actor_train_step])
+
+        if self.loss_type == "pairwise":
+
+            for pos in range(lenghth):
+                for next_pos in range(1, lenghth-pos):
+                    self.sess.run([self.accum_ops], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
+                                                               self.position: 0,
+                                                               self.position2: next_pos,
+                                                               self.doc_length: len(ranklist[pos:]),
+                                                               self.advantage: rewards[pos]-rewards[next_pos]})
+            self.sess.run([self.actor_train_step])
+
 
 
     def record_episode(self, query, ranklist, rewards):
