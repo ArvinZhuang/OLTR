@@ -227,7 +227,7 @@ class ProbabilisticRanker:
         return (np.asarray(l), a)
 
     def probabilistic_multileave_outcome(self, l, rankers, clicks, features):
-        click_ids = np.where(np.asarray(clicks) == 0)[0]
+        click_ids = np.where(np.asarray(clicks) == 1)[0]
 
         if not len(click_ids):  # no clicks, will be a tie
             # return [1/float(len(rankers))]*len(rankers)

@@ -37,9 +37,7 @@ def run(train_set, test_set, ranker, num_interation, click_model):
         final_weight = ranker.get_current_weights()
         num_iter += 1
 
-        all_result = ranker.get_all_query_result_list(test_set)
-        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-        print(num_iter, ndcg)
+        # print(num_iter, ndcg)
     return ndcg_scores, cndcg_scores, final_weight
 
 
@@ -69,45 +67,45 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
         ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate, tau)
         print("PDGD tau{} fold{} {} run{} start!".format(tau, f, model_type, r))
         ndcg_scores, cndcg_scores, final_weight = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
-        # os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
-        #             exist_ok=True)  # create directory if not exist
-        # with open(
-        #         "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
-        #         "wb") as fp:
-        #     pickle.dump(ndcg_scores, fp)
-        # with open(
-        #         "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
-        #         "wb") as fp:
-        #     pickle.dump(cndcg_scores, fp)
-        # with open(
-        #         "../results/exploration/mq2007/PDGD/fold{}/{}_tau{}_run{}_final_weight.txt".format(f, model_type, tau, r),
-        #         "wb") as fp:
-        #     pickle.dump(final_weight, fp)
+        os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
+                    exist_ok=True)  # create directory if not exist
+        with open(
+                "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
+                "wb") as fp:
+            pickle.dump(ndcg_scores, fp)
+        with open(
+                "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
+                "wb") as fp:
+            pickle.dump(cndcg_scores, fp)
+        with open(
+                "../results/exploration/mq2007/PDGD/fold{}/{}_tau{}_run{}_final_weight.txt".format(f, model_type, tau, r),
+                "wb") as fp:
+            pickle.dump(final_weight, fp)
         print("PDGD tau{} fold{} {} run{} finished!".format(tau, f, model_type, r))
 
 
 if __name__ == "__main__":
 
     FEATURE_SIZE = 46
-    NUM_INTERACTION = 200000
-    click_models = ["informational"]
-    # click_models = ["informational", "perfect"]
+    NUM_INTERACTION = 100000
+    # click_models = ["informational"]
+    click_models = ["informational", "perfect"]
     Learning_rate = 0.1
     # dataset_fold = "../datasets/MSLR10K"
     dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "results/yahoo/PDGD"
+    output_fold = "results/mq2007/PDGD"
     # output_fold = "results/mslr10k/long_term_200k/PDGD_eta2"
     # output_fold = "results/mq2007/PDGD"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
-    for f in range(1, 2):
+    for f in range(1, 6):
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         # training_path = "../datasets/ltrc_yahoo/set1.train.txt"
         # test_path = "../datasets/ltrc_yahoo/set1.test.txt"
-        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
-        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
+        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=False)
+        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=False)
 
         processors = []
         # for 3 click_models

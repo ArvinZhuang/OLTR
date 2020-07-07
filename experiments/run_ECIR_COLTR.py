@@ -136,7 +136,8 @@ if __name__ == "__main__":
 
     FEATURE_SIZE = 46
     NUM_INTERACTION = 10000
-    click_models = ["informational", "navigational", "perfect"]
+    # click_models = ["informational", "navigational", "perfect"]
+    click_models = ["informational"]
     Learning_rate = 0.1
     dataset_fold = "../datasets/2007_mq_dataset"
     output_fold = "../results/COLTR/mq2007"
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     step_size = 1
 
     # for 5 folds
-    for f in range(1, 6):
+    for f in range(1, 2):
 
         training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)

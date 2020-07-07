@@ -39,9 +39,9 @@ class MDPRankerV2(AbstractRanker):
         self.doc_length = tf.placeholder(tf.int32)
         self.advantage = tf.placeholder(tf.float32)
 
-        aW1 = tf.Variable(tf.truncated_normal([self.Nfeature, 1], stddev=0.1 / np.sqrt(float(self.Nfeature))))
+        self.aW1 = tf.Variable(tf.truncated_normal([self.Nfeature, 1], stddev=0.1 / np.sqrt(float(self.Nfeature))))
         # b1 = tf.Variable(tf.zeros([1, hidden_units]))
-        ah1 = tf.matmul(self.input_docs, aW1)
+        ah1 = tf.matmul(self.input_docs, self.aW1)
         self.doc_scores = tf.transpose(ah1)
 
         if loss_type == 'pointwise':
@@ -50,17 +50,18 @@ class MDPRankerV2(AbstractRanker):
             neg_log_prob = tf.reduce_sum(
                 -tf.log(tf.clip_by_value(self.prob, 1e-10, 1.0)) * tf.one_hot(self.position, self.doc_length),
                 axis=1)
-            loss = tf.reduce_mean(neg_log_prob * self.advantage)
+            self.loss = tf.reduce_mean(neg_log_prob * self.advantage)
 
         if loss_type == 'pairwise':
-            self.exps = tf.math.exp(self.doc_scores)
             self.position2 = tf.placeholder(tf.int64)
+            self.exp = tf.math.exp(tf.clip_by_value(self.doc_scores[0][self.position] - self.doc_scores[0][self.position2], -100, 70))
+            self.P = tf.math.divide(self.exp, (1 + self.exp))
+
 
             neg_log_prob = tf.reduce_sum(
-                -tf.log(tf.clip_by_value(self.exps[0][self.position]/(self.exps[0][self.position]+self.exps[0][self.position2]),
-                                         1e-10, 1.0)) * tf.one_hot([0], self.doc_length), axis=1)
+                -tf.log(tf.clip_by_value(self.P, 1e-10, 1.0)) * tf.one_hot([0], self.doc_length), axis=1)
 
-            loss = tf.reduce_mean(neg_log_prob * self.advantage)
+            self.loss = tf.reduce_mean(neg_log_prob * self.advantage)
 
         step = tf.Variable(0, trainable=False)
 
@@ -69,14 +70,14 @@ class MDPRankerV2(AbstractRanker):
         else:
             rate = self.lr
 
-        self.train_op = tf.train.AdamOptimizer(rate)
-        # self.train_op = tf.train.GradientDescentOptimizer(rate)
+        # self.train_op = tf.train.AdamOptimizer(rate)
+        self.train_op = tf.train.GradientDescentOptimizer(rate)
 
         # train with gradients accumulative style
         tvs = tf.trainable_variables()
         accum_vars = [tf.Variable(tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvs]
         self.zero_ops = [tv.assign(tf.zeros_like(tv)) for tv in accum_vars]
-        gvs = self.train_op.compute_gradients(loss, tvs)
+        gvs = self.train_op.compute_gradients(self.loss, tvs)
         self.accum_ops = [accum_vars[i].assign_add(gv[0]) for i, gv in enumerate(gvs)]
         self.actor_train_step = self.train_op.apply_gradients([(accum_vars[i], gv[1]) for i, gv in enumerate(gvs)])
 
@@ -121,11 +122,33 @@ class MDPRankerV2(AbstractRanker):
 
             for pos in range(lenghth):
                 for next_pos in range(1, lenghth-pos):
-                    self.sess.run([self.accum_ops], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
+                    _, loss = self.sess.run([self.accum_ops, self.loss], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
                                                                self.position: 0,
                                                                self.position2: next_pos,
                                                                self.doc_length: len(ranklist[pos:]),
-                                                               self.advantage: rewards[pos]-rewards[next_pos]})
+                                                               self.advantage: rewards[pos]-rewards[pos+next_pos]})
+                    # array_sum = np.sum(_)
+                    # if np.isnan(array_sum):
+                    #     print(feature_matrix)
+                    #     print("gradient:", _)
+                    #     print("loss:", loss)
+                    #     # x = self.sess.run(self.aW1)
+                    #     # print(x, x.shape)
+                    #     scores = self.sess.run(self.doc_scores, feed_dict={
+                    #         self.input_docs: feature_matrix[ranklist[pos:]]})
+                    #     print(scores)
+                    #     print(next_pos)
+                    #
+                    #     print(np.divide(np.exp(scores[0][0] - scores[0][next_pos]),
+                    #     (1 + np.exp(scores[0][0] - scores[0][next_pos]))))
+                    #
+                    #     exp = self.sess.run(self.exps, feed_dict={
+                    #         self.input_docs: feature_matrix[ranklist[pos:]],
+                    #         self.position: 0,
+                    #         self.position2: next_pos})
+                    #     print(exp)
+                    #     raise Exception
+
             self.sess.run([self.actor_train_step])
 
 
@@ -210,8 +233,11 @@ class MDPRankerV2(AbstractRanker):
     def get_scores(self, features):
 
         result = self.sess.run([self.doc_scores], feed_dict={self.input_docs: features})[0].reshape([-1])
-        # array_sum = np.sum(result)
+        array_sum = np.sum(result)
         # if np.isnan(array_sum):
-        #     print(sess.run([scores], feed_dict={input_docs: features}))
-        #     print(sess.run([prob], feed_dict={input_docs: features}))
+        #     print(features)
+        #     x = self.sess.run(self.aW1)
+        #     print(x, x.shape)
+        #     print(self.sess.run([self.doc_scores], feed_dict={self.input_docs: features}))
+            # print(self.sess.run([self.prob], feed_dict={self.input_docs: features}))
         return result

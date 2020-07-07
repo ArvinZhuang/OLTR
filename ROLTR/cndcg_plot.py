@@ -43,7 +43,6 @@ def plot(path, parameter, folds, runs, click_model, num_interactions, color, int
     # plt.fill_between(range(num_interactions), smooth(result_low, num_interactions), smooth(result_high, num_interactions), color=COLORS[color], alpha=0.2)
     color_index += 1
     cndcgs = []
-    print(result_mean.shape)
     for start, end in intervals:
         cndcg = 0
         for i in range(start, end):
@@ -56,47 +55,55 @@ def plot(path, parameter, folds, runs, click_model, num_interactions, color, int
 
 
 if __name__ == "__main__":
-    path1 = "results/mslr10k/long_term_200k/PDGD"
-    path2 = "results/mslr10k/long_term_200k/PDGD_eta2"
-    # path2 = "results/mslr10k/long_term_200k/MDP_001decay_both_Adam"
-    # path2 = "results/mslr10k/MDP_001_both_Adam"
-    # path3 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_naive_gamma0"
-    # path4 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_naive_gamma1"
-    path5 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma0"
-    path6 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma1"
-    path7 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma01"
-    path8 = "results/mslr10k/long_term_200k/MDP_001_Adam_positive_unbiased_gamma05"
+    ############## plot different reward function ####
+    # path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
+    # path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both_naive"
+    # path3 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive"
+    # path4 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive"
+    # path5 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_negative"
+    # path6 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_negative_naive"
 
-    # path1 = "results/mslr10k/long_term_1m/PDGD"
-    # path2 = "results/mslr10k/long_term_1m/MDP_0001_Adam_both_unbiased_gamma0"
+    ############## plot different propensities ####
+    # path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both_naive"
+    # path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both_propensity0.5"
+    # path3 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
+    # path4 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both_propensity1.5"
+    # path5 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both_propensity2.0"
 
-    # path1 = "results/mq2007/PDGD"
-    # path2 = "results/mq2007/MDP_001_positive"
-    # path3 = "results/mq2007/MDP_001_negative"
-    # path4 = "results/mq2007/MDP_001_both"
-    # path13 = "results/mq2007/MDP_01_both_correct"
-    # path14 = "results/mq2007/MDP_0001_both_correct"
 
-    # path1 = "results/yahoo/PDGD"
-    # path2 = "results/yahoo/MDP_001decay_Adam_both_gamma0"
-    # path2 = "results/yahoo/MDP_0001_Adam_both_gamma0"
-    # path3 = "results/yahoo/MDP_0001_Adam_positive_gamma0"
-    # path4 = "results/yahoo/MDP_001decay_Adam_both_gamma0"
+    ############## plot different algorithms ####
+    # path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
+    # path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_0001_both_unbiased_pairwise"
+    # path3 = "results/mslr10k/long_term_200k/PDGD"
+    # path4 = "results/mslr10k/COLTR"
+    # path5 = "results/mslr10k/PMGD"
 
-    # path1 = "results/mq2007/PDGD"
-    # path2 = "results/mq2007/MDP_001_Adam_both_gamma0"
-    path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
+    # path1 = "results/yahoo/MDP_with_SGD_optimizer/MDP_0001_both_unbiased"
+    # path2 = "results/yahoo/MDP_with_SGD_optimizer/MDP_0001_both_unbiased_pairwise"
+    # path3 = "results/yahoo/PDGD"
+    # path4 = "results/yahoo/COLTR_gamma1"
+    # path5 = "results/yahoo/PMGD"
+
+    path1 = "results/mq2007/MDP_001_both"
+    path2 = "results/mq2007/MDP_001_both_pairwise"
+    path3 = "results/mq2007/PDGD"
+    path4 = "results/mq2007/COLTR_gamma1"
+    path5 = "results/mq2007/PMGD"
+
     folds = list(range(1, 6))
     runs = list(range(1, 16))
     # intervals = [(0, 10000), (10000, 100000)]
     intervals = [(0, 100000)]
-    click_model = 'informational'
+    click_model = 'perfect'
 
     parameters = ["PDGD", "MDP_positiveDCG", "MDP_negativeDCG", "MDP_pos+neg"]
     num_interactions = 100000
 
-    l1 = plot(path1, "PDGD", folds, runs, click_model, num_interactions, 1, intervals)
-    l2 = plot(path2, "MDP_pos+neg_gamma0", folds, runs, click_model, num_interactions, 2, intervals)
+    l1 = plot(path1, "ReOLTR", folds, runs, click_model, num_interactions, 1, intervals)
+    plot(path2, "ReOLT_piarwise", folds, runs, click_model, num_interactions, 2, intervals)
+    l2 = plot(path3, "PDGD", folds, runs, click_model, num_interactions, 2, intervals)
+    # plot(path4, "COLTR", folds, runs, click_model, num_interactions, 2, intervals)
+    # plot(path5, "PMGD", folds, runs, click_model, num_interactions, 2, intervals)
     # print(ttest(l1[0], l2[0]), ttest(l1[1], l2[1]))
     print(ttest(l1, l2))
     # plot(path3, "MDP_pos_naive_gamma0", folds, runs, click_model, num_interactions, 3, intervals)

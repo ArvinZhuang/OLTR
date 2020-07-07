@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
@@ -44,21 +45,21 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
             continue
 
         # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
-        # last_click = np.where(click_label == 1)[0][-1]
-        # click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
+        last_click = np.where(click_label == 1)[0][-1]
+        click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
 
-        propensities = np.power(np.divide(1, np.arange(1.0, len(click_label) + 1)), 1)
-
-        # directly using pointwise rewards
-        rewards = get_DCG_rewards(click_label, propensities, "both")
+        # propensities = np.power(np.divide(1, np.arange(1.0, len(click_label) + 1)), 1)
+        #
+        # # directly using pointwise rewards
+        # rewards = get_DCG_rewards(click_label, propensities, "both")
 
         # bandit record
-        record = (qid, result_list, rewards, ranker.get_current_weights())
+        record = (qid, result_list, click_label, ranker.get_current_weights())
 
         unit_vectors = ranker.sample_unit_vectors(num_rankers)
         canditate_rankers = ranker.sample_canditate_rankers(unit_vectors)  # canditate_rankers are ranker weights, not ranker class
 
-        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record, minimiz=False)  # winner_rankers are index of candidates rankers who win the evaluation
+        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers], record)  # winner_rankers are index of candidates rankers who win the evaluation
 
         #### This part of code is used to test correctness of counterfactual evaluation ####
         # if winner_rankers is not None:
@@ -82,8 +83,8 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
         if num_interation % 1000 == 0:
             all_result = ranker.get_all_query_result_list(test_set)
             ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-            # print(ndcg)
             ndcg_scores.append(ndcg)
+
         cndcg = evl_tool.query_ndcg_at_k(train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
         final_weight = ranker.get_current_weights()
@@ -116,16 +117,17 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
         pc = [0.4, 0.6, 0.7, 0.8, 0.9]
         ps = [0.1, 0.2, 0.3, 0.4, 0.5]
 
-    # using SDBN click model to simulate clicks.
+    # using PBM click model to simulate clicks.
+    # cm = SDBN(pc, ps)
     cm = PBM(pc, 1)
-
-    for r in range(1, 16):
+    for r in range(1, 26):
         # np.random.seed(r)
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
         print("COTLR {} tau{} fold{} {} run{} start!".format(output_fold, tau, f, model_type, r))
 
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm, num_rankers)
-
+        os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
+                    exist_ok=True)  # create directory if not exist
         # store the results.
         with open(
                 "{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, f, model_type, r),
@@ -139,24 +141,28 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 136
+    FEATURE_SIZE = 700
     NUM_INTERACTION = 100000
     click_models = ["informational", "perfect"]
+    # click_models = ["perfect"]
     Learning_rate = 0.1
-    dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/mslr10k/unbiased_COLTR"
+    # dataset_fold = "../datasets/MSLR10K"
+    output_fold = "results/yahoo/COLTR_gamma1"
+    # output_fold = "results/mslr10k/unbiased_COLTR"
 
     num_rankers = 499
-    tau = 1
-    gamma = 0
+    tau = 0.1
+    gamma = 1
     learning_rate_decay = 0.99966
     step_size = 1
 
-    for f in range(1, 6):
-        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
-        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
+    for f in range(1, 2):
+        # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+        # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+        training_path = "../datasets/ltrc_yahoo/set1.train.txt"
+        test_path = "../datasets/ltrc_yahoo/set1.test.txt"
+        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=False)
+        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=False)
 
         processors = []
         # for click_models

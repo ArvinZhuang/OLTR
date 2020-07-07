@@ -63,20 +63,30 @@ def run(train_set, test_set, ranker, eta, reward_method, num_interation, click_m
 
 def job(model_type, learning_rate, eta, reward_method, f, train_set, test_set, num_features, output_fold):
 
+    # if model_type == "perfect":
+    #     pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+    #     ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+    # elif model_type == "navigational":
+    #     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+    #     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+    # elif model_type == "informational":
+    #     pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+    #     ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+    #
     if model_type == "perfect":
-        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
-        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+        pc = [0.0, 0.5, 1.0]
+        ps = [0.0, 0.0, 0.0]
     elif model_type == "navigational":
-        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+        pc = [0.05, 0.5, 0.95]
+        ps = [0.2, 0.5, 0.9]
     elif model_type == "informational":
-        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+        pc = [0.4, 0.7, 0.9]
+        ps = [0.1, 0.3, 0.5]
     cm = PBM(pc, 1)
 
     for r in range(1, 16):
         # np.random.seed(r)
-        ranker = MDPRankerV2(256, num_features, learning_rate, lr_decay=False)
+        ranker = MDPRankerV2(256, num_features, learning_rate)
         print("MDP Adam mq2007 fold{} {} eta{} reward {} run{} start!".format(f, model_type, eta, reward_method, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, eta, reward_method, NUM_INTERACTION, cm)
         os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
@@ -104,8 +114,8 @@ if __name__ == "__main__":
     click_models = ["informational", "perfect"]
     # click_models = ["perfect"]
     dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "results/mq2007/MDP_0001_Adam_both_gamma0"
-    # output_fold = "results/mslr10k/MDP_001_both_Adam"
+    output_fold = "results/mq2007/MDP_0001_both"
+
 
     # for 5 folds
     for f in range(1, 6):
