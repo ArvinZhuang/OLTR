@@ -9,7 +9,7 @@ COLORS = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'k']
 
 def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, linestyle, marker):
     print("click model:", click_model)
-    subplot = plt.subplot(2, 2, plot_ind + 1)
+    plt.subplot(1, 2, plot_ind + 1)
     plt.title(click_model, loc='left', position=(0.03, 0.9))
 
     result = np.zeros(int(num_interactions / 1000))
@@ -76,13 +76,13 @@ if __name__ == "__main__":
     # path5 = "results/yahoo/PMGD"
 
     path1 = "results/mq2007/MDP_001_both"
-    path2 = "results/mq2007/MDP_001_both_pairwise"
+    path2 = "results/mq2007/MDP_0001_both_pairwise"
     path3 = "results/mq2007/PDGD"
     path4 = "results/mq2007/COLTR_gamma1"
     path5 = "results/mq2007/PMGD"
 
     folds = list(range(1, 6))
-    runs = list(range(1, 16))
+    runs = list(range(1, 3))
     click_models = ["informational", "perfect"]
 
     ############## plot different reward function ####
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     num_interactions = [100000]
 
     # plot different rewards
-    f = plt.figure(1, figsize=(12, 8))
+    f = plt.figure(1, figsize=(12, 4))
 
     plot_index = 0
     for click_model in click_models:
@@ -144,6 +144,6 @@ if __name__ == "__main__":
     plt.legend(legends, loc='lower right')
 
     f.subplots_adjust(wspace=0.2, hspace=0.3)
-    # plt.savefig('mslr10k.png', bbox_inches='tight')
+    plt.savefig('mq2007.png', bbox_inches='tight')
 
     plt.show()

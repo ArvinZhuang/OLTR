@@ -4,7 +4,6 @@ from dataset import LetorDataset
 
 
 def read_intent_qrel(path: str):
-
     # q-d pair dictionary
     query_dic = {}
 
@@ -17,11 +16,13 @@ def read_intent_qrel(path: str):
                 query_dic[qid] = {docid: int(rel)}
     return query_dic
 
+
 def get_dataset_avg_num_of_rel(dataset):
     avg = 0
     for qid in dataset._query_pos_docids.keys():
         avg += len(dataset.get_relevance_docids_by_query(qid))
     return avg/len(dataset._query_pos_docids.keys())
+
 
 def get_qrel_avg_num_of_rel(query_dic):
     avg = 0
@@ -34,8 +35,6 @@ def get_qrel_avg_num_of_rel(query_dic):
                 num_rel += 1
         avg += num_rel
     return avg/num_query
-
-
 
 
 dic0 = read_intent_qrel("0.txt")

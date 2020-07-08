@@ -86,7 +86,7 @@ def job(model_type, learning_rate, eta, reward_method, f, train_set, test_set, n
 
     for r in range(1, 16):
         # np.random.seed(r)
-        ranker = MDPRankerV2(256, num_features, learning_rate)
+        ranker = MDPRankerV2(256, num_features, learning_rate, loss_type='pairwise')
         print("MDP Adam mq2007 fold{} {} eta{} reward {} run{} start!".format(f, model_type, eta, reward_method, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, eta, reward_method, NUM_INTERACTION, cm)
         os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     click_models = ["informational", "perfect"]
     # click_models = ["perfect"]
     dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "results/mq2007/MDP_0001_both"
+    output_fold = "results/mq2007/MDP_0001_both_pairwise"
 
 
     # for 5 folds

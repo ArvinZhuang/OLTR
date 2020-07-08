@@ -3,7 +3,7 @@ import numpy as np
 
 
 class PDGDLinearRanker(LinearRanker):
-    def __init__(self, num_features, learning_rate, tau, learning_rate_decay=1, random_initial=True):
+    def __init__(self, num_features, learning_rate, tau=1, learning_rate_decay=1, random_initial=True):
         super().__init__(num_features, learning_rate, learning_rate_decay, random_initial)
         self.tau = tau
 

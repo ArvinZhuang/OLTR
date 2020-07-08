@@ -1,5 +1,6 @@
 import os
 
+
 def parse_topics(input_folder: str) -> dict:
     files = os.listdir(input_folder)
 
@@ -15,6 +16,7 @@ def parse_topics(input_folder: str) -> dict:
                 query = cols[1].strip()
                 topic_dic[topic_id] = query
     return topic_dic
+
 
 def parse_qrel(path: str) -> dict:
     qrel_dic = {}

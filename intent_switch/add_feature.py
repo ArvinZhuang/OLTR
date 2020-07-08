@@ -17,7 +17,6 @@ def write_to_disk(path, query_doc_dict):
                 f.write(s)
 
 
-
 def load_data_set(path):
     query_doc_dict = {}
     with open(path, "r") as fin:

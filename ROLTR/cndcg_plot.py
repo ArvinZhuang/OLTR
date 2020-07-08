@@ -85,13 +85,13 @@ if __name__ == "__main__":
     # path5 = "results/yahoo/PMGD"
 
     path1 = "results/mq2007/MDP_001_both"
-    path2 = "results/mq2007/MDP_001_both_pairwise"
+    path2 = "results/mq2007/MDP_0001_both_pairwise"
     path3 = "results/mq2007/PDGD"
     path4 = "results/mq2007/COLTR_gamma1"
     path5 = "results/mq2007/PMGD"
 
     folds = list(range(1, 6))
-    runs = list(range(1, 16))
+    runs = list(range(1, 2))
     # intervals = [(0, 10000), (10000, 100000)]
     intervals = [(0, 100000)]
     click_model = 'perfect'

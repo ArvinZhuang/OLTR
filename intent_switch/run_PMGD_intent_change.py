@@ -114,27 +114,23 @@ def job(model_type, f, train_set, test_set, delta, alpha, FEATURE_SIZE, num_rank
 
 
 if __name__ == "__main__":
-
-    FEATURE_SIZE = 91
+    FEATURE_SIZE = 105
     NUM_INTERACTION = 50000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "perfect"]
-    # click_models = ["informational"]
-    # dataset_fold = "../datasets/MSLR-WEB10K"
-    # dataset_fold = "../datasets/2007_mq_dataset"
-    dataset_fold = "../datasets/clueweb09"
-    output_fold = "results/PMGD"
+
+    dataset_fold = "datasets/intent_change_mine"
+    output_fold = "results/SDBN/PMDB/intent_change"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     alpha = 0.01
     delta = 1
     num_rankers = 49
 
     # for 5 folds
-    for f in range(1, 2):
-        # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        training_path = "{}/ClueWeb09-TREC-LTR.txt".format(dataset_fold)
-        test_path = "{}/ClueWeb09-TREC-LTR.txt".format(dataset_fold)
+    for f in range(1, 6):
+        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
