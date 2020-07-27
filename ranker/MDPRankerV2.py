@@ -77,9 +77,9 @@ class MDPRankerV2(AbstractRanker):
         tvs = tf.trainable_variables()
         accum_vars = [tf.Variable(tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvs]
         self.zero_ops = [tv.assign(tf.zeros_like(tv)) for tv in accum_vars]
-        gvs = self.train_op.compute_gradients(self.loss, tvs)
-        self.accum_ops = [accum_vars[i].assign_add(gv[0]) for i, gv in enumerate(gvs)]
-        self.actor_train_step = self.train_op.apply_gradients([(accum_vars[i], gv[1]) for i, gv in enumerate(gvs)])
+        self.gvs = self.train_op.compute_gradients(self.loss, tvs)
+        self.accum_ops = [accum_vars[i].assign_add(gv[0]) for i, gv in enumerate(self.gvs)]
+        self.actor_train_step = self.train_op.apply_gradients([(accum_vars[i], gv[1]) for i, gv in enumerate(self.gvs)])  # gv[1] is equal to the current tvs
 
         init = tf.global_variables_initializer()
         self.sess = tf.Session()
@@ -108,6 +108,7 @@ class MDPRankerV2(AbstractRanker):
 
         # print(self.sess.run([self.prob], feed_dict={self.input_docs: feature_matrix[ranklist[:10]]}))
 
+        gradient_vectors = np.zeros((self.num_features, lenghth))
         self.sess.run(self.zero_ops)
 
         if self.loss_type == "pointwise":
@@ -116,40 +117,49 @@ class MDPRankerV2(AbstractRanker):
                                                            self.position: [0],
                                                            self.doc_length: len(ranklist[pos:]),
                                                            self.advantage: rewards[pos]})
+
+                gradient = self.sess.run([self.gvs], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
+                                                           self.position: [0],
+                                                           self.doc_length: len(ranklist[pos:]),
+                                                           self.advantage: rewards[pos]})[0][0][0]  # get gradient as np.array
+                gradient_vectors[:, pos] = gradient.reshape(-1)
+
+            gradient_var = np.sum(np.var(gradient_vectors, axis=1))
             self.sess.run([self.actor_train_step])
+            return gradient_var
 
-        if self.loss_type == "pairwise":
-
-            for pos in range(lenghth):
-                for next_pos in range(1, lenghth-pos):
-                    _, loss = self.sess.run([self.accum_ops, self.loss], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
-                                                               self.position: 0,
-                                                               self.position2: next_pos,
-                                                               self.doc_length: len(ranklist[pos:]),
-                                                               self.advantage: rewards[pos]-rewards[pos+next_pos]})
-                    # array_sum = np.sum(_)
-                    # if np.isnan(array_sum):
-                    #     print(feature_matrix)
-                    #     print("gradient:", _)
-                    #     print("loss:", loss)
-                    #     # x = self.sess.run(self.aW1)
-                    #     # print(x, x.shape)
-                    #     scores = self.sess.run(self.doc_scores, feed_dict={
-                    #         self.input_docs: feature_matrix[ranklist[pos:]]})
-                    #     print(scores)
-                    #     print(next_pos)
-                    #
-                    #     print(np.divide(np.exp(scores[0][0] - scores[0][next_pos]),
-                    #     (1 + np.exp(scores[0][0] - scores[0][next_pos]))))
-                    #
-                    #     exp = self.sess.run(self.exps, feed_dict={
-                    #         self.input_docs: feature_matrix[ranklist[pos:]],
-                    #         self.position: 0,
-                    #         self.position2: next_pos})
-                    #     print(exp)
-                    #     raise Exception
-
-            self.sess.run([self.actor_train_step])
+        # if self.loss_type == "pairwise":
+        #
+        #     for pos in range(lenghth):
+        #         for next_pos in range(1, lenghth-pos):
+        #             _, loss = self.sess.run([self.accum_ops, self.loss], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
+        #                                                        self.position: 0,
+        #                                                        self.position2: next_pos,
+        #                                                        self.doc_length: len(ranklist[pos:]),
+        #                                                        self.advantage: rewards[pos]-rewards[pos+next_pos]})
+        #             # array_sum = np.sum(_)
+        #             # if np.isnan(array_sum):
+        #             #     print(feature_matrix)
+        #             #     print("gradient:", _)
+        #             #     print("loss:", loss)
+        #             #     # x = self.sess.run(self.aW1)
+        #             #     # print(x, x.shape)
+        #             #     scores = self.sess.run(self.doc_scores, feed_dict={
+        #             #         self.input_docs: feature_matrix[ranklist[pos:]]})
+        #             #     print(scores)
+        #             #     print(next_pos)
+        #             #
+        #             #     print(np.divide(np.exp(scores[0][0] - scores[0][next_pos]),
+        #             #     (1 + np.exp(scores[0][0] - scores[0][next_pos]))))
+        #             #
+        #             #     exp = self.sess.run(self.exps, feed_dict={
+        #             #         self.input_docs: feature_matrix[ranklist[pos:]],
+        #             #         self.position: 0,
+        #             #         self.position2: next_pos})
+        #             #     print(exp)
+        #             #     raise Exception
+        #
+        #     self.sess.run([self.actor_train_step])
 
 
 

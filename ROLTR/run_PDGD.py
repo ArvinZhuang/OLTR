@@ -42,27 +42,27 @@ def run(train_set, test_set, ranker, num_interation, click_model):
 
 
 def job(model_type, f, train_set, test_set, tau, output_fold):
-    # if model_type == "perfect":
-    #     pc = [0.0, 0.2, 0.4, 0.8, 1.0]
-    #     ps = [0.0, 0.0, 0.0, 0.0, 0.0]
-    # elif model_type == "navigational":
-    #     pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-    #     ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-    # elif model_type == "informational":
-    #     pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-    #     ps = [0.1, 0.2, 0.3, 0.4, 0.5]
     if model_type == "perfect":
-        pc = [0.0, 0.5, 1.0]
-        ps = [0.0, 0.0, 0.0]
+        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
     elif model_type == "navigational":
-        pc = [0.05, 0.5, 0.95]
-        ps = [0.2, 0.5, 0.9]
+        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
     elif model_type == "informational":
-        pc = [0.4, 0.7, 0.9]
-        ps = [0.1, 0.3, 0.5]
+        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+    # if model_type == "perfect":
+    #     pc = [0.0, 0.5, 1.0]
+    #     ps = [0.0, 0.0, 0.0]
+    # elif model_type == "navigational":
+    #     pc = [0.05, 0.5, 0.95]
+    #     ps = [0.2, 0.5, 0.9]
+    # elif model_type == "informational":
+    #     pc = [0.4, 0.7, 0.9]
+    #     ps = [0.1, 0.3, 0.5]
     cm = PBM(pc, 1)
 
-    for r in range(1, 16):
+    for r in range(16, 26):
         # np.random.seed(r)
         ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate, tau)
         print("PDGD tau{} fold{} {} run{} start!".format(tau, f, model_type, r))
@@ -86,26 +86,26 @@ def job(model_type, f, train_set, test_set, tau, output_fold):
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 46
+    FEATURE_SIZE = 220
     NUM_INTERACTION = 100000
     # click_models = ["informational"]
     click_models = ["informational", "perfect"]
     Learning_rate = 0.1
     # dataset_fold = "../datasets/MSLR10K"
-    dataset_fold = "../datasets/2007_mq_dataset"
-    output_fold = "results/mq2007/PDGD"
+    # dataset_fold = "../datasets/2007_mq_dataset"
+    output_fold = "results/istella/PDGD"
     # output_fold = "results/mslr10k/long_term_200k/PDGD_eta2"
     # output_fold = "results/mq2007/PDGD"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     taus = [1]
     # for 5 folds
-    for f in range(1, 6):
-        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-        # training_path = "../datasets/ltrc_yahoo/set1.train.txt"
-        # test_path = "../datasets/ltrc_yahoo/set1.test.txt"
-        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=False)
-        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=False)
+    for f in range(1, 2):
+        # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+        # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+        training_path = "../datasets/istella/train.txt"
+        test_path = "../datasets/istella/test.txt"
+        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)
+        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True)
 
         processors = []
         # for 3 click_models

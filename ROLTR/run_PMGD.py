@@ -43,14 +43,13 @@ def run(train_set, test_set, ranker, num_interation, click_model, num_rankers):
             u = u / np.shape(winners)[1]
             ranker.update_weights(u, alpha=ranker.learning_rate)
 
-        # if num_iter % 1000 == 0:
-        all_result = ranker.get_all_query_result_list(test_set, ranker.get_current_weights())
-        ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
-        ndcg_scores.append(ndcg)
+        if num_iter % 1000 == 0:
+            all_result = ranker.get_all_query_result_list(test_set, ranker.get_current_weights())
+            ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
+            ndcg_scores.append(ndcg)
 
         cndcg = evl_tool.query_ndcg_at_k(train_set, inter_list, qid, 10)
         cndcg_scores.append(cndcg)
-        print(num_iter, ndcg)
         num_iter += 1
 
     return ndcg_scores, cndcg_scores
@@ -79,10 +78,10 @@ def job(model_type, f, train_set, test_set, delta, alpha, FEATURE_SIZE, num_rank
     cm = PBM(pc, 1)
 
 
-    for r in range(1, 16):
+    for r in range(1, 26):
         # np.random.seed(r)
         ranker = ProbabilisticRanker(delta, alpha, FEATURE_SIZE)
-        print("PMGD mq2007 fold{} run{} start!".format(f, model_type, r))
+        print("DBGD fold{} run{} start!".format(f, model_type, r))
         ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm, num_rankers)
         os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
                     exist_ok=True)  # create directory if not exist
@@ -98,24 +97,27 @@ def job(model_type, f, train_set, test_set, delta, alpha, FEATURE_SIZE, num_rank
 
 if __name__ == "__main__":
 
-    FEATURE_SIZE = 136
+    FEATURE_SIZE = 220
     NUM_INTERACTION = 100000
     click_models = ["informational", "perfect"]
     # click_models = ["perfect"]
-    dataset_fold = "../datasets/MSLR10K"
+    # dataset_fold = "../datasets/MSLR10K"
     # dataset_fold = "../datasets/2007_mq_dataset"
-
-    output_fold = "results/mslr10k/PMGD_new"
+    output_fold = "results/istella/DBGD"
+    # output_fold = "results/mslr10k/DBGD"
     # output_fold = "results/yahoo/PMGD"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     alpha = 0.01
-    delta = 1
-    num_rankers = 49
+    delta = 49
+    num_rankers = 1
 
     # for 5 folds
-    for f in range(1, 6):
-        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+    for f in range(1, 2):
+        # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+        # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+        training_path = "../datasets/istella/train.txt"
+        test_path = "../datasets/istella/test.txt"
+        print("loading dataset.....")
         # training_path = "../datasets/ltrc_yahoo/set1.train.txt"
         # test_path = "../datasets/ltrc_yahoo/set1.test.txt"
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True)

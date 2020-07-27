@@ -14,6 +14,7 @@ class LetorDataset(AbstractDataset):
         self._binary_label = binary_label
         self._comments = {}
         self._docid_map = {}
+        # self._docstr_map = {}
 
         self._load_data()
 
@@ -34,6 +35,7 @@ class LetorDataset(AbstractDataset):
                     docid = 0
                     current_query = query
                     self._docid_map[query] = {}
+                    # self._docstr_map[query] = {}
                     self._query_pos_docids[query] = []
 
                 comments_part = line.split("#")
@@ -56,6 +58,7 @@ class LetorDataset(AbstractDataset):
                     if not feature_id.isdigit():
                         if feature_id[0] == "#":
                             self._docid_map[query][docid] = cols[i][1:]
+                            # self._docstr_map[query][cols[i][1:]] = docid
                         break
 
                     feature_id = int(feature_id) - 1
@@ -109,9 +112,33 @@ class LetorDataset(AbstractDataset):
                     rel = 0
                 self._query_docid_get_rel[qid][docid] = rel
                 self._query_relevant_labels[qid][ind] = rel
+
                 if rel > 0:
                     self._query_pos_docids[qid].append(docid)
                 ind += 1
+
+
+        # self._query_get_all_features_temp = {}
+        # for qid in self._query_docid_get_rel.keys():
+        #     self._query_pos_docids[qid] = []
+        #     self._query_get_docids[qid] = []
+        #     self._query_get_all_features_temp[qid] = []
+        #     for docstr in qrel_dic[qid].keys():
+        #         docid = self._docstr_map[qid][docstr]
+        #         rel = qrel_dic[qid][docstr]
+        #
+        #         self._query_docid_get_rel[qid][docid] = rel
+        #         self._query_relevant_labels[qid][docid] = rel
+        #         self._query_get_docids[qid].append(docid)
+        #         features = self._query_get_all_features[qid][docid]
+        #         self._query_get_all_features_temp[qid].append(features)
+        #         if rel > 0:
+        #             self._query_pos_docids[qid].append(docid)
+        #     self._query_get_all_features[qid] = np.array(self._query_get_all_features_temp[qid])
+
+
+
+
 
     def update_relevance_by_qrel(self, path: str):
 

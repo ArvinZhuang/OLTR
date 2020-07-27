@@ -60,7 +60,8 @@ def read_diversity(path, data):
             subtopicId = int(cols[1])
             docId = cols[2]
             relevance = cols[3]
-
+            if subtopicId == 0:
+                continue
             if topicId not in data.keys():
                 if int(relevance) > 0:
                     data[topicId] = {docId: [subtopicId]}
@@ -79,12 +80,12 @@ def read_diversity(path, data):
 
 if __name__ == "__main__":
     qrel_years = [9, 10, 11, 12]
-    num_subtopics = 6
+    num_subtopics = 4
     data = {}
     for year in qrel_years:
-        adhoc_path = "./accessments/qrels.adhoc-w{:02d}".format(year)
+        # adhoc_path = "./accessments/qrels.adhoc-w{:02d}".format(year)
         div_path = "./accessments/qrels.diversity-w{:02d}".format(year)
-        data = read_adhoc(adhoc_path, data)
+        # data = read_adhoc(adhoc_path, data)
         data = read_diversity(div_path, data)
 
     qrelRecordsList = []
@@ -93,15 +94,15 @@ if __name__ == "__main__":
 
     for topicId in data.keys():
         for docId in data[topicId].keys():
-            for subtopicId in range(num_subtopics):
+            for subtopicId in range(1, num_subtopics+1):
                 if subtopicId in data[topicId][docId]:
                     newRecord = qrelRecord(topicId, subtopicId, docId, 1)
                 else:
                     newRecord = qrelRecord(topicId, subtopicId, docId, 0)
-                qrelRecordsList[subtopicId].add_record(newRecord)
+                qrelRecordsList[subtopicId - 1].add_record(newRecord)
 
     for i in range(num_subtopics):
-        qrelRecordsList[i].write_to_disk("{}.txt".format(i))
+        qrelRecordsList[i].write_to_disk("{}.txt".format(i+1))
 
 
 

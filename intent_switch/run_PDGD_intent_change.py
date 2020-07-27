@@ -69,7 +69,7 @@ def run(train_intents, test_intents, ranker, num_interation, click_model):
             ndcg = evl_tool.average_ndcg_at_k(current_test_set, all_result, 10)
             ndcg_scores[0].append(ndcg)
 
-            for intent in range(len(test_intents)):
+            for intent in range(4):
                 all_result = ranker.get_all_query_result_list(test_intents[intent])
                 ndcg = evl_tool.average_ndcg_at_k(test_intents[intent], all_result, 10)
                 ndcg_scores[intent+1].append(ndcg)
@@ -105,7 +105,7 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_intents, test_inten
         ndcg_scores, cndcg_scores = run(train_intents, test_intents, ranker, NUM_INTERACTION, cm)
 
         # create directory if not exist
-        os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)), exist_ok=True)
+        os.makedirs(os.path.dirname("{}/current_intent/fold{}/".format(output_fold, f)), exist_ok=True)
         with open(
                 "{}/current_intent/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
                 "wb") as fp:
@@ -133,13 +133,14 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_intents, test_inten
 if __name__ == "__main__":
 
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 40000
+    NUM_INTERACTION = 50000
     # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "perfect"]
     Learning_rate = 0.1
 
     dataset_fold = "datasets/intent_change_mine"
-    output_fold = "results/SDBN/PDGD/intent_change"
+    intent_path = "intents_small"
+    output_fold = "results/SDBN/PDGD/intent_change_small"
 
     # for 5 folds
     for f in range(1, 6):
@@ -149,13 +150,13 @@ if __name__ == "__main__":
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
-        train_set1, test_set1 = get_intent_dataset(train_set, test_set, "1.txt")
-        train_set2, test_set2 = get_intent_dataset(train_set, test_set, "2.txt")
-        train_set3, test_set3 = get_intent_dataset(train_set, test_set, "3.txt")
-        train_set4, test_set4 = get_intent_dataset(train_set, test_set, "4.txt")
+        train_set1, test_set1 = get_intent_dataset(train_set, test_set, "{}/1.txt".format(intent_path))
+        train_set2, test_set2 = get_intent_dataset(train_set, test_set, "{}/2.txt".format(intent_path))
+        train_set3, test_set3 = get_intent_dataset(train_set, test_set, "{}/3.txt".format(intent_path))
+        train_set4, test_set4 = get_intent_dataset(train_set, test_set, "{}/4.txt".format(intent_path))
 
-        train_intents = [train_set1, train_set2, train_set3, train_set4]
-        test_intents = [test_set1, test_set2, test_set3, test_set4]
+        train_intents = [train_set1, train_set2, train_set3, train_set4, train_set1]
+        test_intents = [test_set1, test_set2, test_set3, test_set4, test_set1]
 
         for click_model in click_models:
             mp.Process(target=job, args=(click_model,

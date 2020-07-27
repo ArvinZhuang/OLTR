@@ -31,12 +31,12 @@ def plot(path, folds, runs, click_model, num_interactions, color):
 
 
 if __name__ == "__main__":
-    path = "results/SDBN/PDGD/intent_change/current_intent"
-    # path = "results/SDBN/PDGD/intent_change/intent2"
-    # path = "results/SDBN/COLTR/intent_change"
+    # path = "results/SDBN/PDGD/intent_change_exclusive/current_intent"
+    path = "results/SDBN/PDGD/intent_change_exclusive/intent4"
 
-    path1 = "results/SDBN/PDGD/intent_fixed/intent1"
-    path2 = "results/SDBN/PDGD/intent_fixed/intent2"
+
+    path1 = "results/SDBN/PDGD/intent_change_samll/intent1"
+    path2 = "results/SDBN/PDGD/intent_change_samll/intent2"
     path3 = "results/SDBN/PDGD/intent_fixed/intent3"
     path4 = "results/SDBN/PDGD/intent_fixed/intent4"
 
@@ -44,10 +44,10 @@ if __name__ == "__main__":
     runs = list(range(1, 16))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
-    num_interactions = 400
+    num_interactions = 500
 
-    plot(path3, folds, runs, 'informational', num_interactions, 1)
-    plot(path3, folds, runs, 'perfect', num_interactions, 2)
+    plot(path, folds, runs, 'informational', num_interactions, 1)
+    plot(path, folds, runs, 'perfect', num_interactions, 2)
 
 
     plt.ylabel('NDCG')
