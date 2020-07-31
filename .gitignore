@@ -1,0 +1,17 @@
+.idea/
+*.pyc
+*.local
+datasets/clueweb09/
+datasets/istella/
+datasets/ltrc_yahoo/
+ROLTR/results/
+clickModel/_pycache_/
+click_logs/
+click_model_results/
+feature_click_datasets/
+click_model_results_big/
+datasets/MSLR10K/
+intent_switch/results/
+intent_switch/datasets/
+results/
+

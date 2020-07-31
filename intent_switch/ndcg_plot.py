@@ -37,20 +37,20 @@ if __name__ == "__main__":
 
     path1 = "results/SDBN/PDGD/intent_change_samll/intent1"
     path2 = "results/SDBN/PDGD/intent_change_samll/intent2"
-    path3 = "results/SDBN/PDGD/intent_fixed/intent3"
-    path4 = "results/SDBN/PDGD/intent_fixed/intent4"
+    path3 = "results/SDBN/PDGD/intent_change/intent4"
+    path4 = "results/SDBN/PDGD/intent_fixed/intent1"
 
     folds = list(range(1, 6))
     runs = list(range(1, 16))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
-    num_interactions = 500
+    num_interactions = 400
 
-    plot(path, folds, runs, 'informational', num_interactions, 1)
-    plot(path, folds, runs, 'perfect', num_interactions, 2)
+    plot(path4, folds, runs, 'informational', num_interactions, 1)
+    plot(path4, folds, runs, 'perfect', num_interactions, 2)
 
 
     plt.ylabel('NDCG')
-    plt.xlabel('EPOCH')
+    plt.xlabel('Impressions')
     plt.legend(['informational', 'perfect'], loc='lower right')
     plt.show()

@@ -134,13 +134,13 @@ if __name__ == "__main__":
 
     FEATURE_SIZE = 105
     NUM_INTERACTION = 50000
-    # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["informational", "perfect"]
+    click_models = ["informational", "navigational", "perfect"]
+    # click_models = ["informational", "perfect"]
     Learning_rate = 0.1
 
     dataset_fold = "datasets/intent_change_mine"
-    intent_path = "intents_small"
-    output_fold = "results/SDBN/PDGD/intent_change_small"
+    intent_path = "intents"
+    output_fold = "results/SDBN/PDGD/intent_change2"
 
     # for 5 folds
     for f in range(1, 6):
