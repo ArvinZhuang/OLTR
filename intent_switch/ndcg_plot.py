@@ -6,8 +6,8 @@ from scipy.stats import sem, t
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 
-def plot(path, folds, runs, click_model, num_interactions, color):
-
+def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, interval=None):
+    plt.subplot(1, 3, plot_ind + 1)
     result = np.zeros(num_interactions)
     for f in folds:
         for r in runs:
@@ -23,22 +23,55 @@ def plot(path, folds, runs, click_model, num_interactions, color):
     result_low = np.subtract(result_mean, result_h)
     result_high = np.add(result_mean, result_h)
 
-    plt.plot(range(num_interactions), result_mean, color=COLORS[color], alpha=1)
+    if interval is not None:
+        plt.plot(range((interval[0]+1)*100, interval[1]*100, 100), result_mean[interval[0]+1: interval[1]], color=COLORS[color], alpha=1)
+        plt.fill_between(range((interval[0]+1)*100, interval[1]*100, 100), result_low[interval[0]+1: interval[1]], result_high[interval[0]+1: interval[1]], color=COLORS[color], alpha=0.2)
+    else:
+        plt.plot(range(0, num_interactions*100, 100), result_mean, color=COLORS[color], alpha=1)
+        plt.fill_between(range(0, num_interactions*100, 100), result_low, result_high, color=COLORS[color], alpha=0.2)
 
-    plt.fill_between(range(num_interactions), result_low, result_high, color=COLORS[color], alpha=0.2)
-    plt.figure(1)
-    plt.legend("PDGD", loc='lower right')
+
+def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, color, plot_ind):
+
+    plot(path, folds, runs, click_model, num_interactions, color[0], plot_ind)
+    plot(fixed_paths[0], folds, runs, click_model, num_interactions, color[1], plot_ind, interval=(0, 100))
+    plot(fixed_paths[1], folds, runs, click_model, num_interactions, color[2], plot_ind, interval=(100, 200))
+    plot(fixed_paths[2], folds, runs, click_model, num_interactions, color[3], plot_ind, interval=(200, 300))
+    plot(fixed_paths[3], folds, runs, click_model, num_interactions, color[4], plot_ind, interval=(300, 400))
+
+    plt.xlim(0, 40000)
+    plt.ylim(0.1, 0.45)
+    xcoords = [10000, 20000, 30000]
+    for xc in xcoords:
+        plt.axvline(x=xc, color='black', ls='--')
+
+    plt.xlabel('Impressions')
+    # plt.gca().set_title(click_model)
+    if plot_ind == 0:
+        plt.ylabel('NDCG')
+        plt.legend(['abrupt_change',
+                    'intent4_fixed',
+                    'intent3_fixed',
+                    'intent2_fixed',
+                    'intent1_fixed'], loc='lower right', ncol=3)
+    else:
+        plt.yticks([])
+    ax = plt.twiny()
+
+    ax.set_xticks([5000, 15000, 25000, 35000])
+    ax.set_xticklabels(["intent4", "intent3", "intent2", "intent1"])
+    ax.set_xlim(0, 40000)
+    plt.tight_layout()
+# def make_plots(path, fixed_paths, folds, runs, click_model, num_interactions, color):
 
 
 if __name__ == "__main__":
-    # path = "results/SDBN/PDGD/intent_change_exclusive/current_intent"
-    path = "results/SDBN/PDGD/intent_change_exclusive/intent4"
-
-
-    path1 = "results/SDBN/PDGD/intent_change_samll/intent1"
-    path2 = "results/SDBN/PDGD/intent_change_samll/intent2"
-    path3 = "results/SDBN/PDGD/intent_change/intent4"
-    path4 = "results/SDBN/PDGD/intent_fixed/intent1"
+    fixed_path1 = "results/SDBN/PDGD/intent_fixed/intent1"
+    fixed_path2 = "results/SDBN/PDGD/intent_fixed/intent2"
+    fixed_path3 = "results/SDBN/PDGD/intent_fixed/intent3"
+    fixed_path4 = "results/SDBN/PDGD/intent_fixed/intent4"
+    fixed_paths = [fixed_path4, fixed_path3, fixed_path2, fixed_path1]
+    path1 = "results/SDBN/PDGD/abrupt_change_4321/current_intent"
 
     folds = list(range(1, 6))
     runs = list(range(1, 16))
@@ -46,11 +79,10 @@ if __name__ == "__main__":
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     num_interactions = 400
 
-    plot(path4, folds, runs, 'informational', num_interactions, 1)
-    plot(path4, folds, runs, 'perfect', num_interactions, 2)
+    click_models = ['perfect', 'navigational', 'informational']
+    plt.figure(1, figsize=(18, 3.5))
 
+    for i in range(len(click_models)):
+        plot_slots(path1, fixed_paths, folds, runs, click_models[i], num_interactions, [0,4,3,2,1], i)
 
-    plt.ylabel('NDCG')
-    plt.xlabel('Impressions')
-    plt.legend(['informational', 'perfect'], loc='lower right')
-    plt.show()
+    plt.savefig('PDGD_abrupt_change_4321.png', bbox_inches='tight')

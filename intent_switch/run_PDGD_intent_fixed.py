@@ -118,7 +118,7 @@ if __name__ == "__main__":
     FEATURE_SIZE = 105
     NUM_INTERACTION = 40000
     # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["informational", "perfect"]
+    click_models = ["navigational"]
     Learning_rate = 0.1
 
     dataset_fold = "datasets/intent_change_mine"
@@ -127,6 +127,7 @@ if __name__ == "__main__":
     # for 4 intents
     for i in range(4):
         output_fold = "results/SDBN/PDGD/intent_fixed/intent{}".format(i+1)
+        processors = []
         for f in range(1, 6):
             training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
             test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
@@ -134,15 +135,13 @@ if __name__ == "__main__":
             train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
             test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
-            train_set1, test_set1 = get_intent_dataset(train_set, test_set, "1.txt")
-            train_set2, test_set2 = get_intent_dataset(train_set, test_set, "2.txt")
-            train_set3, test_set3 = get_intent_dataset(train_set, test_set, "3.txt")
-            train_set4, test_set4 = get_intent_dataset(train_set, test_set, "4.txt")
+            train_set1, test_set1 = get_intent_dataset(train_set, test_set, "intents/1.txt")
+            train_set2, test_set2 = get_intent_dataset(train_set, test_set, "intents/2.txt")
+            train_set3, test_set3 = get_intent_dataset(train_set, test_set, "intents/3.txt")
+            train_set4, test_set4 = get_intent_dataset(train_set, test_set, "intents/4.txt")
 
             train_intents = [train_set1, train_set2, train_set3, train_set4, train_set1]
             test_intents = [test_set1, test_set2, test_set3, test_set4, train_set1]
-
-            processors = []
             for click_model in click_models:
                 p = mp.Process(target=job, args=(click_model,
                                                  Learning_rate,
