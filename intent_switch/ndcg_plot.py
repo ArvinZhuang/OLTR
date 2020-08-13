@@ -34,6 +34,7 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, inte
 def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, color, plot_ind):
 
     plot(path, folds, runs, click_model, num_interactions, color[0], plot_ind)
+    # plot("results/SDBN/PDGD/abrupt_change_1234/current_intent", folds, runs, click_model, num_interactions, color[6], plot_ind)
     plot(fixed_paths[0], folds, runs, click_model, num_interactions, color[1], plot_ind, interval=(0, 100))
     plot(fixed_paths[1], folds, runs, click_model, num_interactions, color[2], plot_ind, interval=(100, 200))
     plot(fixed_paths[2], folds, runs, click_model, num_interactions, color[3], plot_ind, interval=(200, 300))
@@ -46,32 +47,33 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, co
         plt.axvline(x=xc, color='black', ls='--')
 
     plt.xlabel('Impressions')
-    # plt.gca().set_title(click_model)
+    plt.gca().set_title(click_model)
     if plot_ind == 0:
         plt.ylabel('NDCG')
         plt.legend(['abrupt_change',
-                    'intent4_fixed',
-                    'intent3_fixed',
-                    'intent2_fixed',
-                    'intent1_fixed'], loc='lower right', ncol=3)
+                    "intent1_fixed",
+                    "intent2_fixed",
+                    "intent3_fixed",
+                    "intent4_fixed"], loc='lower right', ncol=3)
     else:
         plt.yticks([])
     ax = plt.twiny()
 
     ax.set_xticks([5000, 15000, 25000, 35000])
-    ax.set_xticklabels(["intent4", "intent3", "intent2", "intent1"])
+    ax.set_xticklabels(["intent1", "intent2", "intent3", "intent4"])
     ax.set_xlim(0, 40000)
     plt.tight_layout()
 # def make_plots(path, fixed_paths, folds, runs, click_model, num_interactions, color):
 
 
 if __name__ == "__main__":
-    fixed_path1 = "results/SDBN/PDGD/intent_fixed/intent1"
-    fixed_path2 = "results/SDBN/PDGD/intent_fixed/intent2"
-    fixed_path3 = "results/SDBN/PDGD/intent_fixed/intent3"
-    fixed_path4 = "results/SDBN/PDGD/intent_fixed/intent4"
-    fixed_paths = [fixed_path4, fixed_path3, fixed_path2, fixed_path1]
-    path1 = "results/SDBN/PDGD/abrupt_change_4321/current_intent"
+    fixed_path1 = "results/SDBN/COLTR/intent_fixed/intent1"
+    fixed_path2 = "results/SDBN/COLTR/intent_fixed/intent2"
+    fixed_path3 = "results/SDBN/COLTR/intent_fixed/intent3"
+    fixed_path4 = "results/SDBN/COLTR/intent_fixed/intent4"
+    fixed_paths = [fixed_path1, fixed_path2, fixed_path3, fixed_path4]
+    path1 = "results/SDBN/COLTR/intent_leaking_1234/current_intent"
+    path2 = "results/SDBN/PDGD/abrupt_change_1234/current_intent"
 
     folds = list(range(1, 6))
     runs = list(range(1, 16))
@@ -83,6 +85,7 @@ if __name__ == "__main__":
     plt.figure(1, figsize=(18, 3.5))
 
     for i in range(len(click_models)):
-        plot_slots(path1, fixed_paths, folds, runs, click_models[i], num_interactions, [0,4,3,2,1], i)
+        plot_slots(path1, fixed_paths, folds, runs, click_models[i], num_interactions, [0,4,3,2,1,5,6], i)
 
-    plt.savefig('PDGD_abrupt_change_4321.png', bbox_inches='tight')
+    # plt.show()
+    # plt.savefig('COLTR_abrupt_smooth_1234.png', bbox_inches='tight')
