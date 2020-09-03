@@ -30,7 +30,10 @@ def bar_plot(path, folds, runs, click_model, num_interactions, color, plot_ind, 
 def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, linestyle, marker, num_step=1000):
     print("click model:", click_model)
     plt.subplot(2, 1, plot_ind + 1)
-    # plt.title(click_model, loc='left', position=(0.01, 0.9))
+    # if click_model == 'informational':
+    #     plt.title('noisy', loc='left', position=(0.01, 0.9), fontsize=16)
+    # else:
+    #     plt.title(click_model, loc='left', position=(0.01, 0.9), fontsize=16)
     if plot_ind == 0:
         plt.title('mlsr10k', loc='left', position=(0.01, 0.86), fontsize=16)
 
@@ -57,21 +60,21 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, line
 
 
     if plot_ind % 1 == 0:
-        plt.ylabel('NDCG')
+        plt.ylabel('NDCG', fontsize=16)
         plt.xticks([])
-    if plot_ind // 1 == 1:
-        plt.xticks(np.arange(0, 100001, 20000))
-        plt.xlabel('impressions')
+    # if plot_ind // 1 == 1:
+    #     plt.xticks(np.arange(0, 100001, 20000))
+    #     plt.xlabel('impressions')
     # if plot_ind % 2 == 0:
-    #     plt.ylabel('NDCG')
+    #     plt.ylabel('NDCG', fontsize=16)
     # plt.xlabel('impressions')
 
-    # plt.ylim([0.2, 0.35])
+    plt.ylim([0.2, 0.45])
     # plt.yticks(np.arange(0.2, 0.36, 0.05))
     # plt.ylim([0.1, 0.55])
     # plt.xlim([0, 10000])
     # plt.xticks(np.arange(0, 10001, 2000))
-    plt.xlabel('impressions')
+    plt.xlabel('impressions', fontsize=16)
     print("result path:", path, result_mean[-1])
     return result_list
 
@@ -110,16 +113,16 @@ if __name__ == "__main__":
     #            "$\gamma=1$"]
 
     ############# plot different variance ####
-    path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive_gamma0_variance"
-    path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive_gamma1_variance"
-    legends = ["$\gamma=0$",
-               "$\gamma=1$"]
+    # path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive_gamma0_variance"
+    # path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive_gamma1_variance"
+    # legends = ["$\gamma=0$",
+    #            "$\gamma=1$"]
 
     ############## plot different algorithms ####
-    # path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
-    # path2 = "results/mslr10k/long_term_200k/PDGD"
-    # path3 = "results/mslr10k/DBGD"
-    # path4 = "results/mslr10k/PMGD"
+    path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
+    path2 = "results/mslr10k/long_term_200k/PDGD"
+    path3 = "results/mslr10k/DBGD"
+    path4 = "results/mslr10k/PMGD"
 
     # path1 = "results/yahoo/MDP_with_SGD_optimizer/MDP_0005_both"
     # path2 = "results/yahoo/PDGD"
@@ -137,10 +140,10 @@ if __name__ == "__main__":
     # path4 = "results/mq2007/COLTR_gamma1"
     # path5 = "results/mq2007/PMGD"
 
-    # legends = ["ROLTR",
-    #            "PDGD",
-    #            "DBGD",
-    #            "PMGD"]
+    legends = ["ROLTR",
+               "PDGD",
+               "DBGD",
+               "PMGD"]
 
     folds = list(range(1, 6))
     runs = list(range(1, 16))
@@ -172,10 +175,10 @@ if __name__ == "__main__":
             # plot(path5, folds, runs, click_model, num_interaction, 0, plot_index, '--', '1')
 
             ############## plot different algorithms ####
-            # l1 = plot(path1, folds, runs, click_model, num_interaction, 0, plot_index, '-', None)
-            # l2 = plot(path2, folds, runs, click_model, num_interaction, 2, plot_index, '-', None)
-            # plot(path3, folds, runs, click_model, num_interaction, 6, plot_index, '-', None)
-            # plot(path4, folds, runs, click_model, num_interaction, 1, plot_index, '-', None)
+            l1 = plot(path1, folds, runs, click_model, num_interaction, 0, plot_index, '-', None)
+            l2 = plot(path2, folds, runs, click_model, num_interaction, 2, plot_index, '-', None)
+            plot(path3, folds, runs, click_model, num_interaction, 6, plot_index, '-', None)
+            plot(path4, folds, runs, click_model, num_interaction, 1, plot_index, '-', None)
             # print(ttest(l1, l2))
 
             ############## plot different gamma ####
@@ -183,16 +186,16 @@ if __name__ == "__main__":
             # plot(path2, folds, runs, click_model, num_interaction, 3, plot_index, '--', None)
 
             ############## plot different variance ####
-            bar_plot(path1, folds, runs, click_model, num_interaction, 0, plot_index-0.35/2, '--', None)
-            bar_plot(path2, folds, runs, click_model, num_interaction, 3, plot_index+0.35/2, '--', None)
+            # bar_plot(path1, folds, runs, click_model, num_interaction, 0, plot_index-0.35/2, '--', None)
+            # bar_plot(path2, folds, runs, click_model, num_interaction, 3, plot_index+0.35/2, '--', None)
 
             if plot_index == 0:
-                plt.legend(legends, loc='upper right', ncol=1, fontsize=16)
+                plt.legend(legends, loc='lower right', ncol=4, fontsize=16)
             plot_index += 1
             print()
-    plt.xticks(np.arange(2), ("informational", "perfect"), fontsize=16)
+    # plt.xticks(np.arange(2), ("noisy", "perfect"), fontsize=16)
     f.subplots_adjust(wspace=0.13, hspace=0.05)
-    f.set_size_inches(7, 4)
-    plt.savefig('variance_bar.png', bbox_inches='tight')
+    f.set_size_inches(12, 4)
+    plt.savefig('gammas.png', bbox_inches='tight')
 
-    # plt.show()
+    plt.show()
