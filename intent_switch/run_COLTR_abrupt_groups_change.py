@@ -10,6 +10,7 @@ import multiprocessing as mp
 import pickle
 import copy
 import os
+import random
 
 def read_intent_qrel(path: str):
 
@@ -34,9 +35,38 @@ def get_intent_dataset(train_set, test_set, intent_path):
     return new_train_set, new_test_set
 
 
-def run(train_intents, test_intents, ranker, num_interation, click_model, num_rankers):
-    intents_probs = [0.7, 0.1, 0.1, 0.1]
+def get_groups_dataset(train_set, intent_paths):
+    num_groups = len(intent_paths)
+    qrel_dics = []
 
+    print("Reading intents......")
+    for path in intent_paths:
+        qrel_dics.append(read_intent_qrel(path))
+
+    print("Randomly assign groups......")
+    for qid in qrel_dics[0].keys():
+        qid_rel_lists = []
+        for qrel_dic in qrel_dics:
+            doc_rels = {}
+            for docid in qrel_dic[qid].keys():
+                doc_rels[docid] = qrel_dic[qid][docid]
+            qid_rel_lists.append(doc_rels)
+
+        random.shuffle(qid_rel_lists)
+        for i in range(len(qrel_dics)):
+            for docid in qrel_dics[i][qid].keys():
+                qrel_dics[i][qid][docid] = qid_rel_lists[i][docid]
+
+    datasets = []
+    print("Generating new datasets......")
+    for qrel_dic in qrel_dics:
+        new_train_set = copy.deepcopy(train_set)
+        new_train_set.update_relevance_label(qrel_dic)
+        datasets.append(new_train_set)
+    return datasets
+
+
+def run(train_intents, ranker, num_interation, click_model, num_rankers):
     ndcg_scores = [[], [], [], [], []]
     cndcg_scores = []
 
@@ -44,16 +74,17 @@ def run(train_intents, test_intents, ranker, num_interation, click_model, num_ra
     index = np.random.randint(query_set.shape[0], size=num_interation)
     num_iter = 0
 
-    for i in index:
-        if num_iter % 10000 == 0 and num_iter > 0:
-            for k in range(len(intents_probs)):
-                if int(num_iter / 10000) == k:
-                    intents_probs[k] = 0.7
-                else:
-                    intents_probs[k] = 0.1
+    current_train_set = train_intents[0]
 
-        current_intent = np.random.choice(4, 1, p=intents_probs)[0]
-        current_train_set = train_intents[current_intent]
+    for i in index:
+        if num_iter % 50000 == 0 and num_iter > 0:
+            # print("Change intent to", int(num_iter/10000))
+            all_result = ranker.get_all_query_result_list(current_train_set)
+            ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
+            ndcg_scores[0].append(ndcg)
+            current_train_set = train_intents[int(num_iter / 50000)]
+
+
         qid = query_set[i]
         result_list = ranker.get_query_result_list(current_train_set, qid)
 
@@ -61,16 +92,15 @@ def run(train_intents, test_intents, ranker, num_interation, click_model, num_ra
 
         # if no clicks, skip.
         if len(clicked_doc) == 0:
-            if num_iter % 100 == 0:
-                over_all_ndcg = []
+            if num_iter % 1000 == 0:
+                all_result = ranker.get_all_query_result_list(current_train_set)
+                ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
+                ndcg_scores[0].append(ndcg)
+
                 for intent in range(4):
-                    all_result = ranker.get_all_query_result_list(test_intents[intent])
-                    ndcg = evl_tool.average_ndcg_at_k(test_intents[intent], all_result, 10)
+                    all_result = ranker.get_all_query_result_list(train_intents[intent])
+                    ndcg = evl_tool.average_ndcg_at_k(train_intents[intent], all_result, 10)
                     ndcg_scores[intent + 1].append(ndcg)
-                    over_all_ndcg.append(ndcg)
-                over_all_ndcg = np.array(over_all_ndcg)
-                over_all_ndcg = np.sum(over_all_ndcg * intents_probs)
-                ndcg_scores[0].append(over_all_ndcg)
 
             cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
             cndcg_scores.append(cndcg)
@@ -97,16 +127,15 @@ def run(train_intents, test_intents, ranker, num_interation, click_model, num_ra
             gradient = np.sum(unit_vectors[winner_rankers - 1], axis=0) / winner_rankers.shape[0]
             ranker.update(gradient)
 
-        if num_iter % 100 == 0:
-            over_all_ndcg = []
+        if num_iter % 1000 == 0:
+            all_result = ranker.get_all_query_result_list(current_train_set)
+            ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
+            ndcg_scores[0].append(ndcg)
+
             for intent in range(4):
-                all_result = ranker.get_all_query_result_list(test_intents[intent])
-                ndcg = evl_tool.average_ndcg_at_k(test_intents[intent], all_result, 10)
+                all_result = ranker.get_all_query_result_list(train_intents[intent])
+                ndcg = evl_tool.average_ndcg_at_k(train_intents[intent], all_result, 10)
                 ndcg_scores[intent + 1].append(ndcg)
-                over_all_ndcg.append(ndcg)
-            over_all_ndcg = np.array(over_all_ndcg)
-            over_all_ndcg = np.sum(over_all_ndcg * intents_probs)
-            ndcg_scores[0].append(over_all_ndcg)
 
         cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
@@ -116,7 +145,7 @@ def run(train_intents, test_intents, ranker, num_interation, click_model, num_ra
     return ndcg_scores, cndcg_scores
 
 
-def job(model_type, f, train_intents, test_intents, tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold):
+def job(model_type, f, train_set, intent_paths, tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold):
     if model_type == "perfect":
         pc = [0.0, 1.0]
         ps = [0.0, 0.0]
@@ -132,12 +161,13 @@ def job(model_type, f, train_intents, test_intents, tau, step_size, gamma, num_r
     cm = SDBN(pc, ps)
 
 
-    for r in range(1, 16):
+    for r in range(1, 26):
         # np.random.seed(r)
+        datasets = get_groups_dataset(train_set, intent_paths)
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
 
         print("COLTR intent change {} fold{} run{} start!".format(model_type, f, r))
-        ndcg_scores, cndcg_scores = run(train_intents, test_intents, ranker, NUM_INTERACTION, cm, num_rankers)
+        ndcg_scores, cndcg_scores = run(datasets, ranker, NUM_INTERACTION, cm, num_rankers)
 
         # create directory if not exist
         os.makedirs(os.path.dirname("{}/current_intent/fold{}/".format(output_fold, f)), exist_ok=True)
@@ -167,7 +197,7 @@ def job(model_type, f, train_intents, test_intents, tau, step_size, gamma, num_r
 if __name__ == "__main__":
 
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 40000
+    NUM_INTERACTION = 200000
     click_models = ["informational", "navigational", "perfect"]
     # click_models = ["perfect"]
     Learning_rate = 0.1
@@ -177,28 +207,19 @@ if __name__ == "__main__":
     learning_rate_decay = 1
     step_size = 1
 
-    dataset_fold = "datasets/intent_change_mine"
+    dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/COLTR/abrupt_smooth_1234"
+    output_fold = "results/SDBN/COLTR/abrupt_group_change_50k"
 
-    # for 5 folds
-    for f in range(1, 6):
-        training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-        test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+    train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
-        train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
-        test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
+    intent_paths = ["{}/1.txt".format(intent_path),
+                    "{}/2.txt".format(intent_path),
+                    "{}/3.txt".format(intent_path),
+                    "{}/4.txt".format(intent_path)]
 
-        train_set1, test_set1 = get_intent_dataset(train_set, test_set, "{}/1.txt".format(intent_path))
-        train_set2, test_set2 = get_intent_dataset(train_set, test_set, "{}/2.txt".format(intent_path))
-        train_set3, test_set3 = get_intent_dataset(train_set, test_set, "{}/3.txt".format(intent_path))
-        train_set4, test_set4 = get_intent_dataset(train_set, test_set, "{}/4.txt".format(intent_path))
-
-        train_intents = [train_set1, train_set2, train_set3, train_set4]
-        test_intents = [test_set1, test_set2, test_set3, test_set4]
-
-        # for 3 click_models
-        for click_model in click_models:
-            p = mp.Process(target=job, args=(click_model, f, train_intents, test_intents,
-                                             tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold))
-            p.start()
+    # for 3 click_models
+    for click_model in click_models:
+        p = mp.Process(target=job, args=(click_model, 1, train_set, intent_paths,
+                                         tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold))
+        p.start()

@@ -116,10 +116,11 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
     for r in range(1, 26):
         np.random.seed(r)
         datasets = get_groups_dataset(train_set, intent_paths)
-        ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate)
         # create directory if not exist
 
         for i in range(len(datasets)):
+            ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate)
+
             ndcg_scores, cndcg_scores = run(datasets[i], ranker, NUM_INTERACTION, cm)
 
             os.makedirs(os.path.dirname("{}/group{}/fold{}/".format(output_fold, i+1, f)), exist_ok=True)
@@ -138,14 +139,14 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 
 if __name__ == "__main__":
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 200000
+    NUM_INTERACTION = 400000
     click_models = ["informational", "navigational", "perfect"]
 
     Learning_rate = 0.1
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/group_fixed_200k"
+    output_fold = "results/SDBN/PDGD/group_fixed_400k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
