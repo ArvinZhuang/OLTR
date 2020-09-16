@@ -74,17 +74,18 @@ def run(train_intents, ranker, num_interation, click_model):
 
     query_set = train_intents[0].get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
+
     num_iter = 0
 
     current_train_set = train_intents[0]
 
     for i in index:
-        if num_iter % 100000 == 0 and num_iter > 0:
+        if num_iter % 50000 == 0 and num_iter > 0:
             # print("Change intent to", int(num_iter/10000))
             all_result = ranker.get_all_query_result_list(current_train_set)
             ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
             ndcg_scores[0].append(ndcg)
-            current_train_set = train_intents[int(num_iter / 100000)]
+            current_train_set = train_intents[int(num_iter / 50000)]
 
         qid = query_set[i]
         result_list, scores = ranker.get_query_result_list(current_train_set, qid)
@@ -127,6 +128,7 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
     cm = SDBN(pc, ps)
 
     for r in range(1, 26):
+        random.seed(r)
         np.random.seed(r)
         datasets = get_groups_dataset(train_set, intent_paths)
         ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate)
@@ -162,14 +164,14 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 if __name__ == "__main__":
 
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 400000
+    NUM_INTERACTION = 200000
     click_models = ["informational", "navigational", "perfect"]
-
+    # click_models = ["informational"]
     Learning_rate = 0.1
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/abrupt_group_change_100k"
+    output_fold = "results/SDBN/PDGD/abrupt_group_change_50k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

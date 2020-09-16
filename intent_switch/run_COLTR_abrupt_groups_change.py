@@ -162,7 +162,8 @@ def job(model_type, f, train_set, intent_paths, tau, step_size, gamma, num_ranke
 
 
     for r in range(1, 26):
-        # np.random.seed(r)
+        random.seed(r)
+        np.random.seed(r)
         datasets = get_groups_dataset(train_set, intent_paths)
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
 

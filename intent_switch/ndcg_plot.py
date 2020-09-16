@@ -8,7 +8,10 @@ COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, interval=None):
     plt.subplot(1, 3, plot_ind + 1)
-    result = np.zeros(num_interactions+3)
+    if interval is not None:
+        result = np.zeros(num_interactions)
+    else:
+        result = np.zeros(num_interactions+3)
     for f in folds:
         for r in runs:
             with open("{}/fold{}/{}_run{}_ndcg.txt".format(path, f, click_model, r),
@@ -22,8 +25,6 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, inte
     result_h = result_std_err * t.ppf((1 + 0.95) / 2, 16 - 1)
     result_low = np.subtract(result_mean, result_h)
     result_high = np.add(result_mean, result_h)
-
-
 
     if interval is not None:
         xs = []
@@ -48,7 +49,7 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, inte
 def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, color, plot_ind):
 
     plot(path, folds, runs, click_model, num_interactions, color[0], plot_ind)
-    # plot("results/SDBN/PDGD/abrupt_change_1234/current_intent", folds, runs, click_model, num_interactions, color[6], plot_ind)
+    # plot("results/SDBN/COLTR/abrupt_group_change_50k/current_intent", folds, runs, click_model, num_interactions, color[6], plot_ind)
     plot(fixed_paths[0], folds, runs, click_model, num_interactions, color[1], plot_ind, interval=(0, 50))
     plot(fixed_paths[1], folds, runs, click_model, num_interactions, color[2], plot_ind, interval=(50, 100))
     plot(fixed_paths[2], folds, runs, click_model, num_interactions, color[3], plot_ind, interval=(100, 150))
@@ -64,6 +65,10 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, co
     plt.gca().set_title(click_model)
     if plot_ind == 0:
         plt.ylabel('NDCG')
+
+        # plt.legend(['PDGD',
+        #             "COLTR"], loc='lower right', ncol=3)
+
         plt.legend(['abrupt_change',
                     "intent1_fixed",
                     "intent2_fixed",
@@ -91,17 +96,18 @@ if __name__ == "__main__":
     path3 = "results/SDBN/PDGD/abrupt_group_change_50k/current_intent"
 
     folds = list(range(1, 2))
-    runs = list(range(1, 2))
+    runs = list(range(1, 6))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     # num_interactions = 400
     num_interactions = 200
 
     click_models = ['perfect', 'navigational', 'informational']
+    # click_models = ['informational']
     plt.figure(1, figsize=(18, 3.5))
 
     for i in range(len(click_models)):
-        plot_slots(fixed_path2, fixed_paths, folds, runs, click_models[i], num_interactions, [0,4,3,2,1,5,6], i)
+        plot_slots(path3, fixed_paths, folds, runs, click_models[i], num_interactions, [0,4,3,2,1,5,6], i)
 
     # plt.show()
     # plt.savefig('COLTR_abrupt_smooth_1234.png', bbox_inches='tight')
