@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # output_fold = "results/yahoo/PMGD"
     # taus = [0.1, 0.5, 1.0, 5.0, 10.0]
     alpha = 0.01
-    delta = 49
+    delta = 1
     num_rankers = 1
 
     # for 5 folds

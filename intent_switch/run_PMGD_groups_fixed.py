@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
-from ranker.COLTRLinearRanker import COLTRLinearRanker
+from ranker.ProbabilisticRanker import ProbabilisticRanker
 from clickModel.SDBN import SDBN
 from clickModel.PBM import PBM
 from utils import evl_tool
@@ -14,7 +14,6 @@ import random
 
 
 def read_intent_qrel(path: str):
-
     # q-d pair dictionary
     qrel_dic = {}
 
@@ -67,7 +66,6 @@ def get_groups_dataset(train_set, intent_paths):
         datasets.append(new_train_set)
     return datasets
 
-
 def run(train_set, ranker, num_interation, click_model, num_rankers):
     ndcg_scores = []
     cndcg_scores = []
@@ -80,56 +78,44 @@ def run(train_set, ranker, num_interation, click_model, num_rankers):
 
     for i in index:
         qid = query_set[i]
-        result_list = ranker.get_query_result_list(current_train_set, qid)
 
-        clicked_doc, click_label, _ = click_model.simulate(qid, result_list, current_train_set)
+        query_features = current_train_set.get_all_features_by_query(qid)
+        rankers = []
+        us = []
+        rankers.append(ranker)
+        for i in range(num_rankers):
+            new_ranker, new_u = ranker.get_new_candidate()
+            rankers.append(new_ranker)
+            us.append(new_u)
 
-        # if no clicks, skip.
-        if len(clicked_doc) == 0:
-            if num_iter % 1000 == 0:
-                all_result = ranker.get_all_query_result_list(current_train_set)
-                ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
-                ndcg_scores.append(ndcg)
+        (inter_list, a) = ranker.probabilistic_multileave(rankers, query_features, 10)
 
-            cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
-            cndcg_scores.append(cndcg)
-            # print(num_inter, ndcg, "continue")
-            num_iter += 1
-            continue
+        _, click_label, _ = click_model.simulate(qid, inter_list, current_train_set)
 
-        # flip click label. exp: [1,0,1,0,0] -> [0,1,0,0,0]
-        last_click = np.where(click_label == 1)[0][-1]
-        click_label[:last_click + 1] = 1 - click_label[:last_click + 1]
+        outcome = ranker.probabilistic_multileave_outcome(inter_list, rankers, click_label, query_features)
+        winners = np.where(np.array(outcome) > outcome[0])
 
-        # bandit record
-        record = (qid, result_list, click_label, ranker.get_current_weights())
-
-        unit_vectors = ranker.sample_unit_vectors(num_rankers)
-        canditate_rankers = ranker.sample_canditate_rankers(
-            unit_vectors)  # canditate_rankers are ranker weights, not ranker class
-
-        # winner_rankers are index of candidates rankers who win the evaluation
-        winner_rankers = ranker.infer_winners(canditate_rankers[:num_rankers],
-                                              record)
-
-        if winner_rankers is not None:
-            gradient = np.sum(unit_vectors[winner_rankers - 1], axis=0) / winner_rankers.shape[0]
-            ranker.update(gradient)
+        if np.shape(winners)[1] != 0:
+            u = np.zeros(ranker.feature_size)
+            for winner in winners[0]:
+                u += us[winner - 1]
+            u = u / np.shape(winners)[1]
+            ranker.update_weights(u, alpha=ranker.learning_rate)
 
         if num_iter % 1000 == 0:
-            all_result = ranker.get_all_query_result_list(current_train_set)
+            all_result = ranker.get_all_query_result_list(current_train_set, ranker.get_current_weights())
             ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
             ndcg_scores.append(ndcg)
 
-        cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
+        cndcg = evl_tool.query_ndcg_at_k(current_train_set, inter_list, qid, 10)
         cndcg_scores.append(cndcg)
-        # print(num_inter, ndcg)
+
         num_iter += 1
 
     return ndcg_scores, cndcg_scores
 
 
-def job(model_type, f, train_set, intent_paths, tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold):
+def job(model_type, f, train_set, intent_paths, delta, alpha, FEATURE_SIZE, num_rankers, output_fold):
     if model_type == "perfect":
         pc = [0.0, 1.0]
         ps = [0.0, 0.0]
@@ -144,49 +130,44 @@ def job(model_type, f, train_set, intent_paths, tau, step_size, gamma, num_ranke
     # cm = PBM(pc, 1)
     cm = SDBN(pc, ps)
 
-
     for r in range(1, 26):
         random.seed(r)
         np.random.seed(r)
         datasets = get_groups_dataset(train_set, intent_paths)
+        # create directory if not exist
 
         for i in range(len(datasets)):
-            ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
+            ranker = ProbabilisticRanker(delta, alpha, FEATURE_SIZE)
 
-            print("COLTR fixed intent {} fold{} run{} start!".format(model_type, f, r))
+            print("PDGD intent fixed {} intent {} run{} start!".format(model_type, i, r))
             ndcg_scores, cndcg_scores = run(datasets[i], ranker, NUM_INTERACTION, cm, num_rankers)
 
-            # create directory if not exist
             os.makedirs(os.path.dirname("{}/group{}/fold{}/".format(output_fold, i+1, f)), exist_ok=True)
             with open(
-                    "{}/group{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, i + 1, f, model_type, r),
+                    "{}/group{}/fold{}/{}_run{}_ndcg.txt".format(output_fold, i+1, f, model_type, r),
                     "wb") as fp:
                 pickle.dump(ndcg_scores, fp)
             with open(
-                    "{}/group{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, i + 1, f, model_type, r),
+                    "{}/group{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, i+1, f, model_type, r),
                     "wb") as fp:
                 pickle.dump(cndcg_scores, fp)
 
-            print("COLTR fixed intent {} run{} finish!".format(model_type, r))
+            print("PDGD intent fixed {} intent {} run{} finished!".format(model_type, i, r))
             print()
 
 
 if __name__ == "__main__":
-
     FEATURE_SIZE = 105
     NUM_INTERACTION = 200000
     click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["perfect"]
-    Learning_rate = 0.1
-    num_rankers = 499
-    tau = 0.1
-    gamma = 1
-    learning_rate_decay = 1
-    step_size = 1
+    # click_models = ["informational"]
+    alpha = 0.01
+    delta = 1
+    num_rankers = 1
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/COLTR/group_fixed_200k"
+    output_fold = "results/SDBN/PMGD/group_fixed_200k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
@@ -195,13 +176,6 @@ if __name__ == "__main__":
                     "{}/3.txt".format(intent_path),
                     "{}/4.txt".format(intent_path)]
 
-        # for 3 click_models
     for click_model in click_models:
-        p = mp.Process(target=job, args=(click_model,
-                                         1,
-                                         train_set,
-                                         intent_paths,
-                                         tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold))
-        p.start()
-
-
+        mp.Process(target=job, args=(click_model, 1, train_set, intent_paths,
+                                         delta, alpha, FEATURE_SIZE, num_rankers, output_fold)).start()
