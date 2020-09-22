@@ -6,70 +6,19 @@ from ranker.PDGDLinearRanker import PDGDLinearRanker
 from clickModel.SDBN import SDBN
 from clickModel.PBM import PBM
 from utils import evl_tool
+from utils.utility import get_groups_dataset
 import numpy as np
 import multiprocessing as mp
 import pickle
-import copy
-import os
+
 import random
+import os
 
 
-def read_intent_qrel(path: str):
-    # q-d pair dictionary
-    qrel_dic = {}
-
-    with open(path, 'r') as f:
-        for line in f:
-            qid, _, docid, rel = line.strip().split()
-            if qid in qrel_dic.keys():
-                qrel_dic[qid][docid] = int(rel)
-            else:
-                qrel_dic[qid] = {docid: int(rel)}
-    return qrel_dic
-
-
-def get_intent_dataset(train_set, test_set, intent_path):
-    new_train_set = copy.deepcopy(train_set)
-    new_test_set = copy.deepcopy(test_set)
-    qrel_dic = read_intent_qrel(intent_path)
-    new_train_set.update_relevance_label(qrel_dic)
-    new_test_set.update_relevance_label(qrel_dic)
-    return new_train_set, new_test_set
-
-
-def get_groups_dataset(train_set, intent_paths):
-    num_groups = len(intent_paths)
-    qrel_dics = []
-
-    print("Reading intents......")
-    for path in intent_paths:
-        qrel_dics.append(read_intent_qrel(path))
-
-    print("Randomly assign groups......")
-    for qid in qrel_dics[0].keys():
-        qid_rel_lists = []
-        for qrel_dic in qrel_dics:
-            doc_rels = {}
-            for docid in qrel_dic[qid].keys():
-                doc_rels[docid] = qrel_dic[qid][docid]
-            qid_rel_lists.append(doc_rels)
-
-        random.shuffle(qid_rel_lists)
-        for i in range(len(qrel_dics)):
-            for docid in qrel_dics[i][qid].keys():
-                qrel_dics[i][qid][docid] = qid_rel_lists[i][docid]
-
-    datasets = []
-    print("Generating new datasets......")
-    for qrel_dic in qrel_dics:
-        new_train_set = copy.deepcopy(train_set)
-        new_train_set.update_relevance_label(qrel_dic)
-        datasets.append(new_train_set)
-    return datasets
-
-
-def run(train_intents, ranker, num_interation, click_model):
-    ndcg_scores = [[], [], [], [], []]
+def run(train_intents, ranker, num_interation, click_model, group_sequence):
+    ndcg_scores = []
+    for x in range(len(train_intents) + 1):
+        ndcg_scores.append([])
     cndcg_scores = []
 
     query_set = train_intents[0].get_all_querys()
@@ -78,14 +27,13 @@ def run(train_intents, ranker, num_interation, click_model):
     num_iter = 0
 
     current_train_set = train_intents[0]
-
     for i in index:
-        if num_iter % 50000 == 0 and num_iter > 0:
-            # print("Change intent to", int(num_iter/10000))
+        if num_iter % 500000 == 0 and num_iter > 0:
+            print("Change intent to", int(num_iter/500000), "group id", group_sequence[int(num_iter / 500000)])
             all_result = ranker.get_all_query_result_list(current_train_set)
             ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
             ndcg_scores[0].append(ndcg)
-            current_train_set = train_intents[int(num_iter / 50000)]
+            current_train_set = train_intents[group_sequence[int(num_iter / 500000)]]
 
         qid = query_set[i]
         result_list, scores = ranker.get_query_result_list(current_train_set, qid)
@@ -99,7 +47,7 @@ def run(train_intents, ranker, num_interation, click_model):
             ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
             ndcg_scores[0].append(ndcg)
 
-            for intent in range(4):
+            for intent in range(len(train_intents)):
                 all_result = ranker.get_all_query_result_list(train_intents[intent])
                 ndcg = evl_tool.average_ndcg_at_k(train_intents[intent], all_result, 10)
                 ndcg_scores[intent + 1].append(ndcg)
@@ -112,7 +60,7 @@ def run(train_intents, ranker, num_interation, click_model):
     return ndcg_scores, cndcg_scores
 
 
-def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, output_fold):
+def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, output_fold, num_groups, group_sequence):
     if model_type == "perfect":
         pc = [0.0, 1.0]
         ps = [0.0, 0.0]
@@ -130,11 +78,11 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
     for r in range(1, 26):
         random.seed(r)
         np.random.seed(r)
-        datasets = get_groups_dataset(train_set, intent_paths)
+        datasets = get_groups_dataset(train_set, intent_paths, num_groups=num_groups)
         ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate)
 
         print("PDGD intent change {} fold{} run{} start!".format(model_type, f, r))
-        ndcg_scores, cndcg_scores = run(datasets, ranker, NUM_INTERACTION, cm)
+        ndcg_scores, cndcg_scores = run(datasets, ranker, NUM_INTERACTION, cm, group_sequence)
 
         # create directory if not exist
         os.makedirs(os.path.dirname("{}/current_intent/fold{}/".format(output_fold, f)), exist_ok=True)
@@ -164,14 +112,18 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 if __name__ == "__main__":
 
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 200000
+    NUM_INTERACTION = 1500000
+    # CHANGE_PER = 500000
     click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["informational"]
+    # click_models = ["perfect"]
     Learning_rate = 0.1
+    num_groups = 2
+    group_sequence = [0, 1, 0]
+
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/abrupt_group_change_50k"
+    output_fold = "results/SDBN/PDGD/abrupt_group_changeback_500k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
@@ -187,4 +139,6 @@ if __name__ == "__main__":
                                      1,
                                      train_set,
                                      intent_paths,
-                                     output_fold)).start()
+                                     output_fold,
+                                     num_groups,
+                                     group_sequence)).start()
