@@ -1,38 +1,52 @@
 import sys
-
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
 from ranker.PDGDLinearRanker import PDGDLinearRanker
 from clickModel.SDBN import SDBN
 from clickModel.PBM import PBM
 from utils import evl_tool
-from utils.utility import get_groups_dataset
 import numpy as np
 import multiprocessing as mp
 import pickle
-import random
+import copy
 import os
+from utils.utility import get_groups_dataset
+import random
 
 
 def run(train_intents, ranker, num_interation, click_model, group_sequence):
+    intents_probs = [0.7, 0.1, 0.1, 0.1]
+
     ndcg_scores = []
     for x in range(len(train_intents) + 1):
         ndcg_scores.append([])
+
     cndcg_scores = []
 
     query_set = train_intents[0].get_all_querys()
     index = np.random.randint(query_set.shape[0], size=num_interation)
-
     num_iter = 0
 
-    current_train_set = train_intents[0]
+
     for i in index:
         if num_iter % 50000 == 0 and num_iter > 0:
-            print("Change intent to", int(num_iter/50000), "group id", group_sequence[int(num_iter / 50000)])
-            all_result = ranker.get_all_query_result_list(current_train_set)
-            ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
-            ndcg_scores[0].append(ndcg)
-            current_train_set = train_intents[group_sequence[int(num_iter / 50000)]]
+            over_all_ndcg = []
+            for intent in range(len(train_intents)):
+                all_result = ranker.get_all_query_result_list(train_intents[intent])
+                ndcg = evl_tool.average_ndcg_at_k(train_intents[intent], all_result, 10)
+                over_all_ndcg.append(ndcg)
+            over_all_ndcg = np.array(over_all_ndcg)
+            over_all_ndcg = np.sum(over_all_ndcg * intents_probs)
+            ndcg_scores[0].append(over_all_ndcg)
+
+            for k in range(len(intents_probs)):
+                if int(num_iter / 50000) == k:
+                    intents_probs[k] = 0.7
+                else:
+                    intents_probs[k] = 0.1
+
+        current_intent = np.random.choice(4, 1, p=intents_probs)[0]
+        current_train_set = train_intents[current_intent]
 
         qid = query_set[i]
         result_list, scores = ranker.get_query_result_list(current_train_set, qid)
@@ -42,14 +56,16 @@ def run(train_intents, ranker, num_interation, click_model, group_sequence):
         ranker.update_to_clicks(click_label, result_list, scores, current_train_set.get_all_features_by_query(qid))
 
         if num_iter % 1000 == 0:
-            all_result = ranker.get_all_query_result_list(current_train_set)
-            ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
-            ndcg_scores[0].append(ndcg)
-
+            over_all_ndcg = []
             for intent in range(len(train_intents)):
                 all_result = ranker.get_all_query_result_list(train_intents[intent])
                 ndcg = evl_tool.average_ndcg_at_k(train_intents[intent], all_result, 10)
-                ndcg_scores[intent + 1].append(ndcg)
+                ndcg_scores[intent+1].append(ndcg)
+                over_all_ndcg.append(ndcg)
+            over_all_ndcg = np.array(over_all_ndcg)
+            over_all_ndcg = np.sum(over_all_ndcg * intents_probs)
+            ndcg_scores[0].append(over_all_ndcg)
+
 
         cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
@@ -111,18 +127,17 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 if __name__ == "__main__":
 
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 300000
+    NUM_INTERACTION = 200000
     # CHANGE_PER = 500000
     click_models = ["informational", "navigational", "perfect"]
     # click_models = ["perfect"]
     Learning_rate = 0.1
-    num_groups = 2
-    group_sequence = [0, 1, 0, 1, 0, 1]
-
+    num_groups = 4
+    group_sequence = [0, 1, 2, 3]
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/abrupt_group_changeSwap_50k"
+    output_fold = "results/SDBN/PDGD/abrupt_smooth_group_change_50k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

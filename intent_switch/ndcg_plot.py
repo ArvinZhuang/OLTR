@@ -51,10 +51,28 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
 
     plot(path, folds, runs, click_model, num_interactions, num_change, color[0], plot_ind)
 
-    plot(fixed_paths[0], folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(0, 1500))
-    # plot(fixed_paths[1], folds, runs, click_model, num_interactions, num_change, color[2], plot_ind, interval=(0, 1500))
-    # plot(fixed_paths[2], folds, runs, click_model, num_interactions, num_change, color[3], plot_ind, interval=(100, 150))
-    # plot(fixed_paths[3], folds, runs, click_model, num_interactions, num_change, color[4], plot_ind, interval=(150, 200))
+    plot(fixed_paths[0], folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(0, 50))
+    plot(fixed_paths[1], folds, runs, click_model, num_interactions, num_change, color[2], plot_ind, interval=(50, 100))
+    # plot(fixed_paths[0], folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(1000, 1500))
+    plot(fixed_paths[2], folds, runs, click_model, num_interactions, num_change, color[3], plot_ind, interval=(100, 150))
+    plot(fixed_paths[3], folds, runs, click_model, num_interactions, num_change, color[4], plot_ind, interval=(150, 200))
+
+
+    # PMGD = "results/SDBN/PMGD/abrupt_group_change_50k/current_intent"
+    # COLTR = "results/SDBN/COLTR/abrupt_group_change_50k/current_intent"
+    # PDGD = "results/SDBN/PDGD/abrupt_group_change_50k/current_intent"
+    # plot(PMGD, folds, runs, click_model, num_interactions, num_change, color[6], plot_ind)
+    # plot(COLTR, folds, runs, click_model, num_interactions, num_change, color[5], plot_ind)
+    # plot(PDGD, folds, runs, click_model, num_interactions, num_change, color[0], plot_ind)
+
+    # current1 = "results/SDBN/PDGD/abrupt_group_change_50k/intent1"
+    # current2 = "results/SDBN/PDGD/abrupt_group_change_50k/intent2"
+    # current3 = "results/SDBN/PDGD/abrupt_group_change_50k/intent3"
+    # current4 = "results/SDBN/PDGD/abrupt_group_change_50k/intent4"
+    # plot(current1, folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(0, 200))
+    # plot(current2, folds, runs, click_model, num_interactions, num_change, color[2], plot_ind, interval=(0, 200))
+    # plot(current3, folds, runs, click_model, num_interactions, num_change, color[3], plot_ind, interval=(0, 200))
+    # plot(current4, folds, runs, click_model, num_interactions, num_change, color[4], plot_ind, interval=(0, 200))
 
     plt.xlim(0, num_interactions*1000)
     plt.ylim(0.25, 0.5)
@@ -73,13 +91,19 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
         #             "COLTR",
         #             "PDGD"], loc='lower right', ncol=3)
 
-        plt.legend([
-                    "current_intent",
-                    "intent1_fixed"], loc='lower right', ncol=3)
+        plt.legend(["current_intent",
+                    "intent1_fixed",
+                    "intent2_fixed",
+                    "intent3_fixed",
+                    "intent4_fixed",], loc='lower right', ncol=3)
+
+        # plt.legend(["current_intent1",
+        #             "current_intent2",
+        #             "current_intent3",
+        #             "current_intent4", ], loc='lower right', ncol=3)
     else:
         plt.yticks([])
     ax = plt.twiny()
-
 
     xticks = []
     for x in range(num_change+1):
@@ -87,28 +111,33 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
                       + (((num_interactions/(num_change+1))/2) * 1000 * x))
 
     ax.set_xticks(xticks)
-    ax.set_xticklabels(["intent1", "intent2", "intent1"])
+    ax.set_xticklabels(["intent1", "intent2", "intent3", "intent4"])
+    # ax.set_xticklabels(["intent1", "intent2", "intent1"])
     ax.set_xlim(0, num_interactions*1000)
     plt.tight_layout()
-
 
 
 if __name__ == "__main__":
     fixed_path1 = "results/SDBN/PDGD/group_fixed_1500k/group1"
     fixed_path2 = "results/SDBN/PDGD/group_fixed_1500k/group2"
-    fixed_path3 = "results/SDBN/PDGD/group_fixed_200k/group3"
-    fixed_path4 = "results/SDBN/PDGD/group_fixed_200k/group4"
-    fixed_paths = [fixed_path1, fixed_path2, fixed_path3, fixed_path4]
-    path1 = "results/SDBN/PMGD/abrupt_group_change_20k/current_intent"
+    fixed_path3 = "results/SDBN/PDGD/group_fixed_200k/group1"
+    fixed_path4 = "results/SDBN/PDGD/group_fixed_200k/group2"
+    fixed_path5 = "results/SDBN/PDGD/group_fixed_200k/group3"
+    fixed_path6 = "results/SDBN/PDGD/group_fixed_200k/group4"
+    fixed_paths = [fixed_path3, fixed_path4, fixed_path5, fixed_path6]
+    path1 = "results/SDBN/PDGD/abrupt_smooth_group_change_50k/current_intent"
     path2 = "results/SDBN/PDGD/abrupt_group_changeback_500k/current_intent"
+    path3 = "results/SDBN/PDGD/group_leaking_change_50k/current_intent"
+
+
 
     folds = list(range(1, 2))
-    runs = list(range(1, 8))
+    runs = list(range(1, 2))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
-    # num_interactions = 400
-    num_interactions = 1500
-    num_change = 2
+    num_interactions = 200
+    # num_interactions = 1500
+    num_change = 3
 
 
     click_models = ['perfect', 'navigational', 'informational']
@@ -116,7 +145,7 @@ if __name__ == "__main__":
     plt.figure(1, figsize=(18, 3.5))
 
     for i in range(len(click_models)):
-        plot_slots(path2, fixed_paths, folds, runs, click_models[i], num_interactions, num_change, [0,4,3,2,1,5,6], i)
+        plot_slots(path3, fixed_paths, folds, runs, click_models[i], num_interactions, num_change, [0,4,3,2,1,5,6], i)
 
     # plt.show()
-    # plt.savefig('COLTR_abrupt_smooth_1234.png', bbox_inches='tight')
+    # plt.savefig('plots/PDGD_each_current_intent_shortterm.png', bbox_inches='tight')
