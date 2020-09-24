@@ -89,9 +89,9 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 if __name__ == "__main__":
     FEATURE_SIZE = 105
     NUM_INTERACTION = 200000
-    # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["perfect"]
-    Learning_rate = 0.1
+    click_models = ["informational", "navigational", "perfect"]
+    # click_models = ["perfect"]
+    Learning_rate = 0.01
 
     num_groups = 4
 
