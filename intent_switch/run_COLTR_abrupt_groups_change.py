@@ -151,12 +151,12 @@ if __name__ == "__main__":
     num_rankers = 499
     tau = 0.1
     gamma = 1
-    learning_rate_decay = 1
+    learning_rate_decay = 0.99966
     step_size = 1
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/COLTR/abrupt_group_change_50k"
+    output_fold = "results/SDBN/COLTR/abrupt_group_change_lrdecay_50k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

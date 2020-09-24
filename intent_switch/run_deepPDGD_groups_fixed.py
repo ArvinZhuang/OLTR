@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
-from ranker.PDGDLinearRanker import PDGDLinearRanker
+from ranker.PDGDNeuralRanker import PDGDNeuralRanker
 from clickModel.SDBN import SDBN
 from utils.utility import get_groups_dataset
 from utils import evl_tool
@@ -30,16 +30,17 @@ def run(train_set, ranker, num_interation, click_model):
 
         clicked_doc, click_label, _ = click_model.simulate(qid, result_list, current_train_set)
 
-        ranker.update_to_clicks(click_label, result_list, scores, current_train_set.get_all_features_by_query(qid))
+        ranker.update_to_clicks(click_label, result_list, scores)
 
         if num_iter % 1000 == 0:
             all_result = ranker.get_all_query_result_list(current_train_set)
             ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
             ndcg_scores.append(ndcg)
+            print(num_iter, ndcg)
 
         cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
-        # print(num_iter, ndcg)
+
         num_iter += 1
 
     return ndcg_scores, cndcg_scores
@@ -66,7 +67,7 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
         datasets = get_groups_dataset(train_set, intent_paths, num_groups=num_groups)
 
         for i in range(len(datasets)):
-            ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate)
+            ranker = PDGDNeuralRanker(FEATURE_SIZE, Learning_rate, [64])
 
             print("PDGD intent fixed {} intent {} run{} start!".format(model_type, i, r))
             ndcg_scores, cndcg_scores = run(datasets[i], ranker, NUM_INTERACTION, cm)
@@ -87,16 +88,16 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 
 if __name__ == "__main__":
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 300000
-    click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["perfect"]
+    NUM_INTERACTION = 200000
+    # click_models = ["informational", "navigational", "perfect"]
+    click_models = ["perfect"]
     Learning_rate = 0.1
 
-    num_groups = 2
+    num_groups = 4
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/group_fixed_300k"
+    output_fold = "results/SDBN/deepPDGD/group_fixed_300k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
