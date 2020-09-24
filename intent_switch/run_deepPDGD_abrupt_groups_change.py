@@ -39,7 +39,7 @@ def run(train_intents, ranker, num_interation, click_model, group_sequence):
 
         clicked_doc, click_label, _ = click_model.simulate(qid, result_list, current_train_set)
 
-        ranker.update_to_clicks(click_label, result_list, scores, current_train_set.get_all_features_by_query(qid))
+        ranker.update_to_clicks(click_label, result_list, scores)
 
         if num_iter % 1000 == 0:
             all_result = ranker.get_all_query_result_list(current_train_set)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/abrupt_group_changeSwap_50k"
+    output_fold = "results/SDBN/deepPDGD/abrupt_group_change_50k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

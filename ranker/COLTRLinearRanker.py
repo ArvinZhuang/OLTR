@@ -5,7 +5,7 @@ import numpy as np
 class COLTRLinearRanker(LinearRanker):
     def __init__(self, num_features, learning_rate, step_size, tau, gamma,
                  learning_rate_decay=1, random_initial=True):
-        super().__init__(num_features, learning_rate, learning_rate_decay, random_initial)
+        super().__init__(num_features, learning_rate, learning_rate_decay, random_initial=random_initial)
         self.tau = tau
         self.step_size = step_size
         self.gamma = gamma

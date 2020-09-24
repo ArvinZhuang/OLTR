@@ -36,7 +36,6 @@ def run(train_set, ranker, num_interation, click_model):
             all_result = ranker.get_all_query_result_list(current_train_set)
             ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
             ndcg_scores.append(ndcg)
-            print(num_iter, ndcg)
 
         cndcg = evl_tool.query_ndcg_at_k(current_train_set, result_list, qid, 10)
         cndcg_scores.append(cndcg)
@@ -97,7 +96,7 @@ if __name__ == "__main__":
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/deepPDGD/group_fixed_300k"
+    output_fold = "results/SDBN/deepPDGD/group_fixed_200k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
