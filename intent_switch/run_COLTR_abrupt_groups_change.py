@@ -166,7 +166,11 @@ if __name__ == "__main__":
                     "{}/4.txt".format(intent_path)]
 
     # for 3 click_models
+    processors = []
     for click_model in click_models:
         p = mp.Process(target=job, args=(click_model, 1, train_set, intent_paths,
                                          tau, step_size, gamma, num_rankers, learning_rate_decay, output_fold))
         p.start()
+        processors.append(p)
+    for p in processors:
+        p.join()
