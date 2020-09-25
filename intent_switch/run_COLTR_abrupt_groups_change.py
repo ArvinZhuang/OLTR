@@ -111,7 +111,6 @@ def job(model_type, f, train_set, intent_paths, tau, step_size, gamma, num_ranke
         random.seed(r)
         np.random.seed(r)
         datasets = get_groups_dataset(train_set, intent_paths)
-        print(learning_rate_decay)
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
 
         print("COLTR intent change {} fold{} run{} start!".format(model_type, f, r))
@@ -146,8 +145,8 @@ if __name__ == "__main__":
 
     FEATURE_SIZE = 105
     NUM_INTERACTION = 200000
-    # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["perfect"]
+    click_models = ["informational", "navigational", "perfect"]
+    # click_models = ["perfect"]
     Learning_rate = 0.1
     num_rankers = 499
     tau = 0.1
