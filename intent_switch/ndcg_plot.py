@@ -59,15 +59,15 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
     # plot(fixed_paths[3], folds, runs, click_model, num_interactions, num_change, color[4], plot_ind, interval=(150, 200))
 
 
-    # PMGD = "results/SDBN/PMGD/abrupt_group_change_50k/current_intent"
-    # COLTR = "results/SDBN/COLTR/abrupt_group_change_lrdecay_50k/current_intent"
-    # COLTR2 = "results/SDBN/COLTR/abrupt_group_change_50k/current_intent"
+    PMGD = "results/SDBN/PMGD/abrupt_group_change_50k/current_intent"
+    COLTR = "results/SDBN/COLTR/abrupt_group_change_lrdecay_50k/current_intent"
+    COLTR2 = "results/SDBN/COLTR/abrupt_group_change_50k/current_intent"
     PDGD = "results/SDBN/PDGD/abrupt_group_change_50k/current_intent"
-    PDGD2 = "results/SDBN/deepPDGD/abrupt_group_change_50k/current_intent"
-    # plot(PMGD, folds, runs, click_model, num_interactions, num_change, color[6], plot_ind)
-    # plot(COLTR, folds, runs, click_model, num_interactions, num_change, color[5], plot_ind)
+    # PDGD2 = "results/SDBN/deepPDGD/abrupt_group_change_50k/current_intent"
+    plot(PMGD, folds, runs, click_model, num_interactions, num_change, color[6], plot_ind)
+    plot(COLTR, folds, runs, click_model, num_interactions, num_change, color[5], plot_ind)
     plot(PDGD, folds, runs, click_model, num_interactions, num_change, color[4], plot_ind)
-    plot(PDGD2, folds, runs, click_model, num_interactions, num_change, color[0], plot_ind)
+    # plot(PDGD, folds, runs, click_model, 200, num_change, color[0], plot_ind, interval=(0, 200))
 
     # current1 = "results/SDBN/PDGD/abrupt_group_change_50k/intent1"
     # current2 = "results/SDBN/PDGD/abrupt_group_change_50k/intent2"
@@ -95,13 +95,14 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
         #             "COLTR",
         #             "PDGD"], loc='lower right', ncol=3)
 
-        plt.legend(["PDGD-Linear",
-                    "PDGD-Neural",], loc='lower right', ncol=3)
+        # plt.legend(["PDGD-Neural",
+        #             "PDGD-Neural",], loc='lower right', ncol=3)
 
-        # plt.legend(["current_intent1",
-        #             "current_intent2",
-        #             "current_intent3",
-        #             "current_intent4", ], loc='lower right', ncol=3)
+        plt.legend(["current_intent",
+                    "fixed_intent1",
+                    "fixed_intent2",
+                    "fixed_intent3",
+                    "fixed_intent4"], loc='lower right', ncol=3)
     else:
         plt.yticks([])
     ax = plt.twiny()
@@ -119,22 +120,22 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
 
 
 if __name__ == "__main__":
-    fixed_path1 = "results/SDBN/PDGD/group_fixed_300k/group1"
-    fixed_path2 = "results/SDBN/PDGD/group_fixed_1500k/group2"
-    fixed_path3 = "results/SDBN/PDGD/group_fixed_200k/group1"
-    fixed_path4 = "results/SDBN/PDGD/group_fixed_200k/group2"
-    fixed_path5 = "results/SDBN/PDGD/group_fixed_200k/group3"
-    fixed_path6 = "results/SDBN/PDGD/group_fixed_200k/group4"
-    fixed_paths = [fixed_path1, fixed_path4, fixed_path5, fixed_path6]
+    fixed_path1 = "results/SDBN/deepPDGD/group_fixed_300k/group1"
+    fixed_path2 = "results/SDBN/deepPDGD/group_fixed_1500k/group2"
+    fixed_path3 = "results/SDBN/deepPDGD/group_fixed_200k/group1"
+    fixed_path4 = "results/SDBN/deepPDGD/group_fixed_200k/group2"
+    fixed_path5 = "results/SDBN/deepPDGD/group_fixed_200k/group3"
+    fixed_path6 = "results/SDBN/deepPDGD/group_fixed_200k/group4"
+    fixed_paths = [fixed_path3, fixed_path4, fixed_path5, fixed_path6]
     path1 = "results/SDBN/COLTR/abrupt_group_change_lrdecay_50k/current_intent"
     path2 = "results/SDBN/PDGD/abrupt_group_changeback_500k/current_intent"
     path3 = "results/SDBN/PDGD/group_leaking_change_50k/current_intent"
-    path4 = "results/SDBN/PDGD/abrupt_group_changeSwap_50k/current_intent"
+    path4 = "results/SDBN/deepPDGD/abrupt_group_change_50k/current_intent"
 
 
 
     folds = list(range(1, 2))
-    runs = list(range(1, 25))
+    runs = list(range(1, 8))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     num_interactions = 200

@@ -25,7 +25,7 @@ class LinearRanker(AbstractRanker):
         if self.learning_rate > self.learning_rate_clip:
             self.learning_rate *= self.learning_rate_decay
         else:
-            self.learning_rate = self.learning_rate_decay
+            self.learning_rate = self.learning_rate_clip
 
     def assign_weights(self, weights):
         self.weights = weights
