@@ -90,6 +90,20 @@ def get_DCG_rewards(click_labels, propensities, method="both"):
 #
 #     return MDP_rewards
 
+def get_real_DCGs(query, result_list, dataset):
+    result_list = result_list[:10]
+    rels = np.array(dataset.get_all_relevance_label_by_query(query))
+    labels = rels[result_list]
+
+    DCGs = np.zeros(len(labels))
+    for iPos in range(len(labels)):
+        if iPos == 0:
+            DCGs[iPos] = labels[iPos]
+        else:
+            DCGs[iPos] = labels[iPos] / np.log(iPos + 1.0)
+
+    return DCGs
+
 def get_DCG_MDPrewards(click_labels, propensities, method="both", gamma=0.99):
     M = len(click_labels)
     MDP_rewards = np.zeros(M)

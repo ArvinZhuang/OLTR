@@ -27,12 +27,12 @@ def run(train_intents, ranker, num_interation, click_model, group_sequence):
 
     current_train_set = train_intents[0]
     for i in index:
-        if num_iter % 50000 == 0 and num_iter > 0:
-            print("Change intent to", int(num_iter/50000), "group id", group_sequence[int(num_iter / 50000)])
+        if num_iter % 500000 == 0 and num_iter > 0:
+            print("Change intent to", int(num_iter/500000), "group id", group_sequence[int(num_iter / 500000)])
             all_result = ranker.get_all_query_result_list(current_train_set)
             ndcg = evl_tool.average_ndcg_at_k(current_train_set, all_result, 10)
             ndcg_scores[0].append(ndcg)
-            current_train_set = train_intents[group_sequence[int(num_iter / 50000)]]
+            current_train_set = train_intents[group_sequence[int(num_iter / 500000)]]
 
         qid = query_set[i]
         result_list, scores = ranker.get_query_result_list(current_train_set, qid)
@@ -71,6 +71,10 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
     elif model_type == "informational":
         pc = [0.3, 0.7]
         ps = [0.1, 0.5]
+
+    elif model_type == "noisy":
+        pc = [0.4, 0.6]
+        ps = [0.0, 0.0]
     # cm = PBM(pc, 1)
     cm = SDBN(pc, ps)
 
@@ -111,18 +115,18 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 if __name__ == "__main__":
 
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 300000
-    # CHANGE_PER = 500000
-    click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["perfect"]
+    NUM_INTERACTION = 1500000
+    CHANGE_PER = 500000
+    # click_models = ["informational", "navigational", "perfect"]
+    click_models = ["noisy"]
     Learning_rate = 0.1
     num_groups = 2
-    group_sequence = [0, 1, 0, 1, 0, 1]
+    group_sequence = [0, 1, 0]
 
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/abrupt_group_changeSwap_50k"
+    output_fold = "results/SDBN/PDGD/abrupt_group_changeback0406_500k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

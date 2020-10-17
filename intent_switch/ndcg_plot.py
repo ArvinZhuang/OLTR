@@ -6,18 +6,44 @@ from scipy.stats import sem, t
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 
+def compute_mertic(path, target_path, folds, runs, click_model, num_interactions, num_change, interval):
+    result = 0
+
+    for f in folds:
+        for r in runs:
+            with open("{}/fold{}/{}_run{}_ndcg.txt".format(path, f, click_model, r),
+                      "rb") as fp:
+                data1 = pickle.load(fp)
+                data1 = np.array(data1[:num_interactions+num_change])
+
+            with open("{}/fold{}/{}_run{}_ndcg.txt".format(target_path, f, click_model, r),
+                      "rb") as fp:
+                data2 = pickle.load(fp)
+                data2 = np.array(data2[:num_interactions])
+            if interval[0] == 0:
+                difference = data2[interval[0]: interval[1]] - data1[interval[0]: interval[1]]
+            else:
+                difference = data2[interval[0]: interval[1]] - data1[interval[0]+1: interval[1]+1]
+
+            difference = difference.clip(min=0)
+            delta = np.sum(difference)
+            result += delta
+    print(result/len(runs))
+
+
 def plot(path, folds, runs, click_model, num_interactions, num_change, color, plot_ind, interval=None):
     plt.subplot(1, 3, plot_ind + 1)
-    if interval is not None:
-        result = np.zeros(num_interactions)
-    else:
-        result = np.zeros(num_interactions+num_change)
+
+    if interval is None:
+        num_interactions += num_change
+    result = np.zeros(num_interactions)
+
     for f in folds:
         for r in runs:
             with open("{}/fold{}/{}_run{}_ndcg.txt".format(path, f, click_model, r),
                       "rb") as fp:
                 data = pickle.load(fp)
-                data = np.array(data[:num_interactions+num_change])
+                data = np.array(data[:num_interactions])
                 result = np.vstack((result, data))
     result = result[1:].T
     result_mean = np.mean(result, axis=1)
@@ -78,12 +104,42 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
     # plot(current3, folds, runs, click_model, num_interactions, num_change, color[3], plot_ind, interval=(0, 200))
     # plot(current4, folds, runs, click_model, num_interactions, num_change, color[4], plot_ind, interval=(0, 200))
 
-    intent_fixed = "results/SDBN/PDGD/group_mixed_1m/mixed_group"
-    intent_aware = "results/SDBN/PDGD/group_mixed_1m/group_aware"
-    plot(intent_fixed, folds, runs, click_model, num_interactions, num_change, color[0], plot_ind, interval=(0, 1000))
-    # plot(intent_aware, folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(0, 1000))
+    # intent_fixed = "results/SDBN/PDGD/group_mixed_2m/mixed_group"
+    # intent_aware = "results/SDBN/PDGD/group_mixed_2m/group_aware"
+    # plot(intent_fixed, folds, runs, click_model, num_interactions, num_change, color[0], plot_ind, interval=(0, 2000))
+    # plot(intent_aware, folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(0, 2000))
+    #
+
+    ###### plot longterm changeback experiments#####
+    # path1 = "results/SDBN/PDGD/abrupt_group_changeback_500k/current_intent"
+    # path2 = "results/SDBN/PDGD/group_fixed_1500k/group1"
+    # path3 = "results/SDBN/PDGD/group_fixed_1500k/group2"
+    # plot(path1, folds, runs, click_model, num_interactions, num_change, color[0], plot_ind, )
+    # plot(path2, folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(0, 500))
+    # plot(path3, folds, runs, click_model, num_interactions, num_change, color[2], plot_ind, interval=(500, 1000))
+    # plot(path2, folds, runs, click_model, num_interactions, num_change, color[1], plot_ind, interval=(1000, 1500))
+    #
+    # compute_mertic(path1, path2, folds, runs, click_model, num_interactions, num_change, interval=(0, 500))
+    # compute_mertic(path1, path3, folds, runs, click_model, num_interactions, num_change, interval=(500, 1000))
+    # compute_mertic(path1, path2, folds, runs, click_model, num_interactions, num_change, interval=(1000, 1500))
+    # print()
 
 
+    ###### plot noise experiments#####
+    # path_0001 = "results/SDBN/PDGD/abrupt_group_changeback_500k/current_intent"
+    # path_0408 = "results/SDBN/PDGD/abrupt_group_changeback0408_500k/current_intent"
+    # path_0208 = "results/SDBN/PDGD/abrupt_group_changeback0208_500k/current_intent"
+    path_0406 = "results/SDBN/PDGD/abrupt_group_changeback0406_500k/current_intent"
+    # plot(path_0001, folds, runs, 'perfect', num_interactions, num_change, color[0], plot_ind)
+    # plot(path_0208, folds, runs, click_model, num_interactions, num_change, color[1], plot_ind)
+    # plot(path_0408, folds, runs, click_model, num_interactions, num_change, color[2], plot_ind)
+    plot(path_0406, folds, runs, click_model, num_interactions, num_change, color[3], plot_ind)
+
+    path_fixed_0406_1 = "results/SDBN/PDGD/group_fixed_0406_1500k/group1"
+    path_fixed_0406_2 = "results/SDBN/PDGD/group_fixed_0406_1500k/group2"
+    plot(path_fixed_0406_1, folds, runs, click_model, num_interactions, num_change, color[4], plot_ind, interval=(0, 500))
+    plot(path_fixed_0406_2, folds, runs, click_model, num_interactions, num_change, color[5], plot_ind, interval=(500, 1000))
+    plot(path_fixed_0406_1, folds, runs, click_model, num_interactions, num_change, color[4], plot_ind, interval=(1000, 1500))
 
     plt.xlim(0, num_interactions*1000)
     plt.ylim(0.25, 0.5)
@@ -105,10 +161,17 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
         # plt.legend(["PDGD-Neural",
         #             "PDGD-Neural",], loc='lower right', ncol=3)
 
-        plt.legend(["current_intent",
-                    "fixed_intent1",
-                    # "fixed_intent2",
-                    # "fixed_intent3",
+        # plt.legend(["fixed_ranker",
+        #             "intent_aware",
+        #             # "fixed_intent2",
+        #             # "fixed_intent3",
+        #             # "fixed_intent4"
+        #             ], loc='lower right', ncol=3)
+
+        plt.legend(["no noise",
+                    "small noise",
+                    "large noise",
+                    "near random",
                     # "fixed_intent4"
                     ], loc='lower right', ncol=3)
     else:
@@ -121,7 +184,7 @@ def plot_slots(path, fixed_paths, folds, runs, click_model, num_interactions, nu
                       + (((num_interactions/(num_change+1))/2) * 1000 * x))
 
     ax.set_xticks(xticks)
-    ax.set_xticklabels(["intent1", "intent2", "intent3", "intent4"])
+    ax.set_xticklabels(["intent1", "intent2", "intent1", "intent4"])
     # ax.set_xticklabels(["intent1", "intent2", "intent1", "intent2", "intent1", "intent2"])
     ax.set_xlim(0, num_interactions*1000)
     plt.tight_layout()
@@ -139,24 +202,25 @@ if __name__ == "__main__":
     path2 = "results/SDBN/PDGD/abrupt_group_changeSwap_50k/current_intent"
     path3 = "results/SDBN/PDGD/group_leaking_change_50k/current_intent"
     path4 = "results/SDBN/deepPDGD/abrupt_group_change_50k/current_intent"
+    path5 = "results/SDBN/PDGD/abrupt_group_changeback0408_500k/current_intent"
 
 
 
     folds = list(range(1, 2))
-    runs = list(range(1, 2))
+    runs = list(range(1, 6))
     # click_models = ['navigational']
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
-    num_interactions = 1000
-    # num_interactions = 1500
-    num_change = 0
+    # num_interactions = 2000
+    num_interactions = 1500
+    num_change = 2
 
 
-    click_models = ['perfect', 'navigational', 'informational']
-    click_models = ["perfect"]
+    # click_models = ['perfect', 'navigational', 'informational']
+    click_models = ["noisy"]
     plt.figure(1, figsize=(18, 3.5))
 
     for i in range(len(click_models)):
-        plot_slots(path2, fixed_paths, folds, runs, click_models[i], num_interactions, num_change, [0, 4, 3, 2, 1, 5, 6], i)
+        plot_slots(path5, fixed_paths, folds, runs, click_models[i], num_interactions, num_change, [0, 4, 3, 2, 1, 5, 6], i)
 
     # plt.show()
-    plt.savefig('plots/PDGD_intent_frequent_swap.png', bbox_inches='tight')
+    # plt.savefig('plots/PDGD_intent_frequent_swap.png', bbox_inches='tight')

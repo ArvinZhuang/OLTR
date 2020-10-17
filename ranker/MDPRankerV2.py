@@ -243,7 +243,7 @@ class MDPRankerV2(AbstractRanker):
     def get_scores(self, features):
 
         result = self.sess.run([self.doc_scores], feed_dict={self.input_docs: features})[0].reshape([-1])
-        array_sum = np.sum(result)
+        # array_sum = np.sum(result)
         # if np.isnan(array_sum):
         #     print(features)
         #     x = self.sess.run(self.aW1)

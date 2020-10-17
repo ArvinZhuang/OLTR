@@ -92,7 +92,7 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 
 if __name__ == "__main__":
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 1000000
+    NUM_INTERACTION = 2000000
     click_models = ["informational", "navigational", "perfect"]
     # click_models = ["perfect"]
     Learning_rate = 0.1
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/group_mixed_1m"
+    output_fold = "results/SDBN/PDGD/group_mixed_2m"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

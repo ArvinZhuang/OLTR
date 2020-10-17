@@ -57,6 +57,10 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
     elif model_type == "informational":
         pc = [0.3, 0.7]
         ps = [0.1, 0.5]
+
+    elif model_type == "noisy":
+        pc = [0.4, 0.6]
+        ps = [0.0, 0.0]
     # cm = PBM(pc, 1)
     cm = SDBN(pc, ps)
 
@@ -87,16 +91,16 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 
 if __name__ == "__main__":
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 300000
-    click_models = ["informational", "navigational", "perfect"]
-    # click_models = ["perfect"]
+    NUM_INTERACTION = 1500000
+    # click_models = ["informational", "navigational", "perfect"]
+    click_models = ["noisy"]
     Learning_rate = 0.1
 
     num_groups = 2
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/group_fixed_300k"
+    output_fold = "results/SDBN/PDGD/group_fixed_0406_1500k"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 
