@@ -69,9 +69,9 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
         np.random.seed(r)
         datasets = get_groups_dataset(train_set, intent_paths, num_groups=num_groups)
 
-        for i in range(len(datasets)):
+        # for i in range(len(datasets)):
+        for i in [1, 0]:
             ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate)
-
             print("PDGD intent fixed {} intent {} run{} start!".format(model_type, i, r))
             ndcg_scores, cndcg_scores = run(datasets[i], ranker, NUM_INTERACTION, cm)
 
@@ -91,16 +91,16 @@ def job(model_type, Learning_rate, NUM_INTERACTION, f, train_set, intent_paths, 
 
 if __name__ == "__main__":
     FEATURE_SIZE = 105
-    NUM_INTERACTION = 1500000
-    # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["noisy"]
+    NUM_INTERACTION = 300000
+    click_models = ["informational", "navigational", "perfect"]
+    # click_models = ["noisy"]
     Learning_rate = 0.1
 
     num_groups = 2
 
     dataset_path = "datasets/clueweb09_intent_change.txt"
     intent_path = "intents"
-    output_fold = "results/SDBN/PDGD/group_fixed_0406_1500k"
+    output_fold = "results/SDBN/PDGD/group_fixed_300k1"
 
     train_set = LetorDataset(dataset_path, FEATURE_SIZE, query_level_norm=True, binary_label=True)
 

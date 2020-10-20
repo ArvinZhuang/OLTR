@@ -120,7 +120,7 @@ def job(model_type, f, train_set, test_set, tau, step_size, gamma, num_rankers, 
     # using PBM click model to simulate clicks.
     # cm = SDBN(pc, ps)
     cm = PBM(pc, 1)
-    for r in range(1, 26):
+    for r in range(16, 26):
         # np.random.seed(r)
         ranker = COLTRLinearRanker(FEATURE_SIZE, Learning_rate, step_size, tau, gamma, learning_rate_decay=learning_rate_decay)
         print("COTLR {} tau{} fold{} {} run{} start!".format(output_fold, tau, f, model_type, r))
@@ -145,11 +145,12 @@ if __name__ == "__main__":
     NUM_INTERACTION = 100000
     click_models = ["informational", "perfect"]
     # click_models = ["perfect"]
-    Learning_rate = 0.1
     # dataset_fold = "../datasets/MSLR10K"
-    output_fold = "results/yahoo/COLTR_gamma1"
-    # output_fold = "results/mslr10k/unbiased_COLTR"
+    # dataset_fold = "../datasets/istella"
+    # output_fold = "results/yahoo/COLTR_gamma1"
+    output_fold = "results/yahoo/COLTR"
 
+    Learning_rate = 0.1
     num_rankers = 499
     tau = 0.1
     gamma = 1
@@ -157,6 +158,8 @@ if __name__ == "__main__":
     step_size = 1
 
     for f in range(1, 2):
+        # training_path = "{}/train.txt".format(dataset_fold)
+        # test_path = "{}/test.txt".format(dataset_fold)
         # training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
         # test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         training_path = "../datasets/ltrc_yahoo/set1.train.txt"

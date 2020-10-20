@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import sem, t
 from utils.evl_tool import ttest
 import scipy.stats as st
-COLORS = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'k', 'r']
+COLORS = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'k', 'r', 'C9']
 
 def bar_plot(path, folds, runs, click_model, num_interactions, color, plot_ind, linestyle, marker, num_step=1):
     print("click model:", click_model)
@@ -32,12 +32,12 @@ def bar_plot(path, folds, runs, click_model, num_interactions, color, plot_ind, 
 def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, linestyle, marker, num_step=1000, plot_line=False):
     print("click model:", click_model)
     plt.subplot(2, 1, plot_ind + 1)
-    # if click_model == 'informational':
-    #     plt.title('noisy', loc='left', position=(0.01, 0.9), fontsize=16)
-    # else:
-    #     plt.title(click_model, loc='left', position=(0.01, 0.9), fontsize=16)
-    if plot_ind == 0:
-        plt.title('istella', loc='left', position=(0.01, 0.86), fontsize=16)
+    if click_model == 'informational':
+        plt.title('noisy', loc='left', position=(0.01, 0.9), fontsize=16)
+    else:
+        plt.title(click_model, loc='left', position=(0.01, 0.9), fontsize=16)
+    # if plot_ind == 1:
+    plt.title('yahoo!', loc='right', position=(0.99, 0.9), fontsize=16)
 
     result = np.zeros(int(num_interactions / num_step))
     for f in folds:
@@ -79,10 +79,10 @@ def plot(path, folds, runs, click_model, num_interactions, color, plot_ind, line
 
     # plt.ylim([0.2, 0.45])
     # plt.yticks(np.arange(0.2, 0.36, 0.05))
-    plt.ylim([0.2, 0.7])
-    plt.xlim([0, 100000])
-    # plt.xticks(np.arange(0, 10001, 2000))
-    # plt.xlabel('impressions', fontsize=16)
+    plt.ylim([0.5, 0.75])
+    plt.xlim([0, 10000])
+    plt.xticks(np.arange(0, 10001, 2000))
+    plt.xlabel('impressions', fontsize=16)
     plt.yticks(fontsize=12)
     plt.xticks(fontsize=12)
     print("result path:", path, result_mean[-1])
@@ -134,18 +134,21 @@ if __name__ == "__main__":
     # path3 = "results/mslr10k/DBGD"
     # path4 = "results/mslr10k/PMGD"
     # path5 = "results/mslr10k/MDPRank/MDPRank_001_gamma0"
+    # path6 = "results/mslr10k/COLTR"
 
-    # path1 = "results/yahoo/MDP_with_SGD_optimizer/MDP_0005_both"
-    # path2 = "results/yahoo/PDGD"
-    # path3 = "results/yahoo/DBGD"
-    # path4 = "results/yahoo/PMGD"
-    # path5 = "results/yahoo/MDPRank/MDPRank_0005_gamma0"
+    path1 = "results/yahoo/MDP_with_SGD_optimizer/MDP_0005_both"
+    path2 = "results/yahoo/PDGD"
+    path3 = "results/yahoo/DBGD"
+    path4 = "results/yahoo/PMGD"
+    path5 = "results/yahoo/MDPRank/MDPRank_0005_gamma0"
+    path6 = "results/yahoo/COLTR"
     #
-    path1 = "results/istella/MDP_with_SGD_optimizer/MDP_001_both"
-    path2 = "results/istella/PDGD"
-    path3 = "results/istella/DBGD"
-    path4 = "results/istella/PMGD"
-    path5 = "results/istella/MDPRank/MDPRank_001_gamma0"
+    # path1 = "results/istella/MDP_with_SGD_optimizer/MDP_001_both"
+    # path2 = "results/istella/PDGD"
+    # path3 = "results/istella/DBGD"
+    # path4 = "results/istella/PMGD"
+    # path5 = "results/istella/MDPRank/MDPRank_001_gamma0"
+    # path6 = "results/istella/COLTR"
 
     # #
     # path1 = "results/mq2007/MDP_001_both"
@@ -153,21 +156,22 @@ if __name__ == "__main__":
     # path3 = "results/mq2007/PDGD"
     # path4 = "results/mq2007/COLTR_gamma1"
     # path5 = "results/mq2007/PMGD"
-
+    #
     legends = [
                "ROLTR",
                "PDGD",
                "DBGD",
                "PMGD",
-                "MDPRank(offline)"]
+                # "MDPRank(offline)",
+                "COLTR"]
 
     folds = list(range(1, 2))
-    runs = list(range(1, 16))
-    click_models = ["informational", "perfect"]
-    # click_models = ["informational"]
+    runs = list(range(1, 26))
+    # click_models = ["informational", "perfect"]
+    click_models = ["informational"]
 
 
-    num_interactions = [100000]
+    num_interactions = [10000]
 
     # plot different rewards
     f = plt.figure(1, figsize=(10, 8))
@@ -197,7 +201,8 @@ if __name__ == "__main__":
             l2 = plot(path2, folds, runs, click_model, num_interaction, 2, plot_index, '-', None)
             plot(path3, folds, runs, click_model, num_interaction, 6, plot_index, '-', None)
             plot(path4, folds, runs, click_model, num_interaction, 1, plot_index, '-', None)
-            plot(path5, folds, list(range(1, 2)), "MDPRank", 100000, 8, plot_index, '--', None, plot_line=True)
+            # plot(path5, folds, list(range(1, 2)), "MDPRank", 100000, 8, plot_index, '--', None, plot_line=True)
+            plot(path6, folds, list(range(1, 26)), click_model, num_interaction, 9, plot_index, '-', None)
             # print(ttest(l1, l2))
 
             ############## plot different gamma ####
@@ -208,13 +213,13 @@ if __name__ == "__main__":
             # bar_plot(path1, folds, runs, click_model, num_interaction, 0, plot_index-0.35/2, '--', None)
             # bar_plot(path2, folds, runs, click_model, num_interaction, 3, plot_index+0.35/2, '--', None)
 
-            if plot_index == 1:
+            if plot_index == 0:
                 plt.legend(legends, loc='lower right', ncol=3, fontsize=18)
             plot_index += 1
             print()
     # plt.xticks(np.arange(2), ("noisy", "perfect"), fontsize=16)
     f.subplots_adjust(wspace=0.13, hspace=0.08)
     f.set_size_inches(10, 8)
-    plt.savefig('istella.png', bbox_inches='tight')
+    plt.savefig('yahoo_10k_new.png', bbox_inches='tight')
 
     plt.show()
