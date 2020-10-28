@@ -51,7 +51,7 @@ class PDGDLinearRanker(LinearRanker):
         else:
             return ranking
 
-    def update_to_clicks(self, click_label, ranking, doc_scores, feature_matrix, last_exam=None):
+    def update_to_clicks(self, click_label, ranking, doc_scores, feature_matrix, last_exam=None, return_gradients=False):
 
         if last_exam is None:
 
@@ -84,6 +84,8 @@ class PDGDLinearRanker(LinearRanker):
         n_pairs = n_pos * n_neg
 
         if n_pairs == 0:
+            if return_gradients:
+                return np.zeros(feature_matrix.shape[1])
             return
 
         pos_r_ind = ranking[pos_ind]
@@ -114,17 +116,30 @@ class PDGDLinearRanker(LinearRanker):
         all_w = np.concatenate([pos_w, neg_w])
         all_ind = np.concatenate([pos_r_ind, neg_r_ind])
 
-        self._update_to_documents(all_ind, all_w, feature_matrix)
+        if return_gradients:
+            return self.get_update_gradients(all_ind, all_w, feature_matrix)
+        else:
+            self._update_to_documents(all_ind, all_w, feature_matrix)
+
+
+    def get_update_gradients(self, doc_ind, doc_weights, feature_matrix):
+        weighted_docs = feature_matrix[doc_ind, :] * doc_weights[:, None]
+        gradients = np.sum(weighted_docs, axis=0)
+        return gradients
+
+    def update_to_gradients(self, gradients):
+        self.weights += self.learning_rate * gradients
+        self.learning_rate *= self.learning_rate_decay
 
     def _update_to_documents(self, doc_ind, doc_weights, feature_matrix):
         weighted_docs = feature_matrix[doc_ind, :] * doc_weights[:, None]
-        gradient = np.sum(weighted_docs, axis=0)
+        gradients = np.sum(weighted_docs, axis=0)
         # print("gradient length", np.sqrt(np.sum(gradient ** 2)))
         # # print(gradient)
         # print("weight length", np.sqrt(np.sum(self.weights**2)))
         # # print(self.weights)
         # print()
-        self.weights += self.learning_rate * gradient
+        self.weights += self.learning_rate * gradients
         self.learning_rate *= self.learning_rate_decay
 
     def _calculate_unbias_weights(self, pos_ind, neg_ind, doc_scores, ranking):

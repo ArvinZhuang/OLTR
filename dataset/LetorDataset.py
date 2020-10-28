@@ -2,23 +2,65 @@ from dataset.AbstractDataset import AbstractDataset
 import numpy as np
 import math
 import os
+import hashlib
+import pickle
 
 
 class LetorDataset(AbstractDataset):
 
-    def __init__(self, path,
+    def __init__(self,
+                 path,
                  feature_size,
                  query_level_norm=False,
-                 binary_label=False):
+                 binary_label=False,
+                 cache_root=None
+                 ):
         super().__init__(path, feature_size, query_level_norm)
         self._binary_label = binary_label
         self._comments = {}
         self._docid_map = {}
         # self._docstr_map = {}
 
-        self._load_data()
+        if cache_root is not None:
+            new = self.from_path(path, cache_root)
+            if new is not None:
+                self.__dict__.update(new.__dict__)
+            else:
+                self._load_data()
+                cache_name = f"{hashlib.md5(path.encode()).hexdigest()}.pkl"
+                file_path = f'./{cache_root}/{cache_name}'
+
+                with open(file_path, 'wb') as f:
+                    pickle.dump(self, f)
+                print(f"Cached the array to {file_path}")
+        else:
+            self._load_data()
+
+
+    def from_path(self, path: str, cache_root: str) -> 'LetorDataset':
+        """
+        Constructs a dataset by reading form a disk
+        :param root_path: A path to the root that contains (Fold1, Fold2, ...)
+        :param cache_root: None if no caching is needed, otherwise a path to the cache dir;
+                        if the cache dir already contains the data it will be used. Hence, cleaning
+                        of the cache has to be done manually if needed.
+        :return: Constructed Dataset instance
+        """
+
+
+        cache_name = f"{hashlib.md5(path.encode()).hexdigest()}.pkl"
+        file_path = f'./{cache_root}/{cache_name}'
+        if os.path.exists(file_path):
+            print(f"Loading from cache file {file_path}")
+            with open(file_path, 'rb') as f:
+                data = pickle.load(f)
+            return data
+        else:
+            print("no cache found for", path)
+            return None
 
     def _load_data(self):
+        print("Loading {}......".format(self._path))
         with open(self._path, "r") as fin:
             current_query = None
             for line in fin:

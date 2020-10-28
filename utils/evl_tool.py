@@ -1,6 +1,14 @@
 import numpy as np
 from scipy import stats
 
+def online_mrr_at_k(clicks, k):
+    reciprocal_rank = 0.0
+    n_docs = len(clicks)
+    for i in range(min(k, n_docs)):
+        if clicks[i] > 0:
+            reciprocal_rank = 1.0 / (1.0 + i)
+            break
+    return reciprocal_rank
 
 def query_ndcg_at_k(dataset, result_list, query, k):
     # try:
@@ -30,7 +38,7 @@ def query_ndcg_at_k(dataset, result_list, query, k):
     ndcg = (dcg / idcg)
     return ndcg
 
-def average_ndcg_at_k(dataset, query_result_list, k):
+def average_ndcg_at_k(dataset, query_result_list, k, count_bad_query=False):
     ndcg = 0.0
     num_query = 0
     for query in dataset.get_all_querys():
@@ -40,6 +48,8 @@ def average_ndcg_at_k(dataset, query_result_list, k):
         #     print("Query:", query, "has no relevant document!")
         #     continue
         if len(dataset.get_relevance_docids_by_query(query)) == 0:
+            if count_bad_query:
+                num_query += 1
             continue
         else:
             pos_docid_set = set(dataset.get_relevance_docids_by_query(query))

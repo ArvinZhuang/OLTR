@@ -28,10 +28,10 @@ class SDBN(CM):
 
             relevance = dataset.get_relevance_label_by_query_and_docid(query, docid)
 
-            if click_prob <= self.pc[relevance]:
+            if click_prob < self.pc[relevance]:
                 click_label[i] = 1
                 clicked_doc.append(result_list[i])
-                if stop_prob <= self.ps[relevance]:
+                if stop_prob < self.ps[relevance]:
                     satisfied = True
                     break
 
