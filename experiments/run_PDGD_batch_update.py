@@ -53,23 +53,7 @@ def run(train_set, test_set, ranker, num_interation, click_model, batch_size):
     return ndcg_scores, cndcg_scores, cmrr_scores, final_weights
 
 
-def job(model_type, f, train_set, test_set, output_fold, batch_size):
-    if model_type == "perfect":
-        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
-        # pc = [0.0, 0.5, 1.0]
-        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
-        # ps = [0.0, 0.0, 0.0]
-    elif model_type == "navigational":
-        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
-        # pc = [0.05, 0.5, 0.95]
-        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
-        # ps = [0.2, 0.5, 0.9]
-    elif model_type == "informational":
-        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
-        # pc = [0.4, 0.7, 0.9]
-        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
-        # ps = [0.1, 0.3, 0.5]
-
+def job(model_type, f, train_set, test_set, output_fold, batch_size, pc, ps):
     cm = SDBN(pc, ps)
 
     for r in range(1, 2):
@@ -99,24 +83,85 @@ def job(model_type, f, train_set, test_set, output_fold, batch_size):
 
 
 if __name__ == "__main__":
+    # todo: mq size 8000 (done)
+    #       mslr size 8000
+    #       mq size 4000 (done)
+    #       mslr size 4000 (done)
+    #       mq size 200 (done)
+    #       mslr size 200 (done)
 
-    FEATURE_SIZE = 136
     NUM_INTERACTION = 2000000
-    # click_models = ["informational", "navigational", "perfect"]
     click_models = ["informational", "navigational", "perfect"]
     Learning_rate = 0.1
-    batch_size = 8000
-    dataset_fold = "../datasets/MSLR10K"
-    output_fold = "../results/FOLTR/PDGD/MSLR10K/MSLR10K_batch_update_size8000_grad_add"
-    # dataset_fold = "../datasets/mq2007"
-    # output_fold = "../results/FOLTR/PDGD/mq2007/MQ2007_batch_update_size8000_grad_add"
-    # for 5 folds
+    batch_sizes = [8000, 4000, 200]
 
-    for click_model in click_models:
-        for f in range(1, 6):
-            training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
-            test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
-            train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, cache_root="../datasets/cache")
-            test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, cache_root="../datasets/cache")
+    mslr10k_fold = "../datasets/MSLR10K"
+    mslr10k_output = "../results/FOLTR/PDGD/MSLR10K/MSLR10K_batch_update_size{}_grad_add"
+    mq2007_fold = "../datasets/mq2007"
+    mq2007_output = "../results/FOLTR/PDGD/mq2007/MQ2007_batch_update_size{}_grad_add"
+    Yahoo_fold = "../datasets/Yahoo"
+    Yahoo_output = "../results/FOLTR/PDGD/yahoo/yahoo_batch_update_size{}_grad_add"
 
-            mp.Process(target=job, args=(click_model, f, train_set, test_set, output_fold, batch_size)).start()
+    for batch_size in batch_sizes:
+        paths = [
+                (mslr10k_fold, mslr10k_output.format(batch_size)),
+                (mq2007_fold, mq2007_output.format(batch_size)),
+                (Yahoo_fold, Yahoo_output)]
+        for path in paths:
+            dataset_fold = path[0]
+            output_fold = path[1]
+
+            processors = []
+            for click_model in click_models:
+                if dataset_fold == "../datasets/MSLR10K":
+                    FEATURE_SIZE = 136
+                    norm = True
+                    fold_range = range(1, 6)
+                    if click_model == "perfect":
+                        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+                        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+                    elif click_model == "navigational":
+                        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+                        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+                    elif click_model == "informational":
+                        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+                        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+                elif dataset_fold == "../datasets/mq2007":
+                    FEATURE_SIZE = 46
+                    norm = False
+                    fold_range = range(1, 6)
+                    if click_model == "perfect":
+                        pc = [0.0, 0.5, 1.0]
+                        ps = [0.0, 0.0, 0.0]
+                    elif click_model == "navigational":
+                        pc = [0.05, 0.5, 0.95]
+                        ps = [0.2, 0.5, 0.9]
+                    elif click_model == "informational":
+                        pc = [0.4, 0.7, 0.9]
+                        ps = [0.1, 0.3, 0.5]
+                elif dataset_fold == "../datasets/Yahoo":
+                    FEATURE_SIZE = 700
+                    norm = False
+                    fold_range = range(1, 2)
+                    if click_model == "perfect":
+                        pc = [0.0, 0.2, 0.4, 0.8, 1.0]
+                        ps = [0.0, 0.0, 0.0, 0.0, 0.0]
+                    elif click_model == "navigational":
+                        pc = [0.05, 0.3, 0.5, 0.7, 0.95]
+                        ps = [0.2, 0.3, 0.5, 0.7, 0.9]
+                    elif click_model == "informational":
+                        pc = [0.4, 0.6, 0.7, 0.8, 0.9]
+                        ps = [0.1, 0.2, 0.3, 0.4, 0.5]
+
+                for f in fold_range:
+                    training_path = "{}/Fold{}/train.txt".format(dataset_fold, f)
+                    test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
+                    train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=norm, cache_root="../datasets/cache")
+                    test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=norm, cache_root="../datasets/cache")
+
+                    print(dataset_fold, click_model, f, batch_size)
+                    p = mp.Process(target=job, args=(click_model, f, train_set, test_set, output_fold, batch_size, pc, ps))
+                    p.start()
+                    processors.append(p)
+            for p in processors:
+                p.join()
