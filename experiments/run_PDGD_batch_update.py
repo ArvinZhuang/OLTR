@@ -83,13 +83,6 @@ def job(model_type, f, train_set, test_set, output_fold, batch_size, pc, ps):
 
 
 if __name__ == "__main__":
-    # todo: mq size 8000 (done)
-    #       mslr size 8000
-    #       mq size 4000 (done)
-    #       mslr size 4000 (done)
-    #       mq size 200 (done)
-    #       mslr size 200 (done)
-
     NUM_INTERACTION = 2000000
     click_models = ["informational", "navigational", "perfect"]
     Learning_rate = 0.1
