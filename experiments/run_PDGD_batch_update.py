@@ -91,15 +91,19 @@ if __name__ == "__main__":
     mslr10k_fold = "../datasets/MSLR10K"
     mslr10k_output = "../results/FOLTR/PDGD/MSLR10K/MSLR10K_batch_update_size{}_grad_add"
     mq2007_fold = "../datasets/mq2007"
-    mq2007_output = "../results/FOLTR/PDGD/mq2007/MQ2007_batch_update_size{}_grad_add"
+    mq2007_output = "../results/FOLTR/PDGD/mq2008/MQ2008_batch_update_size{}_grad_add"
+    mq2008_fold = "../datasets/mq2008"
+    mq2008_output = "../results/FOLTR/PDGD/mq2008/MQ2008_batch_update_size{}_grad_add"
     Yahoo_fold = "../datasets/Yahoo"
     Yahoo_output = "../results/FOLTR/PDGD/yahoo/yahoo_batch_update_size{}_grad_add"
 
     for batch_size in batch_sizes:
         paths = [
-                (mslr10k_fold, mslr10k_output.format(batch_size)),
-                (mq2007_fold, mq2007_output.format(batch_size)),
-                (Yahoo_fold, Yahoo_output)]
+                # (mslr10k_fold, mslr10k_output.format(batch_size)),
+                # (mq2007_fold, mq2007_output.format(batch_size)),
+                (mq2008_fold, mq2008_output.format(batch_size)),
+                # (Yahoo_fold, Yahoo_output)
+        ]
         for path in paths:
             dataset_fold = path[0]
             output_fold = path[1]
@@ -119,7 +123,7 @@ if __name__ == "__main__":
                     elif click_model == "informational":
                         pc = [0.4, 0.6, 0.7, 0.8, 0.9]
                         ps = [0.1, 0.2, 0.3, 0.4, 0.5]
-                elif dataset_fold == "../datasets/mq2007":
+                elif dataset_fold == "../datasets/mq2007" or dataset_fold == "../datasets/mq2008":
                     FEATURE_SIZE = 46
                     norm = False
                     fold_range = range(1, 6)
