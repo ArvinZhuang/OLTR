@@ -51,7 +51,7 @@ class PDGDNeuralRanker:
 
         return derivatives
 
-    def get_query_result_list(self, dataset, query):
+    def get_query_result_list(self, dataset, query, random=False):
         feature_matrix = dataset.get_all_features_by_query(query)
         docid_list = np.array(dataset.get_candidate_docids_by_query(query))
         n_docs = docid_list.shape[0]
@@ -64,7 +64,8 @@ class PDGDNeuralRanker:
 
         ranking = self._recursive_choice(np.copy(doc_scores),
                                          np.array([], dtype=np.int32),
-                                         k)
+                                         k,
+                                         random)
         return ranking, doc_scores
 
     def get_all_query_result_list(self, dataset):
@@ -83,7 +84,7 @@ class PDGDNeuralRanker:
 
         return query_result_list
 
-    def _recursive_choice(self, scores, incomplete_ranking, k_left):
+    def _recursive_choice(self, scores, incomplete_ranking, k_left, random):
         n_docs = scores.shape[0]
 
         scores[incomplete_ranking] = np.amin(scores)
@@ -97,17 +98,21 @@ class PDGDNeuralRanker:
         safe_n = np.sum(probs > 10 ** (-4) / n_docs)
 
         safe_k = np.minimum(safe_n, k_left)
-
-        next_ranking = np.random.choice(np.arange(n_docs),
-                                        replace=False,
-                                        p=probs,
-                                        size=safe_k)
+        if random:
+            next_ranking = np.random.choice(np.arange(n_docs),
+                                            replace=False,
+                                            size=safe_k)
+        else:
+            next_ranking = np.random.choice(np.arange(n_docs),
+                                            replace=False,
+                                            p=probs,
+                                            size=safe_k)
 
         ranking = np.concatenate((incomplete_ranking, next_ranking))
         k_left = k_left - safe_k
 
         if k_left > 0:
-            return self._recursive_choice(scores, ranking, k_left)
+            return self._recursive_choice(scores, ranking, k_left, random)
         else:
             return ranking
 

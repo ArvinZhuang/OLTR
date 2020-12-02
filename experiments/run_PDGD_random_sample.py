@@ -3,6 +3,7 @@ import sys
 sys.path.append('../')
 from dataset.LetorDataset import LetorDataset
 from ranker.PDGDLinearRanker import PDGDLinearRanker
+from ranker.PDGDNeuralRanker import PDGDNeuralRanker
 from clickModel.SDBN import SDBN
 from clickModel.PBM import PBM
 from utils import evl_tool
@@ -10,10 +11,10 @@ import numpy as np
 import multiprocessing as mp
 import pickle
 
+
 FEATURE_SIZE = 220
 NUM_INTERACTION = 1000000
 Learning_rate = 0.1
-
 
 def run(train_set, test_set, ranker, num_interation, click_model):
     ndcg_scores = []
@@ -26,12 +27,12 @@ def run(train_set, test_set, ranker, num_interation, click_model):
 
         qid = query_set[i]
 
-        result_list, scores = ranker.get_query_result_list(train_set, qid)
+        result_list, scores = ranker.get_query_result_list(train_set, qid, random=True)
 
         clicked_doc, click_label, _ = click_model.simulate(qid, result_list, train_set)
 
-        ranker.update_to_clicks(click_label, result_list, scores, train_set.get_all_features_by_query(qid))
-
+        # ranker.update_to_clicks(click_label, result_list, scores, train_set.get_all_features_by_query(qid))
+        ranker.update_to_clicks(click_label, result_list, scores)
         if num_iter % 1000 == 0 or num_iter == 1:
             all_result = ranker.get_all_query_result_list(test_set)
             ndcg = evl_tool.average_ndcg_at_k(test_set, all_result, 10)
@@ -39,8 +40,8 @@ def run(train_set, test_set, ranker, num_interation, click_model):
             # print(ndcg)
         cndcg = evl_tool.online_mrr_at_k(click_label, 10)
         cndcg_scores.append(cndcg)
-        final_weights = ranker.get_current_weights()
-    return ndcg_scores, cndcg_scores, final_weights
+        # final_weights = ranker.get_current_weights()
+    return ndcg_scores, cndcg_scores
 
 
 def job(model_type, f, train_set, test_set, output_fold):
@@ -65,9 +66,9 @@ def job(model_type, f, train_set, test_set, output_fold):
     for r in range(1, 16):
         # np.random.seed(r)
         FEATURE_SIZE = 220
-        ranker = PDGDLinearRanker(FEATURE_SIZE, Learning_rate)
+        ranker = PDGDNeuralRanker(FEATURE_SIZE, Learning_rate, [128])
         print("PDGD fold{} {} run{} start!".format(f, model_type, r))
-        ndcg_scores, cndcg_scores, final_weights = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
+        ndcg_scores, cndcg_scores = run(train_set, test_set, ranker, NUM_INTERACTION, cm)
         os.makedirs(os.path.dirname("{}/fold{}/".format(output_fold, f)),
                     exist_ok=True)  # create directory if not exist
         with open(
@@ -78,18 +79,18 @@ def job(model_type, f, train_set, test_set, output_fold):
                 "{}/fold{}/{}_run{}_cndcg.txt".format(output_fold, f, model_type, r),
                 "wb") as fp:
             pickle.dump(cndcg_scores, fp)
-        with open(
-                "{}/fold{}/{}_run{}_weights.txt".format(output_fold, f, model_type, r),
-                "wb") as fp:
-            pickle.dump(final_weights, fp)
+        # with open(
+        #         "{}/fold{}/{}_run{}_weights.txt".format(output_fold, f, model_type, r),
+        #         "wb") as fp:
+        #     pickle.dump(final_weights, fp)
         print("PDGD fold{} {} run{} finished!".format(f, model_type, r))
 
 
 if __name__ == "__main__":
     # click_models = ["informational", "navigational", "perfect"]
-    click_models = ["perfect", "informational"]
+    click_models = ["perfect"]
     dataset_fold = "../datasets/istella"
-    output_fold = "../results/exploration/PDGD/istella/original"
+    output_fold = "../results/exploration/PDGD/istella/random_neural"
     # for 5 folds
 
     for f in range(1, 2):

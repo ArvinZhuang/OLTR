@@ -18,6 +18,7 @@ def plot(path, parameters, folds, runs, click_model, num_interactions, color):
                     data = np.array(data[:num_interactions])
                     result = np.vstack((result, data))
         result = result[1:].T
+        print(result.shape)
         result_mean = np.mean(result, axis=1)
         result_std_err = sem(result, axis=1)
         result_h = result_std_err * t.ppf((1 + 0.95) / 2, 25 - 1)
@@ -58,18 +59,21 @@ def plot_mrr(path, folds, runs, click_models, num_interactions, color):
 
 
 if __name__ == "__main__":
-    path1 = "../results/PDGD/mq2007"
+    # path1 = "../results/PDGD/mq2007"
+    path1 = "../results/exploration/PDGD/istella/random"
+    path2 = "../results/exploration/PDGD/istella/original"
     # path2 = "../results/reduction/mq2007/PDGD"
-    folds = list(range(1, 6))
+    folds = list(range(1, 2))
     runs = list(range(1, 2))
     click_models = ["navigational", 'informational', "perfect"]
     # parameters = [0.03, 0.05, 0.08, 0.1, 0.5, 1.0, 5.0]
     parameters = [0.1]
-    num_interactions = 250
+    num_interactions = 1000
 
     # plot(path1, parameters, folds, runs, 'informational', num_interactions, 1)
-    # plot(path1, parameters, folds, runs, 'perfect', num_interactions, 2)
-    plot_mrr(path1, folds, runs, click_models, num_interactions, 2)
+    plot(path1, parameters, folds, runs, 'perfect', num_interactions, 2)
+    plot(path2, parameters, folds, runs, 'perfect', num_interactions, 1)
+    # plot_mrr(path1, folds, runs, click_models, num_interactions, 2)
     plt.ylabel('NDCG')
     plt.xlabel('EPOCH')
 
