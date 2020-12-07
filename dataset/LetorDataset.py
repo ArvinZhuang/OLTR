@@ -12,7 +12,7 @@ class LetorDataset(AbstractDataset):
                  path,
                  feature_size,
                  query_level_norm=False,
-                 binary_label=False,
+                 binary_label=0,
                  cache_root=None
                  ):
         super().__init__(path, feature_size, query_level_norm)
@@ -36,7 +36,6 @@ class LetorDataset(AbstractDataset):
         else:
             self._load_data()
 
-
     def from_path(self, path: str, cache_root: str) -> 'LetorDataset':
         """
         Constructs a dataset by reading form a disk
@@ -46,7 +45,6 @@ class LetorDataset(AbstractDataset):
                         of the cache has to be done manually if needed.
         :return: Constructed Dataset instance
         """
-
 
         cache_name = f"{hashlib.md5(path.encode()).hexdigest()}.pkl"
         file_path = f'./{cache_root}/{cache_name}'
@@ -89,8 +87,11 @@ class LetorDataset(AbstractDataset):
                 relevence = float(cols[0])  # Sometimes the relevance label can be a float.
                 if relevence.is_integer():
                     relevence = int(relevence)  # But if it is indeed an int, cast it into one.
-                    if self._binary_label and relevence > 0:
+                if self._binary_label != 0:
+                    if relevence >= self._binary_label:
                         relevence = 1
+                    else:
+                        relevence = 0
 
                 features = [0] * self._feature_size
 
@@ -109,7 +110,6 @@ class LetorDataset(AbstractDataset):
                         feature_value = 0
 
                     features[feature_id] = feature_value
-
 
                 if relevence > 0:
                     self._query_pos_docids[query].append(docid)
@@ -159,7 +159,6 @@ class LetorDataset(AbstractDataset):
                     self._query_pos_docids[qid].append(docid)
                 ind += 1
 
-
         # self._query_get_all_features_temp = {}
         # for qid in self._query_docid_get_rel.keys():
         #     self._query_pos_docids[qid] = []
@@ -177,10 +176,6 @@ class LetorDataset(AbstractDataset):
         #         if rel > 0:
         #             self._query_pos_docids[qid].append(docid)
         #     self._query_get_all_features[qid] = np.array(self._query_get_all_features_temp[qid])
-
-
-
-
 
     def update_relevance_by_qrel(self, path: str):
 
@@ -260,7 +255,7 @@ class LetorDataset(AbstractDataset):
         """
 
         for fold in range(fold_num):
-            fold_path = "{}/fold{}".format(path, fold+1)
+            fold_path = "{}/fold{}".format(path, fold + 1)
             # Create target Directory if don't exist
             if not os.path.exists(fold_path):
                 os.mkdir(fold_path)
@@ -275,16 +270,15 @@ class LetorDataset(AbstractDataset):
         query_chunks = np.array_split(all_queries, fold_num)
 
         for i in range(fold_num):
-            test_path = "{}/Fold{}/test.txt".format(path, i+1)
+            test_path = "{}/Fold{}/test.txt".format(path, i + 1)
             train_path = "{}/Fold{}/train.txt".format(path, i + 1)
             test_queries = query_chunks[i]
             train_chunks = query_chunks[:i]
-            train_chunks.extend(query_chunks[i+1:])
+            train_chunks.extend(query_chunks[i + 1:])
             train_queries = np.concatenate(train_chunks)
 
             self.write_by_queries(test_path, test_queries)
             self.write_by_queries(train_path, train_queries)
-
 
     @staticmethod
     def runs_to_letor(input_folder: str, output_folder: str):
@@ -321,13 +315,13 @@ class LetorDataset(AbstractDataset):
                 for feature_id, socre in query_dic[qid][docid]:
                     s += "{}:{} ".format(feature_id, socre)
                 s += "#docid = {}\n".format(docid)
-        with open(output_folder+"letor.txt", "w") as f:
+        with open(output_folder + "letor.txt", "w") as f:
             f.write(s)
 
         s = ""
         for fid in range(len(files)):
-            s += "{}:{}\n".format(fid+1, files[fid])
-        with open(output_folder+"feature_description.txt", "w") as f:
+            s += "{}:{}\n".format(fid + 1, files[fid])
+        with open(output_folder + "feature_description.txt", "w") as f:
             f.write(s)
 
     # bad implementation only for PMGD:
@@ -339,4 +333,3 @@ class LetorDataset(AbstractDataset):
 
     def get_query_get_docids(self):
         return self._query_get_docids
-
