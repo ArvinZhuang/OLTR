@@ -57,7 +57,7 @@ def get_DCG_rewards(click_labels, propensities, method="both"):
     reward = np.zeros(len(click_labels))
 
     for iPos in range(len(click_labels)):
-        reward[iPos] = (2 ** 1 - 1) / np.log2(iPos + 2.0)
+        reward[iPos] = 1 / np.log2(iPos + 2.0)
 
         if click_labels[iPos] == 1:
             # reward[iPos] = 0

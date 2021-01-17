@@ -20,3 +20,13 @@ class PBM(AbstractClickModel):
         clicks = clicks.astype(int)
 
         return clicked_doces, clicks, propensities
+
+    def simulate_with_position(self, query, docid, dataset, rank):
+        propensities = np.power(np.divide(1, np.arange(1.0, 10 + 1)), self.eta)
+        propensity = propensities[rank]
+        rel = np.array(dataset.get_relevance_label_by_query_and_docid(query, docid))
+        click_prob = self.pc[rel] * propensity
+        rand = np.random.rand()
+        click = 1 if rand < click_prob else 0
+
+        return click, propensity

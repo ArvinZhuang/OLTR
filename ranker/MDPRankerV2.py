@@ -113,6 +113,8 @@ class MDPRankerV2(AbstractRanker):
 
         if self.loss_type == "pointwise":
             for pos in range(lenghth):
+
+
                 self.sess.run([self.accum_ops], feed_dict={self.input_docs: feature_matrix[ranklist[pos:]],
                                                            self.position: [0],
                                                            self.doc_length: len(ranklist[pos:]),
