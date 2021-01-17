@@ -129,13 +129,8 @@ if __name__ == "__main__":
         test_path = "{}/Fold{}/test.txt".format(dataset_fold, f)
         train_set = LetorDataset(training_path, FEATURE_SIZE, query_level_norm=True, cache_root="../datasets/cache")
         test_set = LetorDataset(test_path, FEATURE_SIZE, query_level_norm=True, cache_root="../datasets/cache")
-        # %%
-        processors = []
-        # for 3 click_models
+
         for click_model in click_models:
             p = mp.Process(target=job, args=(click_model, learning_rate, eta, gamma, reward_method, f, train_set, test_set, FEATURE_SIZE, output_fold))
             p.start()
-            p.join()
-            processors.append(p)
-    for p in processors:
-        p.join()
+
