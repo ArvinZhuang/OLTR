@@ -72,11 +72,12 @@ if __name__ == "__main__":
 
 
     ############## plot different algorithms ####
-    # path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
-    # path2 = "results/mslr10k/long_term_200k/PDGD"
-    # path3 = "results/mslr10k/DBGD"
-    # path4 = "results/mslr10k/PMGD"
-    # path5 = "results/mslr10k/COLTR"
+    path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both"
+    path2 = "results/mslr10k/long_term_200k/PDGD"
+    path3 = "results/mslr10k/DBGD"
+    path4 = "results/mslr10k/PMGD"
+    path5 = "results/mslr10k/COLTR"
+    path7 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_both_one_at_time"
 
     # path1 = "results/yahoo/MDP_with_SGD_optimizer/MDP_0002_both"
     # path2 = "results/yahoo/PDGD"
@@ -88,13 +89,13 @@ if __name__ == "__main__":
     # path2 = "results/istella/PDGD"
     # path3 = "results/istella/DBGD"
     # path4 = "results/istella/PMGD"
-    path5 = "results/istella/COLTR"
+    # path5 = "results/istella/COLTR"
 
     # path1 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive_gamma0_variance"
     # path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive_gamma1_variance"
 
-    folds = list(range(1, 2))
-    runs = list(range(1, 16))
+    folds = list(range(1, 6))
+    runs = list(range(1, 6))
     # intervals = [(0, 10000), (10000, 100000)]
     intervals = [(0, 100000)]
     click_model = 'perfect'
@@ -102,14 +103,12 @@ if __name__ == "__main__":
     parameters = ["ReOLTR", "PDGD", "PDGD", "MDP_pos+neg"]
     num_interactions = 100000
     print(click_model)
-    # l1 = plot(path1, "ReOLTR", folds, runs, click_model, num_interactions, 1, intervals)
-    # l2 = plot(path2, "PDGD", folds, runs, click_model, num_interactions, 2, intervals)
-    # plot(path3, "DBGD", folds, runs, click_model, num_interactions, 3, intervals)
-    # plot(path4, "PMGD", folds, runs, click_model, num_interactions, 4, intervals)
+    l1 = plot(path1, "ReOLTR", folds, runs, click_model, num_interactions, 1, intervals)
+    l2 = plot(path2, "PDGD", folds, runs, click_model, num_interactions, 2, intervals)
+    plot(path3, "DBGD", folds, runs, click_model, num_interactions, 3, intervals)
+    plot(path4, "PMGD", folds, runs, click_model, num_interactions, 4, intervals)
     plot(path5, "COLTR", folds, runs, click_model, num_interactions, 5, intervals)
-    click_model = 'informational'
-    print(click_model)
-    plot(path5, "COLTR", folds, runs, click_model, num_interactions, 5, intervals)
+    plot(path7, "ROLTR_new", folds, runs, click_model, num_interactions, 5, intervals)
     # print(ttest(l1[0], l2[0]), ttest(l1[1], l2[1]))
     # print(ttest(l1, l2))
     # plt.ylabel('NDCG')
