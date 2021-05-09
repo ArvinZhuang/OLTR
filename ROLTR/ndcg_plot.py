@@ -208,7 +208,7 @@ if __name__ == "__main__":
             plot(path4, folds, runs, click_model, num_interaction, 1, plot_index, '-', None)
             # plot(path5, folds, list(range(1, 2)), "MDPRank", 100000, 8, plot_index, '--', None, plot_line=True)
             plot(path6, folds, list(range(1, 16)), click_model, num_interaction, 9, plot_index, '-', None)
-            plot(path7, folds, list(range(1, 6)), click_model, num_interaction, 5, plot_index, '-', None)
+            plot(path7, folds, list(range(1, 11)), click_model, num_interaction, 5, plot_index, '-', None)
             # print(ttest(l1, l2))
 
             ############## plot different gamma ####

@@ -31,9 +31,11 @@ def plot(path, parameter, folds, runs, click_model, num_interactions, color, int
     #     result_lists.append(np.mean(result[1:, start:end], axis=1))
 
     result = result[1:].T
+    plot_result = np.cumsum(result, axis=1)
+
     n = result.shape[1]
-    result_mean = np.mean(result, axis=1)
-    result_std_err = sem(result, axis=1)
+    result_mean = np.mean(plot_result, axis=1)
+    result_std_err = sem(plot_result, axis=1)
     result_h = result_std_err * t.ppf((1 + 0.95) / 2, n - 1)
     result_low = np.subtract(result_mean, result_h)
     result_high = np.add(result_mean, result_h)
@@ -95,23 +97,38 @@ if __name__ == "__main__":
     # path2 = "results/mslr10k/MDP_with_SGD_optimizer/MDP_001_positive_naive_gamma1_variance"
 
     folds = list(range(1, 6))
-    runs = list(range(1, 6))
+    runs = list(range(1, 11))
     # intervals = [(0, 10000), (10000, 100000)]
     intervals = [(0, 100000)]
     click_model = 'perfect'
 
-    parameters = ["ReOLTR", "PDGD", "PDGD", "MDP_pos+neg"]
+    # parameters = ["ReOLTR", "PDGD", "PDGD", "MDP_pos+neg"]
+    parameters = ["ReOLTR", "ReOLTR_new"]
     num_interactions = 100000
     print(click_model)
-    l1 = plot(path1, "ReOLTR", folds, runs, click_model, num_interactions, 1, intervals)
-    l2 = plot(path2, "PDGD", folds, runs, click_model, num_interactions, 2, intervals)
-    plot(path3, "DBGD", folds, runs, click_model, num_interactions, 3, intervals)
-    plot(path4, "PMGD", folds, runs, click_model, num_interactions, 4, intervals)
-    plot(path5, "COLTR", folds, runs, click_model, num_interactions, 5, intervals)
-    plot(path7, "ROLTR_new", folds, runs, click_model, num_interactions, 5, intervals)
+    # l1 = plot(path1, "ReOLTR", folds, runs, click_model, num_interactions, 1, intervals)
+    # l2 = plot(path2, "PDGD", folds, runs, click_model, num_interactions, 2, intervals)
+    # plot(path3, "DBGD", folds, runs, click_model, num_interactions, 3, intervals)
+    # plot(path4, "PMGD", folds, runs, click_model, num_interactions, 4, intervals)
+    # plot(path5, "COLTR", folds, runs, click_model, num_interactions, 5, intervals)
+    # plot(path7, "ROLTR_new", folds, runs, click_model, num_interactions, 5, intervals)
     # print(ttest(l1[0], l2[0]), ttest(l1[1], l2[1]))
     # print(ttest(l1, l2))
     # plt.ylabel('NDCG')
     # plt.xlabel('EPOCH')
+
+    click_model = 'informational'
+
+    # parameters = ["ReOLTR", "PDGD", "PDGD", "MDP_pos+neg"]
+    # parameters = ["ReOLTR", "ReOLTR_new"]
+    # num_interactions = 100000
+    # print(click_model)
+    l1 = plot(path1, "ReOLTR", folds, runs, click_model, num_interactions, 1, intervals)
+    # l2 = plot(path2, "PDGD", folds, runs, click_model, num_interactions, 2, intervals)
+    # plot(path3, "DBGD", folds, runs, click_model, num_interactions, 3, intervals)
+    # plot(path4, "PMGD", folds, runs, click_model, num_interactions, 4, intervals)
+    # plot(path5, "COLTR", folds, runs, click_model, num_interactions, 5, intervals)
+    plot(path7, "ROLTR_new", folds, runs, click_model, num_interactions, 5, intervals)
+
     plt.legend(parameters, loc='lower right')
     # plt.show()
