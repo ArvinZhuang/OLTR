@@ -1,3 +1,5 @@
+
+
 # OLTR
 Online learning to rank python codebase.
 
@@ -9,6 +11,6 @@ To reproduce results of our paper "Counterfactual Online Learning to Rank" publi
 More information about the paper, please visit our website: http://ielab.io/COLTR
 
 ## How do Online Learning to Rank Methods Adapt to Changes of Intent?
-The datasets and code relate to our paper "How do Online Learning to Rank Methods Adapt to Changes of Intent?" published at SIGIR 2021, go to `intent_change/` folder.
+The datasets and code related to our paper "How do Online Learning to Rank Methods Adapt to Changes of Intent?" published at SIGIR 2021 can be found in the `intent_change/` folder.
 
 More information about the paper, please visit our website: http://ielab.io/intent_change
